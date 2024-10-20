@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"xyosc/audio"
 	"xyosc/config"
+	"xyosc/fonts"
 	"xyosc/media"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -28,6 +29,8 @@ func main() {
 	var AY float32
 	var BX float32
 	var BY float32
+
+	fonts.Init()
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		rl.ClearBackground(rl.Blank)
@@ -48,9 +51,9 @@ func main() {
 		if config.Config.FPSCounter {
 			rl.DrawFPS(16, config.Config.WindowHeight)
 		}
-		rl.DrawText(media.PlayingMediaInfo.Artist+" - "+media.PlayingMediaInfo.Title, 16, 16, 32, config.AccentColor)
-		rl.DrawText(media.PlayingMediaInfo.Album, 16, 48, 16, config.ThirdColor)
-		rl.DrawText(media.FmtDuration(media.PlayingMediaInfo.Position)+" / "+media.FmtDuration(media.PlayingMediaInfo.Duration), 16, 64, 32, config.AccentColor)
+		rl.DrawTextEx(fonts.FontIosevka32, media.PlayingMediaInfo.Artist+" - "+media.PlayingMediaInfo.Title, rl.NewVector2(16, 16), 32, 2, config.AccentColor)
+		rl.DrawTextEx(fonts.FontIosevka16, media.PlayingMediaInfo.Album, rl.NewVector2(16, 48), 16, 1, config.ThirdColor)
+		rl.DrawTextEx(fonts.FontIosevka32, media.FmtDuration(media.PlayingMediaInfo.Position)+" / "+media.FmtDuration(media.PlayingMediaInfo.Duration), rl.NewVector2(16, 64), 32, 2, config.AccentColor)
 		rl.EndDrawing()
 	}
 

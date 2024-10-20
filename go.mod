@@ -3,6 +3,7 @@ module xyosc
 go 1.23.2
 
 require (
+	github.com/flopp/go-findfont v0.1.0
 	github.com/gen2brain/malgo v0.11.22
 	github.com/gen2brain/raylib-go/raylib v0.0.0-20241019150900-b7833eeae8d0
 	github.com/godbus/dbus v4.1.0+incompatible
