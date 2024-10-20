@@ -14,6 +14,7 @@ import (
 
 type ConfigS struct {
 	FPSCounter         bool
+	ShowMPRIS          bool
 	TargetFPS          int32
 	WindowWidth        int32
 	WindowHeight       int32
@@ -29,6 +30,7 @@ type ConfigS struct {
 
 var DefaultConfig = ConfigS{
 	FPSCounter:         false,
+	ShowMPRIS:          true,
 	TargetFPS:          60,
 	WindowWidth:        1080,
 	WindowHeight:       1080,
@@ -45,6 +47,8 @@ var DefaultConfig = ConfigS{
 var Config ConfigS
 
 var AccentColor color.RGBA
+var FirstColor color.RGBA
+var ThirdColor color.RGBA
 
 func Init() {
 	configPath := configdir.LocalConfig("ontake", "xyosc")
@@ -78,6 +82,8 @@ func Init() {
 	walFile := filepath.Join(walPath, "colors")
 	if _, err = os.Stat(walFile); os.IsNotExist(err) {
 		AccentColor = color.RGBA{255, 0, 0, Config.LineOpacity}
+		FirstColor = color.RGBA{255, 120, 120, Config.LineOpacity}
+		ThirdColor = color.RGBA{255, 0, 0, Config.LineOpacity}
 	} else {
 		fh, err := os.Open(walFile)
 		utils.CheckError(err)
@@ -86,17 +92,26 @@ func Init() {
 		var line int
 		var rgbaColor color.RGBA
 		for scanner.Scan() {
+			if line == 0 {
+				rgbaColor, err = ParseHexColor(scanner.Text())
+				utils.CheckError(err)
+				FirstColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
+			}
 			if line == 1 {
 				rgbaColor, err = ParseHexColor(scanner.Text())
 				utils.CheckError(err)
+				AccentColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
+			}
+			if line == 2 {
+				rgbaColor, err = ParseHexColor(scanner.Text())
+				utils.CheckError(err)
+				ThirdColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
 				break
 			}
 			line++
 		}
 
-		AccentColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
 	}
-	fmt.Println(AccentColor)
 }
 
 func ParseHexColor(s string) (c color.RGBA, err error) {

@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"xyosc/audio"
 	"xyosc/config"
+	"xyosc/media"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -12,6 +13,7 @@ func main() {
 	config.Init()
 	audio.Init()
 	go audio.Start()
+	go media.Start()
 
 	scale := min(config.Config.WindowWidth, config.Config.WindowHeight) / 2
 	rl.InitWindow(config.Config.WindowWidth, config.Config.WindowHeight, "xyosc")
@@ -44,8 +46,11 @@ func main() {
 			AY = BY
 		}
 		if config.Config.FPSCounter {
-			rl.DrawFPS(0, 0)
+			rl.DrawFPS(16, config.Config.WindowHeight)
 		}
+		rl.DrawText(media.PlayingMediaInfo.Artist+" - "+media.PlayingMediaInfo.Title, 16, 16, 32, config.AccentColor)
+		rl.DrawText(media.PlayingMediaInfo.Album, 16, 48, 16, config.ThirdColor)
+		rl.DrawText(media.FmtDuration(media.PlayingMediaInfo.Position)+" / "+media.FmtDuration(media.PlayingMediaInfo.Duration), 16, 64, 32, config.AccentColor)
 		rl.EndDrawing()
 	}
 
