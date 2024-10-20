@@ -16,8 +16,9 @@ func main() {
 	scale := min(config.Config.WindowWidth, config.Config.WindowHeight) / 2
 	rl.InitWindow(config.Config.WindowWidth, config.Config.WindowHeight, "xyosc")
 	defer rl.CloseWindow()
-	rl.SetWindowOpacity(0.0)
+	rl.SetWindowOpacity(0.5)
 	rl.SetConfigFlags(rl.FlagWindowTransparent)
+	rl.SetConfigFlags(rl.FlagMsaa4xHint)
 	rl.SetWindowState(rl.FlagWindowUndecorated)
 	rl.SetTargetFPS(config.Config.TargetFPS)
 	rl.SetWindowPosition(rl.GetMonitorWidth(rl.GetCurrentMonitor())/2, rl.GetMonitorHeight(rl.GetCurrentMonitor())/2)
