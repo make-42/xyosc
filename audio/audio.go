@@ -2,6 +2,7 @@ package audio
 
 import (
 	"fmt"
+	"os"
 	"xyosc/config"
 	"xyosc/utils"
 
@@ -15,10 +16,8 @@ var SampleSizeInBytes uint32
 const format = malgo.FormatF32
 
 func Init() {
-	deviceConfig := malgo.DefaultDeviceConfig(malgo.Duplex)
 	SampleRingBuffer = ringbuffer.New(int(config.Config.RingBufferSize))
-	deviceConfig.Capture.Format = format
-	SampleSizeInBytes = uint32(malgo.SampleSizeInBytes(deviceConfig.Capture.Format))
+	SampleSizeInBytes = uint32(malgo.SampleSizeInBytes(format))
 }
 
 func Start() {
@@ -31,11 +30,31 @@ func Start() {
 		ctx.Free()
 	}()
 
-	deviceConfig := malgo.DefaultDeviceConfig(malgo.Duplex)
+	// Capture devices.
+	infos, err := ctx.Devices(malgo.Capture)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Println("Capture Devices")
+	for i, info := range infos {
+		e := "ok"
+		full, err := ctx.DeviceInfo(malgo.Capture, info.ID, malgo.Shared)
+		if err != nil {
+			e = err.Error()
+		}
+		fmt.Printf("    %d: %v, %s, [%s], formats: %+v\n",
+			i, info.ID, info.Name(), e, full.Formats)
+	}
+
+	deviceConfig := malgo.DefaultDeviceConfig(malgo.Capture)
 	deviceConfig.Capture.Format = format
 	deviceConfig.Capture.Channels = 2
+	deviceConfig.Capture.DeviceID = infos[config.Config.CaptureDeviceIndex].ID.Pointer()
 	deviceConfig.SampleRate = config.Config.SampleRate
 	deviceConfig.Alsa.NoMMap = 1
+
 	onRecvFrames := func(pSample2, pSample []byte, framecount uint32) {
 		SampleRingBuffer.Write(pSample)
 	}
@@ -49,7 +68,6 @@ func Start() {
 	err = device.Start()
 
 	utils.CheckError(err)
-	for {
-	}
+	select {}
 	//device.Uninit()
 }

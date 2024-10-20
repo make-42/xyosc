@@ -16,7 +16,7 @@ func main() {
 	scale := min(config.Config.WindowWidth, config.Config.WindowHeight) / 2
 	rl.InitWindow(config.Config.WindowWidth, config.Config.WindowHeight, "xyosc")
 	defer rl.CloseWindow()
-	rl.SetWindowOpacity(0.5)
+	rl.SetWindowOpacity(config.Config.WindowOpacity)
 	rl.SetConfigFlags(rl.FlagWindowTransparent)
 	rl.SetConfigFlags(rl.FlagMsaa4xHint)
 	rl.SetWindowState(rl.FlagWindowUndecorated)
