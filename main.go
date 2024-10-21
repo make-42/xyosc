@@ -44,6 +44,8 @@ func main() {
 			fAY := -float32(AY) * config.Config.Gain * float32(scale)
 			fBX := float32(BX) * config.Config.Gain * float32(scale)
 			fBY := -float32(BY) * config.Config.Gain * float32(scale)
+			//inv := fastsqrt.FastInvSqrt32((fBX-fAX)*(fBX-fAX) + (fBY-fBY)*(fBY-fBY))
+			//colorAdjusted := color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, uint8(255 * inv * config.Config.LineOpacity)}
 			rl.DrawLineEx(rl.NewVector2(float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowWidth/2)+fAY), rl.NewVector2(float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowWidth/2)+fBY), config.Config.LineThickness, config.AccentColor)
 			AX = BX
 			AY = BY
