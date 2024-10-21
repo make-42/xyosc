@@ -48,6 +48,7 @@ func main() {
 			AX = BX
 			AY = BY
 		}
+		//audio.SampleRingBuffer.Reset()
 		if config.Config.FPSCounter {
 			rl.DrawFPS(16, config.Config.WindowHeight)
 		}
