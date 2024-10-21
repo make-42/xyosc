@@ -50,7 +50,7 @@ func main() {
 		}
 		//audio.SampleRingBuffer.Reset()
 		if config.Config.FPSCounter {
-			rl.DrawFPS(16, config.Config.WindowHeight)
+			rl.DrawFPS(16, config.Config.WindowHeight-32)
 		}
 		rl.DrawTextEx(fonts.FontIosevka32, media.PlayingMediaInfo.Artist+" - "+media.PlayingMediaInfo.Title, rl.NewVector2(16, 16), 32, 2, config.AccentColor)
 		rl.DrawTextEx(fonts.FontIosevka16, media.PlayingMediaInfo.Album, rl.NewVector2(16, 48), 16, 1, config.ThirdColor)

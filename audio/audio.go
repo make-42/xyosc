@@ -16,7 +16,7 @@ var SampleSizeInBytes uint32
 const format = malgo.FormatF32
 
 func Init() {
-	SampleRingBuffer = ringbuffer.New(int(config.Config.RingBufferSize))
+	SampleRingBuffer = ringbuffer.New(int(config.Config.RingBufferSize)).SetBlocking(true)
 	SampleSizeInBytes = uint32(malgo.SampleSizeInBytes(format))
 }
 
