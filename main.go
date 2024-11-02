@@ -2,10 +2,14 @@ package main
 
 import (
 	"encoding/binary"
+	"image"
+	"image/color"
 	"log"
 	"xyosc/audio"
 	"xyosc/config"
+	"xyosc/fastsqrt"
 	"xyosc/fonts"
+	"xyosc/icons"
 	"xyosc/media"
 
 	"fmt"
@@ -38,9 +42,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		fAY := -float32(AY) * config.Config.Gain * float32(scale)
 		fBX := float32(BX) * config.Config.Gain * float32(scale)
 		fBY := -float32(BY) * config.Config.Gain * float32(scale)
-		//inv := fastsqrt.FastInvSqrt32((fBX-fAX)*(fBX-fAX) + (fBY-fBY)*(fBY-fBY))
-		//colorAdjusted := color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, uint8(255 * inv * config.Config.LineOpacity)}
-		vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowWidth/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowWidth/2)+fBY, config.Config.LineThickness, config.AccentColor, true)
+		if config.Config.LineInvSqrtOpacityControl {
+
+			inv := fastsqrt.FastInvSqrt32((fBX-fAX)*(fBX-fAX) + (fBY-fBY)*(fBY-fBY))
+			colorAdjusted := color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, uint8(float32(config.Config.LineOpacity) * inv)}
+			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowWidth/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowWidth/2)+fBY, config.Config.LineThickness, colorAdjusted, true)
+		} else {
+			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowWidth/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowWidth/2)+fBY, config.Config.LineThickness, config.AccentColor, true)
+
+		}
 		AX = BX
 		AY = BY
 	}
@@ -84,10 +94,13 @@ func main() {
 	config.Init()
 	audio.Init()
 	fonts.Init()
+	icons.Init()
 	go audio.Start()
 	go media.Start()
+	ebiten.SetWindowIcon([]image.Image{icons.WindowIcon48, icons.WindowIcon32, icons.WindowIcon16})
 	ebiten.SetWindowSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	ebiten.SetWindowTitle("xyosc")
+	ebiten.SetWindowMousePassthrough(true)
 	ebiten.SetTPS(int(config.Config.TargetFPS))
 	ebiten.SetWindowDecorated(false)
 	screenW, screenH := ebiten.Monitor().Size()

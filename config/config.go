@@ -14,35 +14,35 @@ import (
 )
 
 type ConfigS struct {
-	FPSCounter         bool
-	ShowMPRIS          bool
-	TargetFPS          int32
-	WindowWidth        int32
-	WindowHeight       int32
-	WindowOpacity      float32
-	CaptureDeviceIndex int
-	SampleRate         uint32
-	RingBufferSize     uint32
-	ReadBufferSize     uint32
-	Gain               float32
-	LineOpacity        uint8
-	LineThickness      float32
+	FPSCounter                bool
+	ShowMPRIS                 bool
+	TargetFPS                 int32
+	WindowWidth               int32
+	WindowHeight              int32
+	CaptureDeviceIndex        int
+	SampleRate                uint32
+	RingBufferSize            uint32
+	ReadBufferSize            uint32
+	Gain                      float32
+	LineOpacity               uint8
+	LineThickness             float32
+	LineInvSqrtOpacityControl bool
 }
 
 var DefaultConfig = ConfigS{
-	FPSCounter:         false,
-	ShowMPRIS:          true,
-	TargetFPS:          60,
-	WindowWidth:        1080,
-	WindowHeight:       1080,
-	WindowOpacity:      0.8,
-	CaptureDeviceIndex: 0,
-	SampleRate:         48000,
-	RingBufferSize:     4800,
-	ReadBufferSize:     4800,
-	Gain:               1,
-	LineOpacity:        50,
-	LineThickness:      2,
+	FPSCounter:                false,
+	ShowMPRIS:                 true,
+	TargetFPS:                 240,
+	WindowWidth:               1300,
+	WindowHeight:              1300,
+	CaptureDeviceIndex:        0,
+	SampleRate:                96000,
+	RingBufferSize:            9600,
+	ReadBufferSize:            9600,
+	Gain:                      1,
+	LineOpacity:               100,
+	LineThickness:             3,
+	LineInvSqrtOpacityControl: false,
 }
 
 var Config ConfigS
