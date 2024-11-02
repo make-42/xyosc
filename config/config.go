@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"xyosc/utils"
 
+	"github.com/fsnotify/fsnotify"
 	"github.com/kirsle/configdir"
 	"gopkg.in/yaml.v2"
 )
@@ -50,6 +51,8 @@ var AccentColor color.RGBA
 var FirstColor color.RGBA
 var ThirdColor color.RGBA
 
+var watcher *fsnotify.Watcher
+
 func Init() {
 	configPath := configdir.LocalConfig("ontake", "xyosc")
 	err := configdir.MakePath(configPath) // Ensure it exists.
@@ -78,9 +81,41 @@ func Init() {
 	}
 
 	// Get pywal accent color
+	watcher, err = fsnotify.NewWatcher()
+	utils.CheckError(err)
+	updatePywalColors()
 	walPath := configdir.LocalCache("wal")
 	walFile := filepath.Join(walPath, "colors")
-	if _, err = os.Stat(walFile); os.IsNotExist(err) {
+	// Start listening for events.
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				if event.Has(fsnotify.Write) {
+					updatePywalColors()
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				utils.CheckError(err)
+			}
+		}
+	}()
+	if _, err := os.Stat(walFile); os.IsNotExist(err) {
+	} else {
+		err = watcher.Add(walFile)
+		utils.CheckError(err)
+	}
+}
+
+func updatePywalColors() {
+	walPath := configdir.LocalCache("wal")
+	walFile := filepath.Join(walPath, "colors")
+	if _, err := os.Stat(walFile); os.IsNotExist(err) {
 		AccentColor = color.RGBA{255, 0, 0, Config.LineOpacity}
 		FirstColor = color.RGBA{255, 120, 120, Config.LineOpacity}
 		ThirdColor = color.RGBA{255, 0, 0, Config.LineOpacity}
