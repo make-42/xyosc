@@ -16,6 +16,7 @@ import (
 type ConfigS struct {
 	FPSCounter                bool
 	ShowMPRIS                 bool
+	MPRISTextOpacity          uint8
 	TargetFPS                 int32
 	WindowWidth               int32
 	WindowHeight              int32
@@ -25,6 +26,7 @@ type ConfigS struct {
 	ReadBufferSize            uint32
 	Gain                      float32
 	LineOpacity               uint8
+	LineBrightness            float64
 	LineThickness             float32
 	LineInvSqrtOpacityControl bool
 }
@@ -32,6 +34,7 @@ type ConfigS struct {
 var DefaultConfig = ConfigS{
 	FPSCounter:                false,
 	ShowMPRIS:                 true,
+	MPRISTextOpacity:          255,
 	TargetFPS:                 240,
 	WindowWidth:               1300,
 	WindowHeight:              1300,
@@ -40,7 +43,8 @@ var DefaultConfig = ConfigS{
 	RingBufferSize:            9600,
 	ReadBufferSize:            9600,
 	Gain:                      1,
-	LineOpacity:               100,
+	LineOpacity:               200,
+	LineBrightness:            1,
 	LineThickness:             3,
 	LineInvSqrtOpacityControl: false,
 }
@@ -50,6 +54,7 @@ var Config ConfigS
 var AccentColor color.RGBA
 var FirstColor color.RGBA
 var ThirdColor color.RGBA
+var ThirdColorAdj color.RGBA
 
 var watcher *fsnotify.Watcher
 
@@ -119,6 +124,7 @@ func updatePywalColors() {
 		AccentColor = color.RGBA{255, 0, 0, Config.LineOpacity}
 		FirstColor = color.RGBA{255, 120, 120, Config.LineOpacity}
 		ThirdColor = color.RGBA{255, 0, 0, Config.LineOpacity}
+		ThirdColorAdj = color.RGBA{uint8(255 * Config.LineBrightness), 0, 0, Config.LineOpacity}
 	} else {
 		fh, err := os.Open(walFile)
 		utils.CheckError(err)
@@ -141,6 +147,7 @@ func updatePywalColors() {
 				rgbaColor, err = ParseHexColor(scanner.Text())
 				utils.CheckError(err)
 				ThirdColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
+				ThirdColorAdj = color.RGBA{uint8(float64(rgbaColor.R) * Config.LineBrightness), uint8(float64(rgbaColor.G) * Config.LineBrightness), uint8(float64(rgbaColor.B) * Config.LineBrightness), Config.LineOpacity}
 				break
 			}
 			line++

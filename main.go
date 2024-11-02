@@ -45,10 +45,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if config.Config.LineInvSqrtOpacityControl {
 
 			inv := fastsqrt.FastInvSqrt32((fBX-fAX)*(fBX-fAX) + (fBY-fBY)*(fBY-fBY))
-			colorAdjusted := color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, uint8(float32(config.Config.LineOpacity) * inv)}
+			colorAdjusted := color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, uint8(float32(config.Config.LineOpacity) * inv)}
 			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowWidth/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowWidth/2)+fBY, config.Config.LineThickness, colorAdjusted, true)
 		} else {
-			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowWidth/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowWidth/2)+fBY, config.Config.LineThickness, config.AccentColor, true)
+			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowWidth/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowWidth/2)+fBY, config.Config.LineThickness, config.ThirdColorAdj, true)
 
 		}
 		AX = BX
@@ -62,7 +62,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if config.Config.ShowMPRIS {
 		op := &text.DrawOptions{}
 		op.GeoM.Translate(16, 16)
-		op.ColorScale.ScaleWithColor(config.AccentColor)
+		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
 		text.Draw(screen, media.PlayingMediaInfo.Artist+" - "+media.PlayingMediaInfo.Title, &text.GoTextFace{
 			Source: fonts.Font,
 			Size:   32,
@@ -70,7 +70,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		op = &text.DrawOptions{}
 		op.GeoM.Translate(16, 64)
-		op.ColorScale.ScaleWithColor(config.ThirdColor)
+		op.ColorScale.ScaleWithColor(color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, config.Config.MPRISTextOpacity})
+
 		text.Draw(screen, media.PlayingMediaInfo.Album, &text.GoTextFace{
 			Source: fonts.Font,
 			Size:   16,
@@ -78,7 +79,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		op = &text.DrawOptions{}
 		op.GeoM.Translate(16, 80)
-		op.ColorScale.ScaleWithColor(config.AccentColor)
+		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
+
 		text.Draw(screen, media.FmtDuration(media.PlayingMediaInfo.Position)+" / "+media.FmtDuration(media.PlayingMediaInfo.Duration), &text.GoTextFace{
 			Source: fonts.Font,
 			Size:   32,
