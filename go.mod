@@ -3,6 +3,7 @@ module xyosc
 go 1.23.2
 
 require (
+	github.com/chewxy/math32 v1.11.1
 	github.com/flopp/go-findfont v0.1.0
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gen2brain/malgo v0.11.22

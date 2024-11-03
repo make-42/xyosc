@@ -14,39 +14,51 @@ import (
 )
 
 type ConfigS struct {
-	FPSCounter                bool
-	ShowMPRIS                 bool
-	MPRISTextOpacity          uint8
-	TargetFPS                 int32
-	WindowWidth               int32
-	WindowHeight              int32
-	CaptureDeviceIndex        int
-	SampleRate                uint32
-	RingBufferSize            uint32
-	ReadBufferSize            uint32
-	Gain                      float32
-	LineOpacity               uint8
-	LineBrightness            float64
-	LineThickness             float32
-	LineInvSqrtOpacityControl bool
+	FPSCounter                       bool
+	ShowMPRIS                        bool
+	MPRISTextOpacity                 uint8
+	TargetFPS                        int32
+	WindowWidth                      int32
+	WindowHeight                     int32
+	CaptureDeviceIndex               int
+	SampleRate                       uint32
+	RingBufferSize                   uint32
+	ReadBufferSize                   uint32
+	Gain                             float32
+	LineOpacity                      uint8
+	LineBrightness                   float64
+	LineThickness                    float32
+	LineInvSqrtOpacityControl        bool
+	Particles                        bool
+	ParticleGenPerFrameEveryXSamples int
+	ParticleMaxCount                 int
+	ParticleMinSize                  float32
+	ParticleMaxSize                  float32
+	ParticleAcceleration             float32
 }
 
 var DefaultConfig = ConfigS{
-	FPSCounter:                false,
-	ShowMPRIS:                 true,
-	MPRISTextOpacity:          255,
-	TargetFPS:                 240,
-	WindowWidth:               1300,
-	WindowHeight:              1300,
-	CaptureDeviceIndex:        0,
-	SampleRate:                96000,
-	RingBufferSize:            9600,
-	ReadBufferSize:            9600,
-	Gain:                      1,
-	LineOpacity:               200,
-	LineBrightness:            1,
-	LineThickness:             3,
-	LineInvSqrtOpacityControl: false,
+	FPSCounter:                       false,
+	ShowMPRIS:                        true,
+	MPRISTextOpacity:                 255,
+	TargetFPS:                        240,
+	WindowWidth:                      1300,
+	WindowHeight:                     1300,
+	CaptureDeviceIndex:               0,
+	SampleRate:                       96000,
+	RingBufferSize:                   9600,
+	ReadBufferSize:                   9600,
+	Gain:                             1,
+	LineOpacity:                      200,
+	LineBrightness:                   1,
+	LineThickness:                    3,
+	LineInvSqrtOpacityControl:        false,
+	Particles:                        true,
+	ParticleGenPerFrameEveryXSamples: 9600,
+	ParticleMaxCount:                 3000,
+	ParticleMinSize:                  0.2,
+	ParticleMaxSize:                  2.0,
+	ParticleAcceleration:             0.01,
 }
 
 var Config ConfigS
