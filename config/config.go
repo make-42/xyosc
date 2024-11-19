@@ -35,6 +35,7 @@ type ConfigS struct {
 	ParticleMinSize                  float32
 	ParticleMaxSize                  float32
 	ParticleAcceleration             float32
+	ParticleDrag                     float32
 }
 
 var DefaultConfig = ConfigS{
@@ -54,11 +55,12 @@ var DefaultConfig = ConfigS{
 	LineThickness:                    3,
 	LineInvSqrtOpacityControl:        false,
 	Particles:                        true,
-	ParticleGenPerFrameEveryXSamples: 9600,
-	ParticleMaxCount:                 3000,
+	ParticleGenPerFrameEveryXSamples: 2000,
+	ParticleMaxCount:                 600,
 	ParticleMinSize:                  0.2,
 	ParticleMaxSize:                  2.0,
-	ParticleAcceleration:             0.01,
+	ParticleAcceleration:             0.015,
+	ParticleDrag:                     5.0,
 }
 
 var Config ConfigS

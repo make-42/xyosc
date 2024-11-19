@@ -61,7 +61,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 				particles.Particles = append(particles.Particles, particles.Particle{
 					X:    float32(AX) * config.Config.Gain,
-					Y:    float32(AY) * config.Config.Gain,
+					Y:    -float32(AY) * config.Config.Gain,
 					VX:   0,
 					VY:   0,
 					Size: rand.Float32()*(config.Config.ParticleMaxSize-config.Config.ParticleMinSize) + config.Config.ParticleMinSize,
@@ -78,8 +78,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		norm := math32.Sqrt(particles.Particles[i].X*particles.Particles[i].X + particles.Particles[i].Y*particles.Particles[i].Y)
 		particles.Particles[i].X += particle.VX / float32(ebiten.ActualTPS())
 		particles.Particles[i].Y += particle.VY / float32(ebiten.ActualTPS())
-		particles.Particles[i].VX += config.Config.ParticleAcceleration * particle.X / norm * S / float32(ebiten.ActualTPS())
-		particles.Particles[i].VY += config.Config.ParticleAcceleration * particle.Y / norm * S / float32(ebiten.ActualTPS())
+		speed := math32.Sqrt(particle.VX*particle.VX + particle.VY*particle.VY)
+		particles.Particles[i].VX += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.X / norm / float32(ebiten.ActualTPS())
+		particles.Particles[i].VY += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.Y / norm / float32(ebiten.ActualTPS())
 	}
 
 	//audio.SampleRingBuffer.Reset()
