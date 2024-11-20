@@ -1,3 +1,7 @@
 # xyosc
 A simple XY-oscilloscope written in Go.
-![Screenshot_20241021_143354-xyosc](https://github.com/user-attachments/assets/225dd213-5a26-4e99-ac2a-f2c69f1485e1)
+
+
+https://github.com/user-attachments/assets/7b6c6545-5a93-4ba8-8a8a-a381d3e62672
+
+
