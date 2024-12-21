@@ -1,20 +1,21 @@
 package fonts
 
 import (
-	"os"
 	"xyosc/utils"
 
-	"github.com/flopp/go-findfont"
+	"embed"
+
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
+
+//go:embed assets/SourceHanSansJP-Heavy.otf
+var embedFS embed.FS
 
 var Font *text.GoTextFaceSource
 
 func Init() {
 	// NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
-	fontPath, err := findfont.Find("SourceHanSansJP-Heavy.otf")
-	utils.CheckError(err)
-	f, err := os.Open(fontPath)
+	f, err := embedFS.Open("assets/SourceHanSansJP-Heavy.otf")
 	utils.CheckError(err)
 	Font, err = text.NewGoTextFaceSource(f)
 	utils.CheckError(err)
