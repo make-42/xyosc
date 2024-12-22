@@ -137,7 +137,7 @@ func main() {
 	screenW, screenH := ebiten.Monitor().Size()
 	ebiten.SetWindowPosition(screenW/2-int(config.Config.WindowWidth)/2, screenH/2-int(config.Config.WindowHeight)/2)
 	ebiten.SetVsyncEnabled(true)
-	if err := ebiten.RunGame(&Game{}); err != nil {
+	if err := ebiten.RunGameWithOptions(&Game{}, &ebiten.RunGameOptions{ScreenTransparent: true}); err != nil {
 		log.Fatal(err)
 	}
 }
