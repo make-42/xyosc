@@ -1,0 +1,10 @@
+[Desktop Entry]
+Categories=Audio;AudioVideo
+Comment=A simple XY-oscilloscope written in Go.
+Exec=xyosc
+GenericName=Graphical Audio Visualizer
+Icon=xyosc
+Name=xyosc
+Terminal=false
+Type=Application
+Version=1.4
