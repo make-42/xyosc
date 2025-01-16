@@ -38,6 +38,7 @@ type ConfigS struct {
 	ParticleDrag                     float32
 	DefaultToSingleChannel           bool
 	PeakDetectSeparator              int
+	SingleChannelWindow              uint32
 }
 
 var DefaultConfig = ConfigS{
@@ -65,6 +66,7 @@ var DefaultConfig = ConfigS{
 	ParticleDrag:                     5.0,
 	DefaultToSingleChannel:           false,
 	PeakDetectSeparator:              100,
+	SingleChannelWindow:              1000,
 }
 
 var Config ConfigS
