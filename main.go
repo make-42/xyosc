@@ -114,8 +114,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 		offset := uint32((maxθ / (2 * math.Pi)) * (float64(numSamples) / float64(maxi)))
 		for i := uint32(0); i < numSamples-1; i++ {
-			fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
-			fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
+			fAX := float32(FFTBuffer[(i-offset)%numSamples]) * config.Config.Gain * float32(scale)
+			fBX := float32(FFTBuffer[(i+1-offset)%numSamples]) * config.Config.Gain * float32(scale)
 			vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i)/float32(numSamples), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i+1)/float32(numSamples), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
 		}
 	}
