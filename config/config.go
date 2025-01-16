@@ -36,6 +36,7 @@ type ConfigS struct {
 	ParticleMaxSize                  float32
 	ParticleAcceleration             float32
 	ParticleDrag                     float32
+	DefaultToSingleChannel           bool
 }
 
 var DefaultConfig = ConfigS{
@@ -61,6 +62,7 @@ var DefaultConfig = ConfigS{
 	ParticleMaxSize:                  2.0,
 	ParticleAcceleration:             0.015,
 	ParticleDrag:                     5.0,
+	DefaultToSingleChannel:           false,
 }
 
 var Config ConfigS
@@ -99,6 +101,7 @@ func Init() {
 
 		decoder := yaml.NewDecoder(fh)
 		decoder.Decode(&Config)
+		SingleChannel = Config.DefaultToSingleChannel
 	}
 
 	// Get pywal accent color
