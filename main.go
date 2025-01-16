@@ -103,7 +103,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		r, θ := cmplx.Polar(X[1])
 		maxR := r
 		maxθ := θ
-		maxi := 1
+		maxi := uint32(1)
 		for i := uint32(0); i < numSamples-1; i++ {
 			r, θ = cmplx.Polar(X[i+1])
 			if r > maxR {
