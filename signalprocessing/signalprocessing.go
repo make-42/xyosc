@@ -10,5 +10,5 @@ import (
 var HannWindow []float64
 
 func Init() {
-	HannWindow = window.Hann(config.Config.ReadBufferSize / audio.SampleSizeInBytes / 2)
+	HannWindow = window.Hann(int(config.Config.ReadBufferSize / audio.SampleSizeInBytes / 2))
 }
