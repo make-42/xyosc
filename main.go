@@ -112,7 +112,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				maxi = i + 1
 			}
 		}
-		offset := uint32((maxθ/(2*math.Pi) + 0.5) * (float64(numSamples) / float64(maxi)))
+		offset := uint32((maxθ / (2 * math.Pi)) * (float64(numSamples) / float64(maxi)))
 		for i := uint32(0); i < numSamples-1; i++ {
 			fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 			fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
