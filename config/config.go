@@ -76,6 +76,8 @@ var watcher *fsnotify.Watcher
 
 var SingleChannel bool = false
 
+var HannWindow []float64
+
 func Init() {
 	configPath := configdir.LocalConfig("ontake", "xyosc")
 	err := configdir.MakePath(configPath) // Ensure it exists.
@@ -101,8 +103,9 @@ func Init() {
 
 		decoder := yaml.NewDecoder(fh)
 		decoder.Decode(&Config)
-		SingleChannel = Config.DefaultToSingleChannel
+
 	}
+	SingleChannel = Config.DefaultToSingleChannel
 
 	// Get pywal accent color
 	watcher, err = fsnotify.NewWatcher()
