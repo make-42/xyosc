@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"log"
 	"math/rand/v2"
+	"sort"
 	"xyosc/audio"
 	"xyosc/config"
 	"xyosc/fastsqrt"
@@ -99,6 +100,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 
 		indices := peaks.Get(FFTBuffer, config.Config.PeakDetectSeparator)
+		sort.Ints(indices)
 		offset := uint32(indices[0])
 		for i := uint32(0); i < numSamples-1; i++ {
 			fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
