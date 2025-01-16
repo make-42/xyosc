@@ -108,7 +108,6 @@ github.com/leberKleber/go-mpris
 ## explicit
 github.com/mjibson/go-dsp/dsputils
 github.com/mjibson/go-dsp/fft
-github.com/mjibson/go-dsp/window
 # github.com/smallnest/ringbuffer v0.0.0-20241129171057-356c688ba81d
 ## explicit; go 1.19
 github.com/smallnest/ringbuffer

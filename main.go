@@ -15,7 +15,6 @@ import (
 	"xyosc/icons"
 	"xyosc/media"
 	"xyosc/particles"
-	"xyosc/signalprocessing"
 
 	"fmt"
 
@@ -27,7 +26,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"github.com/mjibson/go-dsp/fft"
-	"github.com/mjibson/go-dsp/window"
 )
 
 type Game struct {
@@ -101,7 +99,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 		}
-		window.Apply(FFTBuffer, signalprocessing.CachedWindowFunction)
 		X := fft.FFTReal(FFTBuffer)
 		r, θ := cmplx.Polar(X[1])
 		maxR := r
@@ -167,7 +164,6 @@ func main() {
 	audio.Init()
 	fonts.Init()
 	icons.Init()
-	signalprocessing.Init()
 	go audio.Start()
 	go media.Start()
 	ebiten.SetWindowIcon([]image.Image{icons.WindowIcon48, icons.WindowIcon32, icons.WindowIcon16})
