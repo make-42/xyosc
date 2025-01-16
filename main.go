@@ -98,17 +98,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 		}
 
-		separator := 1000
-		indices := peaks.Get(FFTBuffer, int(separator))
+		indices := peaks.Get(FFTBuffer, config.Config.PeakDetectSeparator)
 		offset := uint32(indices[0])
-		for i, newPoint := range nextDataPoints {
-			signal := detector.Next(newPoint)
-			switch signal {
-			case peakdetect.SignalPositive:
-				offset = uint32(i + lag)
-				break
-			}
-		}
 		for i := uint32(0); i < numSamples-1; i++ {
 			fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 			fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
