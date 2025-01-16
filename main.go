@@ -167,6 +167,7 @@ func main() {
 	audio.Init()
 	fonts.Init()
 	icons.Init()
+	signalprocessing.Init()
 	go audio.Start()
 	go media.Start()
 	ebiten.SetWindowIcon([]image.Image{icons.WindowIcon48, icons.WindowIcon32, icons.WindowIcon16})
