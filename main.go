@@ -5,8 +5,6 @@ import (
 	"image"
 	"image/color"
 	"log"
-	"math"
-	"math/cmplx"
 	"math/rand/v2"
 	"xyosc/audio"
 	"xyosc/config"
@@ -25,7 +23,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
-	"github.com/mjibson/go-dsp/fft"
+	"github.com/MicahParks/peakdetect"
 )
 
 type Game struct {
@@ -99,20 +97,23 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 		}
-		X := fft.FFTReal(FFTBuffer)
-		r, θ := cmplx.Polar(X[1])
-		maxR := r
-		maxθ := θ
-		maxi := uint32(1)
-		for i := uint32(0); i < numSamples-1; i++ {
-			r, θ = cmplx.Polar(X[i+1])
-			if r > maxR {
-				maxθ = θ
-				maxR = r
-				maxi = i + 1
+		const (
+			lag       = 200
+			threshold = 5
+			influence = 0
+		)
+		detector := peakdetect.NewPeakDetector()
+		detector.Initialize(influence, threshold, FFTBuffer[:lag])
+		nextDataPoints := FFTBuffer[lag:]
+		offset := uint32(0)
+		for i, newPoint := range nextDataPoints {
+			signal := detector.Next(newPoint)
+			switch signal {
+			case peakdetect.SignalPositive:
+				offset = uint32(i)
+				break
 			}
 		}
-		offset := uint32((maxθ / (2 * math.Pi)) * (float64(numSamples) / float64(maxi)))
 		for i := uint32(0); i < numSamples-1; i++ {
 			fAX := float32(FFTBuffer[(i-offset)%numSamples]) * config.Config.Gain * float32(scale)
 			fBX := float32(FFTBuffer[(i+1-offset)%numSamples]) * config.Config.Gain * float32(scale)

@@ -3,6 +3,7 @@ module xyosc
 go 1.23.2
 
 require (
+	github.com/MicahParks/peakdetect v0.1.2
 	github.com/chewxy/math32 v1.11.1
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gen2brain/malgo v0.11.23
@@ -10,7 +11,6 @@ require (
 	github.com/hajimehoshi/ebiten/v2 v2.8.6
 	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
 	github.com/leberKleber/go-mpris v1.1.0
-	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/smallnest/ringbuffer v0.0.0-20241129171057-356c688ba81d
 	github.com/ztrue/tracerr v0.4.0
 	gopkg.in/yaml.v2 v2.4.0
