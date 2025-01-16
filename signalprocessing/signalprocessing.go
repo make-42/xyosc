@@ -12,3 +12,7 @@ var HannWindow []float64
 func Init() {
 	HannWindow = window.Hann(int(config.Config.ReadBufferSize / audio.SampleSizeInBytes / 2))
 }
+
+func CachedWindowFunction(u int) []float64 {
+	return HannWindow
+}
