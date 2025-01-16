@@ -66,7 +66,7 @@ var DefaultConfig = ConfigS{
 	ParticleDrag:                     5.0,
 	DefaultToSingleChannel:           false,
 	PeakDetectSeparator:              100,
-	SingleChannelWindow:              1000,
+	SingleChannelWindow:              1200,
 }
 
 var Config ConfigS
