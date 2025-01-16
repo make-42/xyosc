@@ -10,6 +10,7 @@ require (
 	github.com/hajimehoshi/ebiten/v2 v2.8.6
 	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
 	github.com/leberKleber/go-mpris v1.1.0
+	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/smallnest/ringbuffer v0.0.0-20241129171057-356c688ba81d
 	github.com/ztrue/tracerr v0.4.0
 	gopkg.in/yaml.v2 v2.4.0

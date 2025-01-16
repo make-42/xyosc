@@ -5,6 +5,8 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"math"
+	"math/cmplx"
 	"math/rand/v2"
 	"xyosc/audio"
 	"xyosc/config"
@@ -22,6 +24,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+
+	"github.com/mjibson/go-dsp/fft"
 )
 
 type Game struct {
@@ -37,15 +41,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var AY float32
 	var BX float32
 	var BY float32
-	var FFTBuffer = make([]float32, config.Config.ReadBufferSize/audio.SampleSizeInBytes/2)
+	var numSamples = config.Config.ReadBufferSize / audio.SampleSizeInBytes / 2
+	var FFTBuffer = make([]float64, numSamples)
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		config.SingleChannel = !config.SingleChannel
 	}
-	if config.SingleChannel {
+	if !config.SingleChannel {
 		binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
 		binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 		S := float32(0)
-		for i := uint32(0); i < config.Config.ReadBufferSize/audio.SampleSizeInBytes/2; i++ {
+		for i := uint32(0); i < numSamples; i++ {
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BX)
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BY)
 			fAX := float32(AX) * config.Config.Gain * float32(scale)
@@ -89,15 +94,29 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			particles.Particles[i].VY += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.Y / norm / float32(ebiten.ActualTPS())
 		}
 	} else {
-		for i := uint32(0); i < config.Config.ReadBufferSize/audio.SampleSizeInBytes/2; i++ {
-			FFTBuffer[i] = AX
+		for i := uint32(0); i < numSamples; i++ {
+			FFTBuffer[i] = float64(AX)
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 		}
-		for i := uint32(0); i < config.Config.ReadBufferSize/audio.SampleSizeInBytes/2-1; i++ {
-			fAX := float32(FFTBuffer[i]) * config.Config.Gain * float32(scale)
-			fBX := float32(FFTBuffer[i+1]) * config.Config.Gain * float32(scale)
-			vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i)/float32(config.Config.ReadBufferSize/audio.SampleSizeInBytes/2), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i+1)/float32(config.Config.ReadBufferSize/audio.SampleSizeInBytes/2), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+		X := fft.FFTReal(FFTBuffer)
+		r, θ := cmplx.Polar(X[1])
+		maxR := r
+		maxθ := θ
+		maxi := 1
+		for i := uint32(0); i < numSamples-1; i++ {
+			r, θ = cmplx.Polar(X[i+1])
+			if r > maxR {
+				maxθ = θ
+				maxR = r
+				maxi = i + 1
+			}
+		}
+		offset := uint32((maxθ/(2*math.Pi) + 0.5) * (float64(numSamples) / float64(maxi)))
+		for i := uint32(0); i < numSamples-1; i++ {
+			fAX := float32(FFTBuffer[(i-offset)%numSamples]) * config.Config.Gain * float32(scale)
+			fBX := float32(FFTBuffer[(i+1-offset)%numSamples]) * config.Config.Gain * float32(scale)
+			vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i)/float32(numSamples), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i+1)/float32(numSamples), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
 		}
 	}
 
