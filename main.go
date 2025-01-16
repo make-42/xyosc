@@ -40,7 +40,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var AY float32
 	var BX float32
 	var BY float32
-	var numSamples = config.Config.ReadBufferSize / audio.SampleSizeInBytes / 2
+	var numSamples = config.Config.ReadBufferSize / audio.SampleSizeInBytes * 4
 	var FFTBuffer = make([]float64, numSamples)
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		config.SingleChannel = !config.SingleChannel
