@@ -23,7 +23,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
-	"github.com/MicahParks/peakdetect"
+	"github.com/goccmack/godsp/peaks"
 )
 
 type Game struct {
@@ -97,15 +97,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 		}
-		const (
-			lag       = 200
-			threshold = 5
-			influence = 0
-		)
-		detector := peakdetect.NewPeakDetector()
-		detector.Initialize(influence, threshold, FFTBuffer[:lag])
-		nextDataPoints := FFTBuffer[lag:]
-		offset := uint32(0)
+
+		separator := 1000
+		indices := peaks.Get(FFTBuffer, int(separator))
+		offset := uint32(indices[0])
 		for i, newPoint := range nextDataPoints {
 			signal := detector.Next(newPoint)
 			switch signal {
