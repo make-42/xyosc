@@ -53,6 +53,7 @@ github.com/godbus/dbus/v5
 ## explicit; go 1.22.0
 github.com/hajimehoshi/ebiten/v2
 github.com/hajimehoshi/ebiten/v2/ebitenutil
+github.com/hajimehoshi/ebiten/v2/inpututil
 github.com/hajimehoshi/ebiten/v2/internal/affine
 github.com/hajimehoshi/ebiten/v2/internal/atlas
 github.com/hajimehoshi/ebiten/v2/internal/buffered

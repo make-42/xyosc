@@ -72,6 +72,8 @@ var ThirdColorAdj color.RGBA
 
 var watcher *fsnotify.Watcher
 
+var SingleChannel bool = false
+
 func Init() {
 	configPath := configdir.LocalConfig("ontake", "xyosc")
 	err := configdir.MakePath(configPath) // Ensure it exists.

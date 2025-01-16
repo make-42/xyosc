@@ -19,6 +19,7 @@ import (
 	"github.com/chewxy/math32"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
@@ -36,51 +37,68 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var AY float32
 	var BX float32
 	var BY float32
-	binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
-	binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
-	S := float32(0)
-	for i := uint32(0); i < config.Config.ReadBufferSize/audio.SampleSizeInBytes/2; i++ {
-		binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BX)
-		binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BY)
-		fAX := float32(AX) * config.Config.Gain * float32(scale)
-		fAY := -float32(AY) * config.Config.Gain * float32(scale)
-		fBX := float32(BX) * config.Config.Gain * float32(scale)
-		fBY := -float32(BY) * config.Config.Gain * float32(scale)
-		if config.Config.LineInvSqrtOpacityControl {
-			inv := fastsqrt.FastInvSqrt32((fBX-fAX)*(fBX-fAX) + (fBY-fBY)*(fBY-fBY))
-			colorAdjusted := color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, uint8(float32(config.Config.LineOpacity) * inv)}
-			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness, colorAdjusted, true)
-		} else {
-			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness, config.ThirdColorAdj, true)
-		}
-		S += float32(AX)*float32(AX) + float32(AY)*float32(AY)
-		if config.Config.Particles {
-			if rand.IntN(config.Config.ParticleGenPerFrameEveryXSamples) == 0 {
-				if len(particles.Particles) >= config.Config.ParticleMaxCount {
-					particles.Particles = particles.Particles[1:]
-				}
-				particles.Particles = append(particles.Particles, particles.Particle{
-					X:    float32(AX) * config.Config.Gain,
-					Y:    -float32(AY) * config.Config.Gain,
-					VX:   0,
-					VY:   0,
-					Size: rand.Float32()*(config.Config.ParticleMaxSize-config.Config.ParticleMinSize) + config.Config.ParticleMinSize,
-				})
-			}
-		}
-
-		AX = BX
-		AY = BY
+	var FFTBuffer = make([]float32, config.Config.ReadBufferSize/audio.SampleSizeInBytes/2)
+	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+		config.SingleChannel = !config.SingleChannel
 	}
+	if config.SingleChannel {
+		binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
+		binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
+		S := float32(0)
+		for i := uint32(0); i < config.Config.ReadBufferSize/audio.SampleSizeInBytes/2; i++ {
+			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BX)
+			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BY)
+			fAX := float32(AX) * config.Config.Gain * float32(scale)
+			fAY := -float32(AY) * config.Config.Gain * float32(scale)
+			fBX := float32(BX) * config.Config.Gain * float32(scale)
+			fBY := -float32(BY) * config.Config.Gain * float32(scale)
+			if config.Config.LineInvSqrtOpacityControl {
+				inv := fastsqrt.FastInvSqrt32((fBX-fAX)*(fBX-fAX) + (fBY-fBY)*(fBY-fBY))
+				colorAdjusted := color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, uint8(float32(config.Config.LineOpacity) * inv)}
+				vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness, colorAdjusted, true)
+			} else {
+				vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness, config.ThirdColorAdj, true)
+			}
+			S += float32(AX)*float32(AX) + float32(AY)*float32(AY)
+			if config.Config.Particles {
+				if rand.IntN(config.Config.ParticleGenPerFrameEveryXSamples) == 0 {
+					if len(particles.Particles) >= config.Config.ParticleMaxCount {
+						particles.Particles = particles.Particles[1:]
+					}
+					particles.Particles = append(particles.Particles, particles.Particle{
+						X:    float32(AX) * config.Config.Gain,
+						Y:    -float32(AY) * config.Config.Gain,
+						VX:   0,
+						VY:   0,
+						Size: rand.Float32()*(config.Config.ParticleMaxSize-config.Config.ParticleMinSize) + config.Config.ParticleMinSize,
+					})
+				}
+			}
 
-	for i, particle := range particles.Particles {
-		vector.DrawFilledCircle(screen, float32(config.Config.WindowWidth/2)+particle.X*float32(scale), float32(config.Config.WindowHeight/2)+particle.Y*float32(scale), particle.Size, config.ThirdColor, true)
-		norm := math32.Sqrt(particles.Particles[i].X*particles.Particles[i].X + particles.Particles[i].Y*particles.Particles[i].Y)
-		particles.Particles[i].X += particle.VX / float32(ebiten.ActualTPS())
-		particles.Particles[i].Y += particle.VY / float32(ebiten.ActualTPS())
-		speed := math32.Sqrt(particle.VX*particle.VX + particle.VY*particle.VY)
-		particles.Particles[i].VX += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.X / norm / float32(ebiten.ActualTPS())
-		particles.Particles[i].VY += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.Y / norm / float32(ebiten.ActualTPS())
+			AX = BX
+			AY = BY
+		}
+
+		for i, particle := range particles.Particles {
+			vector.DrawFilledCircle(screen, float32(config.Config.WindowWidth/2)+particle.X*float32(scale), float32(config.Config.WindowHeight/2)+particle.Y*float32(scale), particle.Size, config.ThirdColor, true)
+			norm := math32.Sqrt(particles.Particles[i].X*particles.Particles[i].X + particles.Particles[i].Y*particles.Particles[i].Y)
+			particles.Particles[i].X += particle.VX / float32(ebiten.ActualTPS())
+			particles.Particles[i].Y += particle.VY / float32(ebiten.ActualTPS())
+			speed := math32.Sqrt(particle.VX*particle.VX + particle.VY*particle.VY)
+			particles.Particles[i].VX += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.X / norm / float32(ebiten.ActualTPS())
+			particles.Particles[i].VY += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.Y / norm / float32(ebiten.ActualTPS())
+		}
+	} else {
+		for i := uint32(0); i < config.Config.ReadBufferSize/audio.SampleSizeInBytes/2; i++ {
+			FFTBuffer[i] = AX
+			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
+			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
+		}
+		for i := uint32(0); i < config.Config.ReadBufferSize/audio.SampleSizeInBytes/2-1; i++ {
+			fAX := float32(FFTBuffer[i]) * config.Config.Gain * float32(scale)
+			fBX := float32(FFTBuffer[i+1]) * config.Config.Gain * float32(scale)
+			vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i)/float32(config.Config.ReadBufferSize/audio.SampleSizeInBytes/2), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i+1)/float32(config.Config.ReadBufferSize/audio.SampleSizeInBytes/2), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+		}
 	}
 
 	//audio.SampleRingBuffer.Reset()
@@ -115,6 +133,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			Size:   32,
 		}, op)
 	}
+
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
