@@ -109,8 +109,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.PeriodCropCount)])
 			samplesPerCrop := lastPeriodOffset - offset
 			for i := uint32(0); i < min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount)-1; i++ {
-				fAX := float32(FFTBuffer[(i+offset)%samplesPerCrop]) * config.Config.Gain * float32(scale)
-				fBX := float32(FFTBuffer[(i+1+offset)%samplesPerCrop]) * config.Config.Gain * float32(scale)
+				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
+				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
 			}
 		} else {
