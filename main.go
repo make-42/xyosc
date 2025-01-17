@@ -101,11 +101,24 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		indices := peaks.Get(FFTBuffer, config.Config.PeakDetectSeparator)
 		sort.Ints(indices)
-		offset := uint32(indices[0])
-		for i := uint32(0); i < numSamples-1; i++ {
-			fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
-			fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
-			vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow+1)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+		offset := uint32(0)
+		if len(indices) != 0 {
+			offset = uint32(indices[0])
+		}
+		if config.Config.PeriodCrop && len(indices) > 1 {
+			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.PeriodCropCount)])
+			samplesPerCrop := lastPeriodOffset - offset
+			for i := uint32(0); i < min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount)-1; i++ {
+				fAX := float32(FFTBuffer[(i+offset)%samplesPerCrop]) * config.Config.Gain * float32(scale)
+				fBX := float32(FFTBuffer[(i+1+offset)%samplesPerCrop]) * config.Config.Gain * float32(scale)
+				vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+			}
+		} else {
+			for i := uint32(0); i < numSamples-1; i++ {
+				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
+				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
+				vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow+1)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+			}
 		}
 	}
 

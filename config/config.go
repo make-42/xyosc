@@ -39,6 +39,9 @@ type ConfigS struct {
 	DefaultToSingleChannel           bool
 	PeakDetectSeparator              int
 	SingleChannelWindow              uint32
+	PeriodCrop                       bool
+	PeriodCropCount                  int
+	PeriodCropLoopOverCount          uint32
 }
 
 var DefaultConfig = ConfigS{
@@ -67,6 +70,9 @@ var DefaultConfig = ConfigS{
 	DefaultToSingleChannel:           false,
 	PeakDetectSeparator:              100,
 	SingleChannelWindow:              1200,
+	PeriodCrop:                       true,
+	PeriodCropCount:                  2,
+	PeriodCropLoopOverCount:          1,
 }
 
 var Config ConfigS
