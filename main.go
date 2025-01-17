@@ -94,7 +94,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	} else {
 		for i := uint32(0); i < numSamples; i++ {
-			FFTBuffer[i] = float64(AX)
+			FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = float64(AX)
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 		}

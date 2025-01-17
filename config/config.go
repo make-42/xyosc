@@ -42,6 +42,7 @@ type ConfigS struct {
 	PeriodCrop                       bool
 	PeriodCropCount                  int
 	PeriodCropLoopOverCount          uint32
+	FFTBufferOffset                  uint32
 }
 
 var DefaultConfig = ConfigS{
@@ -73,6 +74,7 @@ var DefaultConfig = ConfigS{
 	PeriodCrop:                       true,
 	PeriodCropCount:                  2,
 	PeriodCropLoopOverCount:          1,
+	FFTBufferOffset:                  3200,
 }
 
 var Config ConfigS
