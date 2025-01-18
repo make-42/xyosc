@@ -44,18 +44,9 @@ type ConfigS struct {
 	PeriodCropLoopOverCount          uint32
 	FFTBufferOffset                  uint32
 	ForceColors                      bool
-	AccentColorR                     uint8
-	AccentColorG                     uint8
-	AccentColorB                     uint8
-	FirstColorR                      uint8
-	FirstColorG                      uint8
-	FirstColorB                      uint8
-	ThirdColorR                      uint8
-	ThirdColorG                      uint8
-	ThirdColorB                      uint8
-	ThirdColorAdjR                   uint8
-	ThirdColorAdjG                   uint8
-	ThirdColorAdjB                   uint8
+	AccentColor                      string
+	FirstColor                       string
+	ThirdColor                       string
 }
 
 var DefaultConfig = ConfigS{
@@ -89,15 +80,9 @@ var DefaultConfig = ConfigS{
 	PeriodCropLoopOverCount:          1,
 	FFTBufferOffset:                  3200,
 	ForceColors:                      false,
-	AccentColorR:                     255,
-	AccentColorG:                     0,
-	AccentColorB:                     0,
-	FirstColorR:                      255,
-	FirstColorG:                      120,
-	FirstColorB:                      120,
-	ThirdColorR:                      255,
-	ThirdColorG:                      0,
-	ThirdColorB:                      0,
+	AccentColor:                      "FF0000",
+	FirstColor:                       "FF0000",
+	ThirdColor:                       "FF0000",
 }
 
 var Config ConfigS
@@ -178,10 +163,17 @@ func updatePywalColors() {
 	walPath := configdir.LocalCache("wal")
 	walFile := filepath.Join(walPath, "colors")
 	if _, err := os.Stat(walFile); os.IsNotExist(err) || Config.ForceColors {
-		AccentColor = color.RGBA{Config.AccentColorR, Config.AccentColorG, Config.AccentColorB, Config.LineOpacity}
-		FirstColor = color.RGBA{Config.FirstColorR, Config.FirstColorG, Config.FirstColorB, Config.LineOpacity}
-		ThirdColor = color.RGBA{Config.ThirdColorR, Config.ThirdColorG, Config.ThirdColorB, Config.LineOpacity}
-		ThirdColorAdj = color.RGBA{uint8(float64(Config.ThirdColorR) * Config.LineBrightness), uint8(float64(Config.ThirdColorG) * Config.LineBrightness), uint8(float64(Config.ThirdColorB) * Config.LineBrightness), Config.LineOpacity}
+		AccentColorParsed, err := ParseHexColor(Config.AccentColor)
+		utils.CheckError(err)
+		FirstColorParsed, err := ParseHexColor(Config.FirstColor)
+		utils.CheckError(err)
+		ThirdColorParsed, err := ParseHexColor(Config.ThirdColor)
+		utils.CheckError(err)
+
+		AccentColor = color.RGBA{AccentColorParsed.R, AccentColorParsed.G, AccentColorParsed.B, Config.LineOpacity}
+		FirstColor = color.RGBA{FirstColorParsed.R, FirstColorParsed.G, FirstColorParsed.B, Config.LineOpacity}
+		ThirdColor = color.RGBA{ThirdColorParsed.R, ThirdColorParsed.G, ThirdColorParsed.B, Config.LineOpacity}
+		ThirdColorAdj = color.RGBA{uint8(float64(ThirdColorParsed.R) * Config.LineBrightness), uint8(float64(ThirdColorParsed.G) * Config.LineBrightness), uint8(float64(ThirdColorParsed.B) * Config.LineBrightness), Config.LineOpacity}
 	} else {
 		fh, err := os.Open(walFile)
 		utils.CheckError(err)
