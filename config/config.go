@@ -177,7 +177,7 @@ func Init() {
 func updatePywalColors() {
 	walPath := configdir.LocalCache("wal")
 	walFile := filepath.Join(walPath, "colors")
-	if _, err := os.Stat(walFile); os.IsNotExist(err) {
+	if _, err := os.Stat(walFile); os.IsNotExist(err) || Config.ForceColors {
 		AccentColor = color.RGBA{Config.AccentColorR, Config.AccentColorG, Config.AccentColorB, Config.LineOpacity}
 		FirstColor = color.RGBA{Config.FirstColorR, Config.FirstColorG, Config.FirstColorB, Config.LineOpacity}
 		ThirdColor = color.RGBA{Config.ThirdColorR, Config.ThirdColorG, Config.ThirdColorB, Config.LineOpacity}
