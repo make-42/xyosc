@@ -31,20 +31,24 @@ import (
 type Game struct {
 }
 
+var pressedKeys []ebiten.Key
+
 func (g *Game) Update() error {
+	pressedKeys = nil
+	pressedKeys = inpututil.AppendPressedKeys(pressedKeys)
 	return nil
 }
 
 var prevFrame *ebiten.Image
 var firstFrame = true
-var ColorScale ebiten.ColorScale
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	if firstFrame {
-		prevFrame = screen
-		firstFrame = false
-	} else {
-		screen.DrawImage(prevFrame, &ebiten.DrawImageOptions{ColorScale: ColorScale})
+	if config.Config.CopyPreviousFrame {
+		if !firstFrame {
+			op := &ebiten.DrawImageOptions{}
+			op.ColorScale.ScaleAlpha(config.Config.CopyPreviousFrameAlpha)
+			screen.DrawImage(prevFrame, op)
+		}
 	}
 	scale := min(config.Config.WindowWidth, config.Config.WindowHeight) / 2
 	var AX float32
@@ -53,8 +57,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var BY float32
 	var numSamples = config.Config.ReadBufferSize / audio.SampleSizeInBytes * 4
 	var FFTBuffer = make([]float64, numSamples)
-	var pressedKeys []ebiten.Key
-	inpututil.AppendPressedKeys(pressedKeys)
+
 	if slices.Contains(pressedKeys, ebiten.KeyF) {
 		config.SingleChannel = !config.SingleChannel
 	}
@@ -167,7 +170,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			Size:   32,
 		}, op)
 	}
-	prevFrame = screen
+
+	if config.Config.CopyPreviousFrame {
+		prevFrame.Clear()
+		prevFrame.DrawImage(screen, nil)
+	}
+	if firstFrame {
+		firstFrame = false
+		// f, _ := os.Create("image.png")
+		// png.Encode(f, prevFrame)
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -190,7 +202,7 @@ func main() {
 	screenW, screenH := ebiten.Monitor().Size()
 	ebiten.SetWindowPosition(screenW/2-int(config.Config.WindowWidth)/2, screenH/2-int(config.Config.WindowHeight)/2)
 	ebiten.SetVsyncEnabled(true)
-	ColorScale.SetA(0.8)
+	prevFrame = ebiten.NewImage(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	if err := ebiten.RunGameWithOptions(&Game{}, &ebiten.RunGameOptions{ScreenTransparent: true}); err != nil {
 		log.Fatal(err)
 	}

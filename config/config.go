@@ -47,6 +47,8 @@ type ConfigS struct {
 	AccentColor                      string
 	FirstColor                       string
 	ThirdColor                       string
+	CopyPreviousFrame                bool
+	CopyPreviousFrameAlpha           float32
 }
 
 var DefaultConfig = ConfigS{
@@ -83,6 +85,8 @@ var DefaultConfig = ConfigS{
 	AccentColor:                      "FF0000",
 	FirstColor:                       "FF0000",
 	ThirdColor:                       "FF0000",
+	CopyPreviousFrame:                true,
+	CopyPreviousFrameAlpha:           0.4,
 }
 
 var Config ConfigS
