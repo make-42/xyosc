@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"log"
 	"math/rand/v2"
+	"slices"
 	"sort"
 	"xyosc/audio"
 	"xyosc/config"
@@ -34,7 +35,17 @@ func (g *Game) Update() error {
 	return nil
 }
 
+var prevFrame *ebiten.Image
+var firstFrame = true
+var ColorScale ebiten.ColorScale
+
 func (g *Game) Draw(screen *ebiten.Image) {
+	if firstFrame {
+		prevFrame = screen
+		firstFrame = false
+	} else {
+		screen.DrawImage(prevFrame, &ebiten.DrawImageOptions{ColorScale: ColorScale})
+	}
 	scale := min(config.Config.WindowWidth, config.Config.WindowHeight) / 2
 	var AX float32
 	var AY float32
@@ -42,7 +53,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var BY float32
 	var numSamples = config.Config.ReadBufferSize / audio.SampleSizeInBytes * 4
 	var FFTBuffer = make([]float64, numSamples)
-	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+	var pressedKeys []ebiten.Key
+	inpututil.AppendPressedKeys(pressedKeys)
+	if slices.Contains(pressedKeys, ebiten.KeyF) {
 		config.SingleChannel = !config.SingleChannel
 	}
 	if !config.SingleChannel {
@@ -154,7 +167,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			Size:   32,
 		}, op)
 	}
-
+	prevFrame = screen
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -177,6 +190,7 @@ func main() {
 	screenW, screenH := ebiten.Monitor().Size()
 	ebiten.SetWindowPosition(screenW/2-int(config.Config.WindowWidth)/2, screenH/2-int(config.Config.WindowHeight)/2)
 	ebiten.SetVsyncEnabled(true)
+	ColorScale.SetA(0.8)
 	if err := ebiten.RunGameWithOptions(&Game{}, &ebiten.RunGameOptions{ScreenTransparent: true}); err != nil {
 		log.Fatal(err)
 	}
