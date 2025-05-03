@@ -226,6 +226,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}, op)
 	}
 
+	if FiltersApplied && config.Config.ShowFilterInfo {
+		op := &text.DrawOptions{}
+		loFreq := LowCutOffFrac * float64(config.Config.SampleRate)
+		hiFreq := HighCutOffFrac * float64(config.Config.SampleRate)
+
+		op = &text.DrawOptions{}
+		op.GeoM.Translate(16, float64(config.Config.WindowHeight-16))
+		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
+
+		text.Draw(screen, fmt.Sprintf("Lo: %0.2f Hz; Hi: %0.2f Hz", loFreq, hiFreq), &text.GoTextFace{
+			Source: fonts.Font,
+			Size:   16,
+		}, op)
+	}
+
 	if config.Config.CopyPreviousFrame {
 		prevFrame.Clear()
 		prevFrame.DrawImage(screen, nil)

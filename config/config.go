@@ -15,6 +15,7 @@ import (
 
 type ConfigS struct {
 	FPSCounter                       bool
+	ShowFilterInfo                   bool
 	ShowMPRIS                        bool
 	MPRISTextOpacity                 uint8
 	TargetFPS                        int32
@@ -53,6 +54,7 @@ type ConfigS struct {
 
 var DefaultConfig = ConfigS{
 	FPSCounter:                       false,
+	ShowFilterInfo:                   true,
 	ShowMPRIS:                        true,
 	MPRISTextOpacity:                 255,
 	TargetFPS:                        240,
