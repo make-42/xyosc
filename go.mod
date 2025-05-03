@@ -3,6 +3,7 @@ module xyosc
 go 1.23.2
 
 require (
+	github.com/argusdusty/gofft v1.2.1
 	github.com/chewxy/math32 v1.11.1
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gen2brain/malgo v0.11.23

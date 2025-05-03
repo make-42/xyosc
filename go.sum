@@ -1,4 +1,6 @@
 github.com/ajstarks/svgo v0.0.0-20180226025133-644b8db467af/go.mod h1:K08gAheRH3/J6wwsYMMT4xOr94bZjxIelGM0+d/wbFw=
+github.com/argusdusty/gofft v1.2.1 h1:Ir33IyKzMPvgK70PPWtmHpzjbTsUkL51EunWn4mrksA=
+github.com/argusdusty/gofft v1.2.1/go.mod h1:OABUQ4XoJ49ucI4ZPv0i6a0x3KKM4yDSK5rsMwFL43Q=
 github.com/chewxy/math32 v1.11.1 h1:b7PGHlp8KjylDoU8RrcEsRuGZhJuz8haxnKfuMMRqy8=
 github.com/chewxy/math32 v1.11.1/go.mod h1:dOB2rcuFrCn6UHrze36WSLVPKtzPMRAQvBvUwkSsLqs=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
@@ -40,6 +42,8 @@ github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f h1:dKccXx7xA56UNq
 github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f/go.mod h1:4rEELDSfUAlBSyUjPG0JnaNGjf13JySHFeRdD/3dLP0=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
+github.com/ktye/fft v0.0.0-20160109133121-5beb24bb6a43 h1:P/FC0vnk8mHtU+PrgHwsexh/FGJUpHSNZOMp2II7XZo=
+github.com/ktye/fft v0.0.0-20160109133121-5beb24bb6a43/go.mod h1:NOC+5BizuazWsAS/Ge7DXbXTrYzmmDXGqypnTaeNGcc=
 github.com/leberKleber/go-mpris v1.1.0 h1:bHAnmUjVoxAs4uMHH9lfQ8bOm284UWtI7JhLvkiF7O8=
 github.com/leberKleber/go-mpris v1.1.0/go.mod h1:OwKywFZwFGC0p/8xBUTUXMIFZy0Rq/7C6EayfeASTA0=
 github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12 h1:dd7vnTDfjtwCETZDrRe+GPYNLA1jBtbZeyfyE8eZCyk=
@@ -84,3 +88,6 @@ gopkg.in/yaml.v2 v2.4.0/go.mod h1:RDklbk79AGWmwhnvt/jBztapEOGDOx6ZbXqjP6csGnQ=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 rsc.io/pdf v0.1.1/go.mod h1:n8OzWcQ6Sp37PL01nO98y4iUCRdTGarVfzxY20ICaU4=
+scientificgo.org/fft v0.0.0-20181116155530-840c07972bf0 h1:4Adzf5Y4GnJsfGWgnGWyAKJPrTFdHAd1Y53q/3hgl8M=
+scientificgo.org/fft v0.0.0-20181116155530-840c07972bf0/go.mod h1:kjCWUUjwe8nWCDf1noBWJt/zni0qg84jDUBfJhH/ftA=
+scientificgo.org/testutil v0.0.0-20181122181445-a2006c033c77/go.mod h1:Go6R4b+9YkFocMo3H3vNQ7tjbrX9Rc12wal7NZjvPXg=

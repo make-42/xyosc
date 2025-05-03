@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"flag"
 	"image"
 	"image/color"
 	"log"
@@ -11,6 +12,7 @@ import (
 	"xyosc/audio"
 	"xyosc/config"
 	"xyosc/fastsqrt"
+	"xyosc/filter"
 	"xyosc/fonts"
 	"xyosc/icons"
 	"xyosc/media"
@@ -41,6 +43,16 @@ func (g *Game) Update() error {
 
 var prevFrame *ebiten.Image
 var firstFrame = true
+var FFTBuffer []float64
+var ComplexFFTBuffer []complex128
+var FiltersApplied = false
+var LowCutOffFrac = 0.0
+var HighCutOffFrac = 1.0
+var UseRightChannel *bool
+var MixChannels *bool
+
+var XYComplexFFTBufferL []complex128
+var XYComplexFFTBufferR []complex128
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	if config.Config.CopyPreviousFrame {
@@ -56,18 +68,35 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var BX float32
 	var BY float32
 	var numSamples = config.Config.ReadBufferSize / audio.SampleSizeInBytes * 4
-	var FFTBuffer = make([]float64, numSamples)
 
 	if slices.Contains(pressedKeys, ebiten.KeyF) {
 		config.SingleChannel = !config.SingleChannel
 	}
 	if !config.SingleChannel {
-		binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
-		binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
+		if FiltersApplied {
+			for i := uint32(0); i < numSamples; i++ {
+				XYComplexFFTBufferL[i] = complex(float64(AX), 0.0)
+				XYComplexFFTBufferR[i] = complex(float64(AY), 0.0)
+				binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
+				binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
+			}
+			filter.FilterBufferInPlace(&XYComplexFFTBufferL, LowCutOffFrac, HighCutOffFrac)
+			filter.FilterBufferInPlace(&XYComplexFFTBufferR, LowCutOffFrac, HighCutOffFrac)
+			AX = float32(real(XYComplexFFTBufferL[len(XYComplexFFTBufferL)-1]))
+			AY = float32(real(XYComplexFFTBufferR[len(XYComplexFFTBufferR)-1]))
+		} else {
+			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
+			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
+		}
 		S := float32(0)
 		for i := uint32(0); i < numSamples; i++ {
-			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BX)
-			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BY)
+			if FiltersApplied {
+				BX = float32(real(XYComplexFFTBufferL[i]))
+				BY = float32(real(XYComplexFFTBufferR[i]))
+			} else {
+				binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BX)
+				binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BY)
+			}
 			fAX := float32(AX) * config.Config.Gain * float32(scale)
 			fAY := -float32(AY) * config.Config.Gain * float32(scale)
 			fBX := float32(BX) * config.Config.Gain * float32(scale)
@@ -110,9 +139,35 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	} else {
 		for i := uint32(0); i < numSamples; i++ {
-			FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = float64(AX)
+			if FiltersApplied {
+				if *MixChannels {
+					ComplexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
+				} else {
+					if *UseRightChannel {
+						ComplexFFTBuffer[i] = complex(float64(AY), 0.0)
+					} else {
+						ComplexFFTBuffer[i] = complex(float64(AX), 0.0)
+					}
+				}
+			} else {
+				if *MixChannels {
+					FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = (float64(AY) + float64(AX)) / 2
+				} else {
+					if *UseRightChannel {
+						FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = float64(AY)
+					} else {
+						FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = float64(AX)
+					}
+				}
+			}
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
+		}
+		if FiltersApplied {
+			filter.FilterBufferInPlace(&ComplexFFTBuffer, LowCutOffFrac, HighCutOffFrac)
+			for i := uint32(0); i < numSamples; i++ {
+				FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = real(ComplexFFTBuffer[i])
+			}
 		}
 
 		indices := peaks.Get(FFTBuffer, config.Config.PeakDetectSeparator)
@@ -186,9 +241,40 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return int(config.Config.WindowWidth), int(config.Config.WindowHeight)
 }
 
+func Init() {
+	numSamples := config.Config.ReadBufferSize / audio.SampleSizeInBytes * 4
+	FFTBuffer = make([]float64, numSamples)
+	lowCutOff := flag.Float64("lo", 0.0, "low frequency cutoff fraction (discernable details are around 0.001 increments for a 4096 buffer size and 192kHz sample rate)")
+	highCutOff := flag.Float64("hi", 1.0, "high frequency cutoff fraction (discernable details are around 0.001 increments for a 4096 buffer size and 192kHz sample rate)")
+	UseRightChannel = flag.Bool("right", false, "Use the right channel instead of the left for the single axis oscilloscope")
+	MixChannels = flag.Bool("mix", false, "Mix channels instead of just using a single channel for the single axis oscilloscope")
+
+	overrideWidth := flag.Int("width", int(config.Config.WindowWidth), "override window width")
+	overrideHeight := flag.Int("height", int(config.Config.WindowHeight), "override window height")
+
+	flag.Parse()
+	if *lowCutOff != 0.0 {
+		FiltersApplied = true
+		LowCutOffFrac = *lowCutOff
+	}
+	if *highCutOff != 1.0 {
+		FiltersApplied = true
+		HighCutOffFrac = *highCutOff
+	}
+	if FiltersApplied {
+		ComplexFFTBuffer = make([]complex128, numSamples)
+		XYComplexFFTBufferL = make([]complex128, numSamples)
+		XYComplexFFTBufferR = make([]complex128, numSamples)
+	}
+	config.Config.WindowWidth = int32(*overrideWidth)
+	config.Config.WindowHeight = int32(*overrideHeight)
+
+}
+
 func main() {
 	config.Init()
 	audio.Init()
+	Init()
 	fonts.Init()
 	icons.Init()
 	go audio.Start()
