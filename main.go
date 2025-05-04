@@ -54,6 +54,8 @@ var MixChannels *bool
 var XYComplexFFTBufferL []complex128
 var XYComplexFFTBufferR []complex128
 
+var StillSamePressFromToggleKey bool
+
 func (g *Game) Draw(screen *ebiten.Image) {
 	if config.Config.CopyPreviousFrame {
 		if !firstFrame {
@@ -70,7 +72,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var numSamples = config.Config.ReadBufferSize / audio.SampleSizeInBytes * 4
 
 	if slices.Contains(pressedKeys, ebiten.KeyF) {
-		config.SingleChannel = !config.SingleChannel
+		if !StillSamePressFromToggleKey {
+			StillSamePressFromToggleKey = true
+			config.SingleChannel = !config.SingleChannel
+		}
+	} else {
+		StillSamePressFromToggleKey = false
 	}
 	if !config.SingleChannel {
 		if FiltersApplied {
