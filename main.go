@@ -44,12 +44,14 @@ func (g *Game) Update() error {
 var prevFrame *ebiten.Image
 var firstFrame = true
 var FFTBuffer []float64
-var ComplexFFTBuffer []complex128
-var FiltersApplied = false
-var LowCutOffFrac = 0.0
-var HighCutOffFrac = 1.0
-var UseRightChannel *bool
-var MixChannels *bool
+var complexFFTBuffer []complex128
+var filtersApplied = false
+var lowCutOffFrac = 0.0
+var highCutOffFrac = 1.0
+var useRightChannel *bool
+var mixChannels *bool
+var overrideX *int
+var overrideY *int
 
 var XYComplexFFTBufferL []complex128
 var XYComplexFFTBufferR []complex128
@@ -80,15 +82,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		StillSamePressFromToggleKey = false
 	}
 	if !config.SingleChannel {
-		if FiltersApplied {
+		if filtersApplied {
 			for i := uint32(0); i < numSamples; i++ {
 				XYComplexFFTBufferL[i] = complex(float64(AX), 0.0)
 				XYComplexFFTBufferR[i] = complex(float64(AY), 0.0)
 				binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
 				binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 			}
-			filter.FilterBufferInPlace(&XYComplexFFTBufferL, LowCutOffFrac, HighCutOffFrac)
-			filter.FilterBufferInPlace(&XYComplexFFTBufferR, LowCutOffFrac, HighCutOffFrac)
+			filter.FilterBufferInPlace(&XYComplexFFTBufferL, lowCutOffFrac, highCutOffFrac)
+			filter.FilterBufferInPlace(&XYComplexFFTBufferR, lowCutOffFrac, highCutOffFrac)
 			AX = float32(real(XYComplexFFTBufferL[len(XYComplexFFTBufferL)-1]))
 			AY = float32(real(XYComplexFFTBufferR[len(XYComplexFFTBufferR)-1]))
 		} else {
@@ -97,7 +99,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 		S := float32(0)
 		for i := uint32(0); i < numSamples; i++ {
-			if FiltersApplied {
+			if filtersApplied {
 				BX = float32(real(XYComplexFFTBufferL[i]))
 				BY = float32(real(XYComplexFFTBufferR[i]))
 			} else {
@@ -146,21 +148,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	} else {
 		for i := uint32(0); i < numSamples; i++ {
-			if FiltersApplied {
-				if *MixChannels {
-					ComplexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
+			if filtersApplied {
+				if *mixChannels {
+					complexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
 				} else {
-					if *UseRightChannel {
-						ComplexFFTBuffer[i] = complex(float64(AY), 0.0)
+					if *useRightChannel {
+						complexFFTBuffer[i] = complex(float64(AY), 0.0)
 					} else {
-						ComplexFFTBuffer[i] = complex(float64(AX), 0.0)
+						complexFFTBuffer[i] = complex(float64(AX), 0.0)
 					}
 				}
 			} else {
-				if *MixChannels {
+				if *mixChannels {
 					FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = (float64(AY) + float64(AX)) / 2
 				} else {
-					if *UseRightChannel {
+					if *useRightChannel {
 						FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = float64(AY)
 					} else {
 						FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = float64(AX)
@@ -170,10 +172,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
 			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 		}
-		if FiltersApplied {
-			filter.FilterBufferInPlace(&ComplexFFTBuffer, LowCutOffFrac, HighCutOffFrac)
+		if filtersApplied {
+			filter.FilterBufferInPlace(&complexFFTBuffer, lowCutOffFrac, highCutOffFrac)
 			for i := uint32(0); i < numSamples; i++ {
-				FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = real(ComplexFFTBuffer[i])
+				FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = real(complexFFTBuffer[i])
 			}
 		}
 
@@ -233,10 +235,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}, op)
 	}
 
-	if FiltersApplied && config.Config.ShowFilterInfo {
+	if filtersApplied && config.Config.ShowFilterInfo {
 		op := &text.DrawOptions{}
-		loFreq := LowCutOffFrac * float64(config.Config.SampleRate)
-		hiFreq := HighCutOffFrac * float64(config.Config.SampleRate)
+		loFreq := lowCutOffFrac * float64(config.Config.SampleRate)
+		hiFreq := highCutOffFrac * float64(config.Config.SampleRate)
 
 		op = &text.DrawOptions{}
 		op.GeoM.Translate(16, float64(config.Config.WindowHeight-16))
@@ -268,23 +270,25 @@ func Init() {
 	FFTBuffer = make([]float64, numSamples)
 	lowCutOff := flag.Float64("lo", 0.0, "low frequency cutoff fraction (discernable details are around 0.001 increments for a 4096 buffer size and 192kHz sample rate)")
 	highCutOff := flag.Float64("hi", 1.0, "high frequency cutoff fraction (discernable details are around 0.001 increments for a 4096 buffer size and 192kHz sample rate)")
-	UseRightChannel = flag.Bool("right", false, "Use the right channel instead of the left for the single axis oscilloscope")
-	MixChannels = flag.Bool("mix", false, "Mix channels instead of just using a single channel for the single axis oscilloscope")
+	useRightChannel = flag.Bool("right", false, "Use the right channel instead of the left for the single axis oscilloscope")
+	mixChannels = flag.Bool("mix", false, "Mix channels instead of just using a single channel for the single axis oscilloscope")
 
 	overrideWidth := flag.Int("width", int(config.Config.WindowWidth), "override window width")
 	overrideHeight := flag.Int("height", int(config.Config.WindowHeight), "override window height")
 
+	overrideX = flag.Int("x", -1, "overide starting x coordinate of the center of the window")
+	overrideY = flag.Int("y", -1, "overide starting x coordinate of the center of the window")
 	flag.Parse()
 	if *lowCutOff != 0.0 {
-		FiltersApplied = true
-		LowCutOffFrac = *lowCutOff
+		filtersApplied = true
+		lowCutOffFrac = *lowCutOff
 	}
 	if *highCutOff != 1.0 {
-		FiltersApplied = true
-		HighCutOffFrac = *highCutOff
+		filtersApplied = true
+		highCutOffFrac = *highCutOff
 	}
-	if FiltersApplied {
-		ComplexFFTBuffer = make([]complex128, numSamples)
+	if filtersApplied {
+		complexFFTBuffer = make([]complex128, numSamples)
 		XYComplexFFTBufferL = make([]complex128, numSamples)
 		XYComplexFFTBufferR = make([]complex128, numSamples)
 	}
@@ -308,7 +312,13 @@ func main() {
 	ebiten.SetTPS(int(config.Config.TargetFPS))
 	ebiten.SetWindowDecorated(false)
 	screenW, screenH := ebiten.Monitor().Size()
-	ebiten.SetWindowPosition(screenW/2-int(config.Config.WindowWidth)/2, screenH/2-int(config.Config.WindowHeight)/2)
+	if *overrideX == -1 {
+		*overrideX = screenW/2 - int(config.Config.WindowWidth)/2
+	}
+	if *overrideY == -1 {
+		*overrideY = screenH/2 - int(config.Config.WindowHeight)/2
+	}
+	ebiten.SetWindowPosition(*overrideX, *overrideY)
 	ebiten.SetVsyncEnabled(true)
 	prevFrame = ebiten.NewImage(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	if err := ebiten.RunGameWithOptions(&Game{}, &ebiten.RunGameOptions{ScreenTransparent: true}); err != nil {
