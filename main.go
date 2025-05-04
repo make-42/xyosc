@@ -276,8 +276,8 @@ func Init() {
 	overrideWidth := flag.Int("width", int(config.Config.WindowWidth), "override window width")
 	overrideHeight := flag.Int("height", int(config.Config.WindowHeight), "override window height")
 
-	overrideX = flag.Int("x", -1, "overide starting x coordinate of the center of the window")
-	overrideY = flag.Int("y", -1, "overide starting x coordinate of the center of the window")
+	overrideX = flag.Int("x", -1, "override starting x coordinate of the center of the window; x=0 corresponds to the center of the screen")
+	overrideY = flag.Int("y", -1, "override starting y coordinate of the center of the window; y=0 corresponds to the center of the screen")
 	flag.Parse()
 	if *lowCutOff != 0.0 {
 		filtersApplied = true
@@ -315,12 +315,12 @@ func main() {
 	if *overrideX == -1 {
 		*overrideX = screenW/2 - int(config.Config.WindowWidth)/2
 	} else {
-		*overrideX = *overrideX - int(config.Config.WindowWidth)/2
+		*overrideX = screenW/2 + *overrideX - int(config.Config.WindowWidth)/2
 	}
 	if *overrideY == -1 {
 		*overrideY = screenH/2 - int(config.Config.WindowHeight)/2
 	} else {
-		*overrideY = *overrideY - int(config.Config.WindowHeight)/2
+		*overrideY = screenH/2 + *overrideY - int(config.Config.WindowHeight)/2
 	}
 	ebiten.SetWindowPosition(*overrideX, *overrideY)
 	ebiten.SetVsyncEnabled(true)
