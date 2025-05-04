@@ -314,9 +314,13 @@ func main() {
 	screenW, screenH := ebiten.Monitor().Size()
 	if *overrideX == -1 {
 		*overrideX = screenW/2 - int(config.Config.WindowWidth)/2
+	} else {
+		*overrideX = *overrideX - int(config.Config.WindowWidth)/2
 	}
 	if *overrideY == -1 {
 		*overrideY = screenH/2 - int(config.Config.WindowHeight)/2
+	} else {
+		*overrideY = *overrideY - int(config.Config.WindowHeight)/2
 	}
 	ebiten.SetWindowPosition(*overrideX, *overrideY)
 	ebiten.SetVsyncEnabled(true)
