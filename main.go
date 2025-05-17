@@ -273,11 +273,14 @@ func Init() {
 	useRightChannel = flag.Bool("right", false, "Use the right channel instead of the left for the single axis oscilloscope")
 	mixChannels = flag.Bool("mix", false, "Mix channels instead of just using a single channel for the single axis oscilloscope")
 
+	overrideGain := flag.Float64("gain", -1.0, "override gain multiplier")
+
 	overrideWidth := flag.Int("width", int(config.Config.WindowWidth), "override window width")
 	overrideHeight := flag.Int("height", int(config.Config.WindowHeight), "override window height")
 
 	overrideX = flag.Int("x", -1, "override starting x coordinate of the center of the window; x=0 corresponds to the center of the screen")
 	overrideY = flag.Int("y", -1, "override starting y coordinate of the center of the window; y=0 corresponds to the center of the screen")
+
 	flag.Parse()
 	if *lowCutOff != 0.0 {
 		filtersApplied = true
@@ -294,6 +297,10 @@ func Init() {
 	}
 	config.Config.WindowWidth = int32(*overrideWidth)
 	config.Config.WindowHeight = int32(*overrideHeight)
+
+	if *overrideGain != -1.0 {
+		config.Config.Gain = float32(*overrideGain)
+	}
 
 }
 
