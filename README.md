@@ -8,6 +8,8 @@ A simple XY-oscilloscope written in Go.
 # Configuration
 The configuration file can be found at ~/.config/ontake/xyosc/config.yml`
 
+Note: `xyosc` might not chose the right device to get audio from by default. When you run xyosc it displays a list of capture devices with indices, change the `capturedeviceindex` option to the right index if it isn't the right one by default.
+
 # Features
  - XY mode and single channel mode (L/R/Mix modes) - can be toggled with the `F` key
  - particles
