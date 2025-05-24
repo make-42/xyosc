@@ -13,6 +13,7 @@ The configuration file can be found at ~/.config/ontake/xyosc/config.yml`
  - particles
  - MPRIS support
  - frequency separation
+ - theming support
 
 # Screenshots
 
