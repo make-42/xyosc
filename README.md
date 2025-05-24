@@ -1,7 +1,14 @@
 # xyosc
 A simple XY-oscilloscope written in Go.
 
+# Instalation
+ - Arch: `ontake-xyosc-git`
+ - NixOS: Use this repo as a flake. You can test `xyosc` out with `nix run github:make-42/xyosc` for example
 
+# Configuration
+The configuration file can be found at ~/.config/ontake/xyosc/config.yml`
+
+# Screenshots
 
 https://github.com/user-attachments/assets/8495da4f-dadc-44ab-9f8d-dc0331f0c421
 
