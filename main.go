@@ -65,6 +65,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			op.ColorScale.ScaleAlpha(config.Config.CopyPreviousFrameAlpha)
 			screen.DrawImage(prevFrame, op)
 		}
+	} else {
+		if config.Config.DisableTransparency {
+			screen.Fill(config.BGColor)
+		}
 	}
 	scale := min(config.Config.WindowWidth, config.Config.WindowHeight) / 2
 	var AX float32
@@ -253,6 +257,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if config.Config.CopyPreviousFrame {
 		prevFrame.Clear()
 		prevFrame.DrawImage(screen, nil)
+		if config.Config.DisableTransparency {
+			screen.Fill(config.BGColor)
+			screen.DrawImage(prevFrame, nil)
+		}
 	}
 	if firstFrame {
 		firstFrame = false
@@ -332,7 +340,13 @@ func main() {
 	ebiten.SetWindowPosition(*overrideX, *overrideY)
 	ebiten.SetVsyncEnabled(true)
 	prevFrame = ebiten.NewImage(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
-	if err := ebiten.RunGameWithOptions(&Game{}, &ebiten.RunGameOptions{ScreenTransparent: true}); err != nil {
+
+	gameOptions := ebiten.RunGameOptions{ScreenTransparent: true}
+	if config.Config.DisableTransparency {
+		gameOptions.ScreenTransparent = false
+	}
+
+	if err := ebiten.RunGameWithOptions(&Game{}, &gameOptions); err != nil {
 		log.Fatal(err)
 	}
 }

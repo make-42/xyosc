@@ -48,6 +48,8 @@ type ConfigS struct {
 	AccentColor                      string
 	FirstColor                       string
 	ThirdColor                       string
+	BGColor                          string
+	DisableTransparency              bool
 	CopyPreviousFrame                bool
 	CopyPreviousFrameAlpha           float32
 }
@@ -87,6 +89,8 @@ var DefaultConfig = ConfigS{
 	AccentColor:                      "#FF0000",
 	FirstColor:                       "#FF0000",
 	ThirdColor:                       "#FF0000",
+	BGColor:                          "#222222",
+	DisableTransparency:              false,
 	CopyPreviousFrame:                true,
 	CopyPreviousFrameAlpha:           0.4,
 }
@@ -97,6 +101,7 @@ var AccentColor color.RGBA
 var FirstColor color.RGBA
 var ThirdColor color.RGBA
 var ThirdColorAdj color.RGBA
+var BGColor color.RGBA
 
 var watcher *fsnotify.Watcher
 
@@ -166,6 +171,12 @@ func Init() {
 }
 
 func updatePywalColors() {
+	/* This is not synced to pywal */
+	BGColorParsed, err := ParseHexColor(Config.BGColor)
+	utils.CheckError(err)
+	BGColor = color.RGBA{BGColorParsed.R, BGColorParsed.G, BGColorParsed.B, 255}
+	/* end */
+
 	walPath := configdir.LocalCache("wal")
 	walFile := filepath.Join(walPath, "colors")
 	if _, err := os.Stat(walFile); os.IsNotExist(err) || Config.ForceColors {
