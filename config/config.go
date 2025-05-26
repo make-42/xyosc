@@ -127,6 +127,7 @@ func Init() {
 		encoder.Encode(&DefaultConfig)
 		Config = DefaultConfig
 	} else {
+		Config = DefaultConfig
 		// Load the existing file.
 		fh, err := os.Open(configFile)
 		utils.CheckError(err)
@@ -134,7 +135,6 @@ func Init() {
 
 		decoder := yaml.NewDecoder(fh)
 		decoder.Decode(&Config)
-
 	}
 	SingleChannel = Config.DefaultToSingleChannel
 
