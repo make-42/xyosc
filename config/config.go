@@ -84,9 +84,9 @@ var DefaultConfig = ConfigS{
 	PeriodCropLoopOverCount:          1,
 	FFTBufferOffset:                  3200,
 	ForceColors:                      false,
-	AccentColor:                      "FF0000",
-	FirstColor:                       "FF0000",
-	ThirdColor:                       "FF0000",
+	AccentColor:                      "#FF0000",
+	FirstColor:                       "#FF0000",
+	ThirdColor:                       "#FF0000",
 	CopyPreviousFrame:                true,
 	CopyPreviousFrameAlpha:           0.4,
 }
