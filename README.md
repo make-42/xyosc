@@ -42,7 +42,7 @@ Minimal `flake.nix`
 
 And to install
 ```nix
-{  inputs, ... }:
+{  inputs, pkgs, ... }:
 environment.systemPackages = [
     inputs.xyosc.packages.${pkgs.system}.default
 ];
@@ -50,7 +50,7 @@ environment.systemPackages = [
 And the `xyosc` binary should be available
 
 # Configuration
-The configuration file can be found at ~/.config/ontake/xyosc/config.yml`
+The configuration file can be found at `~/.config/ontake/xyosc/config.yml`
 
 Note: `xyosc` might not chose the right device to get audio from by default. When you run xyosc it displays a list of capture devices with indices, change the `capturedeviceindex` option to the right index if it isn't the right one by default.
 
@@ -60,6 +60,30 @@ Note: `xyosc` might not chose the right device to get audio from by default. Whe
  - MPRIS support
  - frequency separation
  - theming support
+
+## NixOS
+
+Here is an example of how to configure `xyosc` using Nix.
+
+```nix
+{ pkgs, lib, ... }:
+
+{
+  xdg.configFile.xyosc = {
+    enable = true;
+    target = "ontake/xyosc/config.yml";
+    text = pkgs.lib.generators.toYAML { } {
+      fpscounter = false;
+      showfilterinfo = true;
+      showmpris = false;
+      mpristextopacity = 255;
+      targetfps = 120;
+      accentcolor = "#FF0000";
+      # rest of config below
+    };
+  };
+}
+```
 
 # Example aliases for running the setup seen in the screenshots
 ```
