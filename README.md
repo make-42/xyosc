@@ -2,8 +2,52 @@
 A simple XY-oscilloscope written in Go.
 
 # Instalation
- - Arch: `ontake-xyosc-git`
- - NixOS: Use this repo as a flake. You can test `xyosc` out with `nix run github:make-42/xyosc` for example
+
+## Arch
+
+Install `ontake-xyosc-git`
+
+## NixOS
+
+Use this repo as a flake. You can test `xyosc` out with `nix run github:make-42/xyosc` for example
+
+Or, install permanantly with flakes:
+
+Minimal `flake.nix`
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    xyosc.url = "github:make-42/xyosc";
+  };
+  # ...
+
+  outputs = inputs @ {
+    nixpkgs,
+    xyosc,
+    ...
+  }: let
+    system = "x86_64-linux"; # change to whatever your system should be
+  in {
+    nixosConfigurations."${host}" = nixpkgs.lib.nixosSystem {
+      specialArgs = {
+        inherit system;
+        inherit inputs;
+      };
+    };
+  };
+}
+```
+
+And to install
+```nix
+{  inputs, ... }:
+environment.systemPackages = [
+    inputs.xyosc.packages.${pkgs.system}.default
+];
+```
+And the `xyosc` binary should be available
 
 # Configuration
 The configuration file can be found at ~/.config/ontake/xyosc/config.yml`
