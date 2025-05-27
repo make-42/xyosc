@@ -48,6 +48,7 @@ type ConfigS struct {
 	AccentColor                      string
 	FirstColor                       string
 	ThirdColor                       string
+	ParticleColor                    string
 	BGColor                          string
 	DisableTransparency              bool
 	CopyPreviousFrame                bool
@@ -89,6 +90,7 @@ var DefaultConfig = ConfigS{
 	AccentColor:                      "#FF0000",
 	FirstColor:                       "#FF0000",
 	ThirdColor:                       "#FF0000",
+	ParticleColor:                    "#FF0000",
 	BGColor:                          "#222222",
 	DisableTransparency:              false,
 	CopyPreviousFrame:                true,
@@ -100,6 +102,7 @@ var Config ConfigS
 var AccentColor color.RGBA
 var FirstColor color.RGBA
 var ThirdColor color.RGBA
+var ParticleColor color.RGBA
 var ThirdColorAdj color.RGBA
 var BGColor color.RGBA
 
@@ -186,10 +189,13 @@ func updatePywalColors() {
 		utils.CheckError(err)
 		ThirdColorParsed, err := ParseHexColor(Config.ThirdColor)
 		utils.CheckError(err)
+		ParticleColorParsed, err := ParseHexColor(Config.ParticleColor)
+		utils.CheckError(err)
 
 		AccentColor = color.RGBA{AccentColorParsed.R, AccentColorParsed.G, AccentColorParsed.B, Config.LineOpacity}
 		FirstColor = color.RGBA{FirstColorParsed.R, FirstColorParsed.G, FirstColorParsed.B, Config.LineOpacity}
 		ThirdColor = color.RGBA{ThirdColorParsed.R, ThirdColorParsed.G, ThirdColorParsed.B, Config.LineOpacity}
+		ParticleColor = color.RGBA{ParticleColorParsed.R, ParticleColorParsed.G, ParticleColorParsed.B, Config.LineOpacity}
 		ThirdColorAdj = color.RGBA{uint8(float64(ThirdColorParsed.R) * Config.LineBrightness), uint8(float64(ThirdColorParsed.G) * Config.LineBrightness), uint8(float64(ThirdColorParsed.B) * Config.LineBrightness), Config.LineOpacity}
 	} else {
 		fh, err := os.Open(walFile)
@@ -214,6 +220,7 @@ func updatePywalColors() {
 				utils.CheckError(err)
 				ThirdColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
 				ThirdColorAdj = color.RGBA{uint8(float64(rgbaColor.R) * Config.LineBrightness), uint8(float64(rgbaColor.G) * Config.LineBrightness), uint8(float64(rgbaColor.B) * Config.LineBrightness), Config.LineOpacity}
+				ParticleColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
 				break
 			}
 			line++

@@ -142,7 +142,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 
 		for i, particle := range particles.Particles {
-			vector.DrawFilledCircle(screen, float32(config.Config.WindowWidth/2)+particle.X*float32(scale), float32(config.Config.WindowHeight/2)+particle.Y*float32(scale), particle.Size, config.ThirdColor, true)
+			vector.DrawFilledCircle(screen, float32(config.Config.WindowWidth/2)+particle.X*float32(scale), float32(config.Config.WindowHeight/2)+particle.Y*float32(scale), particle.Size, config.ParticleColor, true)
 			norm := math32.Sqrt(particles.Particles[i].X*particles.Particles[i].X + particles.Particles[i].Y*particles.Particles[i].Y)
 			particles.Particles[i].X += particle.VX / float32(ebiten.ActualTPS())
 			particles.Particles[i].Y += particle.VY / float32(ebiten.ActualTPS())
