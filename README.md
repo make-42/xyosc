@@ -164,6 +164,8 @@ xyosc-sep = "xyosc-s-1 & xyosc-s-2 & xyosc-s-3 & xyosc-s-4 & xyosc-s-5 & xyosc-s
 ```
 
 # Screenshots
+https://github.com/user-attachments/assets/a527369c-aa43-45d3-b790-9c0956e8d629
+
 
 https://github.com/user-attachments/assets/8495da4f-dadc-44ab-9f8d-dc0331f0c421
 
