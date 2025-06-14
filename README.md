@@ -60,6 +60,7 @@ Note: `xyosc` might not chose the right device to get audio from by default. Whe
  - MPRIS support
  - frequency separation
  - theming support
+ - shader support (using ebitengine's [Kage](https://ebitengine.org/en/documents/shader.html) shader language)
 
 ## NixOS
 
@@ -85,6 +86,72 @@ Here is an example of how to configure `xyosc` using Nix.
 }
 ```
 
+# Typical configuration file
+```yaml
+fpscounter: false
+showfilterinfo: true
+showmpris: false
+mpristextopacity: 255
+targetfps: 240
+windowwidth: 1000
+windowheight: 1000
+capturedeviceindex: 0
+samplerate: 192000
+ringbuffersize: 4096
+readbuffersize: 4096
+gain: 1
+lineopacity: 200
+linebrightness: 1
+linethickness: 3
+lineinvsqrtopacitycontrol: false
+particles: false
+particlegenperframeeveryxsamples: 4000
+particlemaxcount: 100
+particleminsize: 1.0
+particlemaxsize: 3.0
+particleacceleration: 0.2
+particledrag: 5.0
+defaulttosinglechannel: true
+peakdetectseparator: 200
+singlechannelwindow: 1200
+periodcrop: true
+periodcropcount: 2
+periodcroploopovercount: 1
+fftbufferoffset: 2000
+forcecolors: true
+accentcolor: "#C7C4DD"
+firstcolor: "#C7C4DD"
+thirdcolor: "#C7C4DD"
+particlecolor: "#E4E0EF"
+bgcolor: "#1F1F29"
+disabletransparency: false
+copypreviousframe: true
+copypreviousframealpha: 0.1
+useshaders: true
+shaders:
+- name: glow
+  arguments:
+    Strength: 0.1
+- name: glow
+  arguments:
+    Strength: 0.1
+- name: chromaticabberation
+  arguments:
+    Strength: 0.005
+- name: custom/noise
+  arguments:
+    Strength: 0.1
+    Scale: 100.0
+  timescale: 1.0
+customshadercode:
+  noise: "//go:build ignore\n\n//kage:unit pixels\n\npackage main\n\nvar Strength
+      float\nvar Time float\nvar Scale float\n\nfunc Fragment(dstPos vec4, srcPos vec2,
+      color vec4) vec4 {\n\t\t\tvar clr vec4\n\t\t\tclr = imageSrc2At(srcPos)\n\t\t\tamount
+      := abs(cos(sin(srcPos.x*Scale+Time+cos(srcPos.y*Scale+Time)*Scale)*Scale+sin(srcPos.x*Scale+Time)*Scale))
+      * Strength\n\t\t\tclr.r += amount\n\t\t\tclr.g += amount\n\t\t\tclr.b += amount\n\t\t\tclr.a
+      += amount\n\t\t\treturn clr\n}\n"
+```
+
 # Example aliases for running the setup seen in the screenshots
 ```
 xyosc-s-1 = "xyosc -mix -lo=0 -hi=0.0015 -width=650 -height=650 -x=-1332 -y=0 -gain=2 &";
@@ -102,5 +169,3 @@ https://github.com/user-attachments/assets/8495da4f-dadc-44ab-9f8d-dc0331f0c421
 
 
 https://github.com/user-attachments/assets/7b6c6545-5a93-4ba8-8a8a-a381d3e62672
-
-

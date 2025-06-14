@@ -9,6 +9,7 @@ import (
 	"math/rand/v2"
 	"slices"
 	"sort"
+	"time"
 	"xyosc/audio"
 	"xyosc/config"
 	"xyosc/fastsqrt"
@@ -17,6 +18,7 @@ import (
 	"xyosc/icons"
 	"xyosc/media"
 	"xyosc/particles"
+	"xyosc/shaders"
 
 	"fmt"
 
@@ -41,7 +43,9 @@ func (g *Game) Update() error {
 	return nil
 }
 
+var startTime time.Time
 var prevFrame *ebiten.Image
+var shaderWorkBuffer *ebiten.Image
 var firstFrame = true
 var FFTBuffer []float64
 var complexFFTBuffer []complex128
@@ -262,6 +266,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screen.DrawImage(prevFrame, nil)
 		}
 	}
+	if config.Config.UseShaders {
+		timeUniform := float32(time.Since(startTime).Milliseconds()) / 1000
+		op := &ebiten.DrawRectShaderOptions{}
+		op.Images[2] = shaderWorkBuffer
+		for _, shader := range shaders.ShaderRenderList {
+			shaderWorkBuffer.Clear()
+			shaderWorkBuffer.DrawImage(screen, nil)
+			op.Uniforms = shader.Arguments
+			op.Uniforms["Time"] = timeUniform * shader.TimeScale
+			screen.DrawRectShader(int(config.Config.WindowWidth), int(config.Config.WindowHeight), shader.Shader, op)
+		}
+	}
 	if firstFrame {
 		firstFrame = false
 		// f, _ := os.Create("image.png")
@@ -320,6 +336,9 @@ func main() {
 	icons.Init()
 	go audio.Start()
 	go media.Start()
+	if config.Config.UseShaders {
+		shaders.Init()
+	}
 	ebiten.SetWindowIcon([]image.Image{icons.WindowIcon48, icons.WindowIcon32, icons.WindowIcon16})
 	ebiten.SetWindowSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	ebiten.SetWindowTitle("xyosc")
@@ -340,12 +359,15 @@ func main() {
 	ebiten.SetWindowPosition(*overrideX, *overrideY)
 	ebiten.SetVsyncEnabled(true)
 	prevFrame = ebiten.NewImage(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
-
+	if config.Config.UseShaders {
+		shaderWorkBuffer = ebiten.NewImage(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
+	}
 	gameOptions := ebiten.RunGameOptions{ScreenTransparent: true}
 	if config.Config.DisableTransparency {
 		gameOptions.ScreenTransparent = false
 	}
 
+	startTime = time.Now()
 	if err := ebiten.RunGameWithOptions(&Game{}, &gameOptions); err != nil {
 		log.Fatal(err)
 	}

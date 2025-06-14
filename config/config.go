@@ -53,6 +53,9 @@ type ConfigS struct {
 	DisableTransparency              bool
 	CopyPreviousFrame                bool
 	CopyPreviousFrameAlpha           float32
+	UseShaders                       bool
+	Shaders                          []Shader
+	CustomShaderCode                 map[string]string
 }
 
 var DefaultConfig = ConfigS{
@@ -95,6 +98,49 @@ var DefaultConfig = ConfigS{
 	DisableTransparency:              false,
 	CopyPreviousFrame:                true,
 	CopyPreviousFrameAlpha:           0.4,
+	UseShaders:                       true,
+	Shaders: []Shader{
+		{
+			Name: "glow",
+			Arguments: map[string]any{
+				"Strength": 0.1,
+			},
+		}, {
+			Name: "chromaticabberation",
+			Arguments: map[string]any{
+				"Strength": 0.01,
+			},
+		},
+	},
+	CustomShaderCode: map[string]string{
+		"noise": `//go:build ignore
+
+//kage:unit pixels
+
+package main
+
+var Strength float
+var Time float
+var Scale float
+
+func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
+			var clr vec4
+			clr = imageSrc2At(srcPos)
+			amount := abs(cos(sin(srcPos.x*Scale+Time+cos(srcPos.y*Scale+Time)*Scale)*Scale+sin(srcPos.x*Scale+Time)*Scale)) * Strength
+			clr.r += amount
+			clr.g += amount
+			clr.b += amount
+			clr.a += amount
+			return clr
+}
+`,
+	},
+}
+
+type Shader struct {
+	Name      string
+	Arguments map[string]any
+	TimeScale float32
 }
 
 var Config ConfigS
