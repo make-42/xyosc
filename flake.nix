@@ -87,6 +87,23 @@
           pkg-config
           makeWrapper
         ];
+        shellHook = ''
+          export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [
+            pkgs.glfw
+            pkgs.pkg-config
+            pkgs.xorg.libX11.dev
+            pkgs.xorg.libXrandr.dev
+            pkgs.xorg.libXcursor.dev
+            pkgs.xorg.libXinerama.dev
+            pkgs.xorg.libXi.dev
+            pkgs.xorg.libXxf86vm.dev
+            pkgs.libxkbcommon
+            pkgs.libglvnd
+            pkgs.libpulseaudio
+            pkgs.alsa-lib
+            pkgs.libjack2
+          ]}:$LD_LIBRARY_PATH
+        '';
         buildInputs = with pkgs; [
           glfw
           xorg.libX11.dev
