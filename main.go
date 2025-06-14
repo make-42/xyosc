@@ -211,6 +211,28 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	//audio.SampleRingBuffer.Reset()
+
+	if config.Config.CopyPreviousFrame {
+		prevFrame.Clear()
+		prevFrame.DrawImage(screen, nil)
+		if config.Config.DisableTransparency {
+			screen.Fill(config.BGColor)
+			screen.DrawImage(prevFrame, nil)
+		}
+	}
+	if config.Config.UseShaders {
+		timeUniform := float32(time.Since(startTime).Milliseconds()) / 1000
+		op := &ebiten.DrawRectShaderOptions{}
+		op.Images[2] = shaderWorkBuffer
+		for _, shader := range shaders.ShaderRenderList {
+			shaderWorkBuffer.Clear()
+			shaderWorkBuffer.DrawImage(screen, nil)
+			op.Uniforms = shader.Arguments
+			op.Uniforms["Time"] = timeUniform * shader.TimeScale
+			screen.DrawRectShader(int(config.Config.WindowWidth), int(config.Config.WindowHeight), shader.Shader, op)
+		}
+	}
+	
 	if config.Config.FPSCounter {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf("TPS: %0.2f", ebiten.ActualTPS()))
 	}
@@ -257,27 +279,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			Size:   16,
 		}, op)
 	}
-
-	if config.Config.CopyPreviousFrame {
-		prevFrame.Clear()
-		prevFrame.DrawImage(screen, nil)
-		if config.Config.DisableTransparency {
-			screen.Fill(config.BGColor)
-			screen.DrawImage(prevFrame, nil)
-		}
-	}
-	if config.Config.UseShaders {
-		timeUniform := float32(time.Since(startTime).Milliseconds()) / 1000
-		op := &ebiten.DrawRectShaderOptions{}
-		op.Images[2] = shaderWorkBuffer
-		for _, shader := range shaders.ShaderRenderList {
-			shaderWorkBuffer.Clear()
-			shaderWorkBuffer.DrawImage(screen, nil)
-			op.Uniforms = shader.Arguments
-			op.Uniforms["Time"] = timeUniform * shader.TimeScale
-			screen.DrawRectShader(int(config.Config.WindowWidth), int(config.Config.WindowHeight), shader.Shader, op)
-		}
-	}
+	
 	if firstFrame {
 		firstFrame = false
 		// f, _ := os.Create("image.png")

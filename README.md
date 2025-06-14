@@ -131,10 +131,10 @@ useshaders: true
 shaders:
 - name: glow
   arguments:
-    Strength: 0.1
+    Strength: 0.05
 - name: glow
   arguments:
-    Strength: 0.1
+    Strength: 0.05
 - name: chromaticabberation
   arguments:
     Strength: 0.005
