@@ -141,8 +141,8 @@ shaders:
 - name: custom/noise
   arguments:
     Strength: 0.1
-    Scale: 100.0
-  timescale: 1.0
+    Scale: 1000.0
+  timescale: 4.0
 customshadercode:
   noise: "//go:build ignore\n\n//kage:unit pixels\n\npackage main\n\nvar Strength
       float\nvar Time float\nvar Scale float\n\nfunc Fragment(dstPos vec4, srcPos vec2,
