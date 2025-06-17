@@ -37,6 +37,7 @@ func Start() {
 		os.Exit(1)
 	}
 
+	overrideCaptureDeviceIndex := -1
 	fmt.Println("Capture Devices")
 	for i, info := range infos {
 		e := "ok"
@@ -46,12 +47,19 @@ func Start() {
 		}
 		fmt.Printf("    %d: %v, %s, [%s], formats: %+v\n",
 			i, info.ID, info.Name(), e, full.Formats)
+		if info.Name() == config.Config.CaptureDeviceName && config.Config.CaptureDeviceName != "" && (config.Config.CaptureDeviceSampleRate == 0 || config.Config.CaptureDeviceSampleRate == int(full.Formats[0].SampleRate)) {
+			overrideCaptureDeviceIndex = i
+		}
 	}
 
 	deviceConfig := malgo.DefaultDeviceConfig(malgo.Capture)
 	deviceConfig.Capture.Format = format
 	deviceConfig.Capture.Channels = 2
-	deviceConfig.Capture.DeviceID = infos[config.Config.CaptureDeviceIndex].ID.Pointer()
+	if overrideCaptureDeviceIndex != -1 {
+		deviceConfig.Capture.DeviceID = infos[overrideCaptureDeviceIndex].ID.Pointer()
+	} else {
+		deviceConfig.Capture.DeviceID = infos[config.Config.CaptureDeviceIndex].ID.Pointer()
+	}
 	deviceConfig.SampleRate = config.Config.SampleRate
 	deviceConfig.Alsa.NoMMap = 1
 

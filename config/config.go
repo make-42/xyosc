@@ -22,6 +22,8 @@ type ConfigS struct {
 	WindowWidth                      int32
 	WindowHeight                     int32
 	CaptureDeviceIndex               int
+	CaptureDeviceName                string
+	CaptureDeviceSampleRate          int
 	SampleRate                       uint32
 	RingBufferSize                   uint32
 	ReadBufferSize                   uint32
@@ -67,6 +69,8 @@ var DefaultConfig = ConfigS{
 	WindowWidth:                      1300,
 	WindowHeight:                     1300,
 	CaptureDeviceIndex:               0,
+	CaptureDeviceName:                "",
+	CaptureDeviceSampleRate:          0, // In case there are multiple outputs with different sample rates and you want to pick a specific one, else leave equal to 0
 	SampleRate:                       96000,
 	RingBufferSize:                   9600,
 	ReadBufferSize:                   9600,
