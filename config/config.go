@@ -41,6 +41,7 @@ type ConfigS struct {
 	ParticleDrag                     float32
 	DefaultToSingleChannel           bool
 	PeakDetectSeparator              int
+	OscilloscopeStartPeakDetection   bool
 	SingleChannelWindow              uint32
 	PeriodCrop                       bool
 	PeriodCropCount                  int
@@ -88,6 +89,7 @@ var DefaultConfig = ConfigS{
 	ParticleDrag:                     5.0,
 	DefaultToSingleChannel:           false,
 	PeakDetectSeparator:              100,
+	OscilloscopeStartPeakDetection:   true,
 	SingleChannelWindow:              1200,
 	PeriodCrop:                       true,
 	PeriodCropCount:                  2,

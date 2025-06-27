@@ -193,6 +193,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if len(indices) != 0 {
 			offset = uint32(indices[0])
 		}
+		if !config.Config.OscilloscopeStartPeakDetection {
+			offset = 0
+		}
 		if config.Config.PeriodCrop && len(indices) > 1 {
 			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.PeriodCropCount)])
 			samplesPerCrop := lastPeriodOffset - offset
@@ -232,7 +235,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screen.DrawRectShader(int(config.Config.WindowWidth), int(config.Config.WindowHeight), shader.Shader, op)
 		}
 	}
-	
+
 	if config.Config.FPSCounter {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf("TPS: %0.2f", ebiten.ActualTPS()))
 	}
@@ -279,7 +282,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			Size:   16,
 		}, op)
 	}
-	
+
 	if firstFrame {
 		firstFrame = false
 		// f, _ := os.Create("image.png")
