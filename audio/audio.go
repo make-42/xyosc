@@ -60,6 +60,7 @@ func Start() {
 	} else {
 		deviceConfig.Capture.DeviceID = infos[config.Config.CaptureDeviceIndex].ID.Pointer()
 	}
+	deviceConfig.PerformanceProfile = malgo.LowLatency
 	deviceConfig.SampleRate = config.Config.SampleRate
 	deviceConfig.Alsa.NoMMap = 1
 
