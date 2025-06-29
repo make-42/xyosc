@@ -156,6 +156,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	} else {
 		for i := uint32(0); i < numSamples; i++ {
+			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
+			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 			if filtersApplied {
 				if *mixChannels {
 					complexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
@@ -177,8 +179,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					}
 				}
 			}
-			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
-			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 		}
 		if filtersApplied {
 			filter.FilterBufferInPlace(&complexFFTBuffer, lowCutOffFrac, highCutOffFrac)
@@ -207,7 +207,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			for i := uint32(0); i < min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount)-1; i++ {
 				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
-				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples > 1 {
+				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
 					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
 				}
 			}
@@ -215,7 +215,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			for i := uint32(0); i < numSamples-1; i++ {
 				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
-				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples > 1 {
+				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
 					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow+1)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
 				}
 			}
