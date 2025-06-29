@@ -193,6 +193,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if len(indices) != 0 {
 			offset = uint32(indices[0])
 		}
+		if (offset+config.Config.FFTBufferOffset)%numSamples < config.Config.PeakDetectEdgeGuardBufferSize || (numSamples-((offset+config.Config.FFTBufferOffset)%numSamples)) < config.Config.PeakDetectEdgeGuardBufferSize {
+			if len(indices) >= 2 {
+				offset = uint32(indices[1])
+			}
+		}
 		if !config.Config.OscilloscopeStartPeakDetection {
 			offset = 0
 		}

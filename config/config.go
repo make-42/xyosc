@@ -42,6 +42,7 @@ type ConfigS struct {
 	DefaultToSingleChannel           bool
 	PeakDetectSeparator              int
 	OscilloscopeStartPeakDetection   bool
+	PeakDetectEdgeGuardBufferSize    uint32
 	SingleChannelWindow              uint32
 	PeriodCrop                       bool
 	PeriodCropCount                  int
@@ -90,6 +91,7 @@ var DefaultConfig = ConfigS{
 	DefaultToSingleChannel:           false,
 	PeakDetectSeparator:              100,
 	OscilloscopeStartPeakDetection:   true,
+	PeakDetectEdgeGuardBufferSize:    100,
 	SingleChannelWindow:              1200,
 	PeriodCrop:                       true,
 	PeriodCropCount:                  2,
