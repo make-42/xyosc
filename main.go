@@ -207,13 +207,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			for i := uint32(0); i < min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount)-1; i++ {
 				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
-				vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples > 1 {
+					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+				}
 			}
 		} else {
 			for i := uint32(0); i < numSamples-1; i++ {
 				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
-				vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow+1)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples > 1 {
+					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow+1)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+				}
 			}
 		}
 	}
@@ -345,7 +349,9 @@ func main() {
 	fonts.Init()
 	icons.Init()
 	go audio.Start()
-	go media.Start()
+	if config.Config.ShowMPRIS {
+		go media.Start()
+	}
 	if config.Config.UseShaders {
 		shaders.Init()
 	}
