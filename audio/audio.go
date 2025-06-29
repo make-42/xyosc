@@ -63,6 +63,7 @@ func Start() {
 	deviceConfig.PerformanceProfile = malgo.LowLatency
 	deviceConfig.SampleRate = config.Config.SampleRate
 	deviceConfig.Alsa.NoMMap = 1
+	deviceConfig.PeriodSizeInFrames = config.Config.AudioCaptureBufferSize
 
 	onRecvFrames := func(pSample2, pSample []byte, framecount uint32) {
 		SampleRingBuffer.Write(pSample)

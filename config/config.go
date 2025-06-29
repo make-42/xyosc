@@ -25,6 +25,7 @@ type ConfigS struct {
 	CaptureDeviceName                string
 	CaptureDeviceSampleRate          int
 	SampleRate                       uint32
+	AudioCaptureBufferSize           uint32
 	RingBufferSize                   uint32
 	ReadBufferSize                   uint32
 	Gain                             float32
@@ -74,6 +75,7 @@ var DefaultConfig = ConfigS{
 	CaptureDeviceName:                "",
 	CaptureDeviceSampleRate:          0, // In case there are multiple outputs with different sample rates and you want to pick a specific one, else leave equal to 0
 	SampleRate:                       96000,
+	AudioCaptureBufferSize:           512, // Affects latency
 	RingBufferSize:                   9600,
 	ReadBufferSize:                   9600,
 	Gain:                             1,
