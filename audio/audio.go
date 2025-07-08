@@ -12,12 +12,14 @@ import (
 
 var SampleRingBuffer *ringbuffer.RingBuffer
 var SampleSizeInBytes uint32
+var WriteHeadPosition uint32
 
 const format = malgo.FormatF32
 
 func Init() {
 	SampleRingBuffer = ringbuffer.New(int(config.Config.RingBufferSize)).SetBlocking(true)
 	SampleSizeInBytes = uint32(malgo.SampleSizeInBytes(format))
+	WriteHeadPosition = 0
 }
 
 func Start() {
@@ -67,6 +69,7 @@ func Start() {
 
 	onRecvFrames := func(pSample2, pSample []byte, framecount uint32) {
 		SampleRingBuffer.Write(pSample)
+		WriteHeadPosition = (WriteHeadPosition + uint32(len(pSample))) % config.Config.RingBufferSize
 	}
 	captureCallbacks := malgo.DeviceCallbacks{
 		Data: onRecvFrames,

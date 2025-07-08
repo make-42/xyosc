@@ -43,6 +43,7 @@ func (g *Game) Update() error {
 	return nil
 }
 
+var readHeadPosition uint32 = 0
 var startTime time.Time
 var prevFrame *ebiten.Image
 var shaderWorkBuffer *ebiten.Image
@@ -80,7 +81,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var BX float32
 	var BY float32
 	var numSamples = config.Config.ReadBufferSize / audio.SampleSizeInBytes * 4
-
+	rwheadoffset := (config.Config.RingBufferSize + audio.WriteHeadPosition - readHeadPosition - numSamples*8) % config.Config.RingBufferSize
+	for range rwheadoffset {
+		audio.SampleRingBuffer.ReadByte()
+	}
+	readHeadPosition = (readHeadPosition + rwheadoffset) % config.Config.RingBufferSize
 	if slices.Contains(pressedKeys, ebiten.KeyF) {
 		if !StillSamePressFromToggleKey {
 			StillSamePressFromToggleKey = true
@@ -297,6 +302,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		// f, _ := os.Create("image.png")
 		// png.Encode(f, prevFrame)
 	}
+
+	readHeadPosition = (readHeadPosition + numSamples*8) % config.Config.RingBufferSize
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
