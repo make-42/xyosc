@@ -1,16 +1,17 @@
 package main
 
 import (
-	"encoding/binary"
 	"flag"
 	"image"
 	"image/color"
 	"log"
+	"math"
 	"math/rand/v2"
 	"slices"
 	"sort"
 	"time"
 	"xyosc/audio"
+	"xyosc/beatdetect"
 	"xyosc/config"
 	"xyosc/fastsqrt"
 	"xyosc/filter"
@@ -55,6 +56,7 @@ var lowCutOffFrac = 0.0
 var highCutOffFrac = 1.0
 var useRightChannel *bool
 var mixChannels *bool
+var beatDetectOverride *bool
 var overrideX *int
 var overrideY *int
 
@@ -64,6 +66,7 @@ var XYComplexFFTBufferR []complex128
 var StillSamePressFromToggleKey bool
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	var numSamples = config.Config.ReadBufferSize / 2
 	if config.Config.CopyPreviousFrame {
 		if !firstFrame {
 			op := &ebiten.DrawImageOptions{}
@@ -80,12 +83,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var AY float32
 	var BX float32
 	var BY float32
-	var numSamples = config.Config.ReadBufferSize / audio.SampleSizeInBytes * 4
-	rwheadoffset := (config.Config.RingBufferSize + audio.WriteHeadPosition - readHeadPosition - numSamples*8) % config.Config.RingBufferSize
-	for range rwheadoffset {
-		audio.SampleRingBuffer.ReadByte()
-	}
-	readHeadPosition = (readHeadPosition + rwheadoffset) % config.Config.RingBufferSize
+	posStartRead := (config.Config.RingBufferSize + audio.WriteHeadPosition - numSamples*2) % config.Config.RingBufferSize
 	if slices.Contains(pressedKeys, ebiten.KeyF) {
 		if !StillSamePressFromToggleKey {
 			StillSamePressFromToggleKey = true
@@ -97,18 +95,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if !config.SingleChannel {
 		if filtersApplied {
 			for i := uint32(0); i < numSamples; i++ {
+				AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
+				AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
 				XYComplexFFTBufferL[i] = complex(float64(AX), 0.0)
 				XYComplexFFTBufferR[i] = complex(float64(AY), 0.0)
-				binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
-				binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
 			}
 			filter.FilterBufferInPlace(&XYComplexFFTBufferL, lowCutOffFrac, highCutOffFrac)
 			filter.FilterBufferInPlace(&XYComplexFFTBufferR, lowCutOffFrac, highCutOffFrac)
 			AX = float32(real(XYComplexFFTBufferL[len(XYComplexFFTBufferL)-1]))
 			AY = float32(real(XYComplexFFTBufferR[len(XYComplexFFTBufferR)-1]))
 		} else {
-			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
-			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
+			AX = audio.SampleRingBufferUnsafe[(posStartRead)%config.Config.RingBufferSize]
+			AY = audio.SampleRingBufferUnsafe[(posStartRead+1)%config.Config.RingBufferSize]
 		}
 		S := float32(0)
 		for i := uint32(0); i < numSamples; i++ {
@@ -116,8 +114,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				BX = float32(real(XYComplexFFTBufferL[i]))
 				BY = float32(real(XYComplexFFTBufferR[i]))
 			} else {
-				binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BX)
-				binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &BY)
+				BX = audio.SampleRingBufferUnsafe[(posStartRead+i*2+2)%config.Config.RingBufferSize]
+				BY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+3)%config.Config.RingBufferSize]
 			}
 			fAX := float32(AX) * config.Config.Gain * float32(scale)
 			fAY := -float32(AY) * config.Config.Gain * float32(scale)
@@ -161,8 +159,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	} else {
 		for i := uint32(0); i < numSamples; i++ {
-			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AX)
-			binary.Read(audio.SampleRingBuffer, binary.NativeEndian, &AY)
+			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
+			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
 			if filtersApplied {
 				if *mixChannels {
 					complexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
@@ -221,9 +219,42 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
-					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%config.Config.SingleChannelWindow+1)/float32(config.Config.SingleChannelWindow), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2))/float32((config.Config.SingleChannelWindow/2)), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2)+1)/float32(config.Config.SingleChannelWindow/2), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
 				}
 			}
+		}
+	}
+
+	if config.Config.BeatDetect || *beatDetectOverride {
+		beatdetect.InterpolateBeatTime()
+		layoutY := config.Config.MetronomePadding
+		if config.Config.ShowMetronome {
+			if beatdetect.InterpolatedBPM != 0 {
+				progress := float64(time.Now().Sub(beatdetect.InterpolatedBeatTime).Nanoseconds()) / (1000000000 * 60 / beatdetect.InterpolatedBPM)
+				easedProgress := math.Sin(progress * math.Pi)
+				if config.Config.MetronomeThinLineMode {
+					if config.Config.MetronomeThinLineThicknessChangeWithVelocity {
+						easedVelocityProgress := math.Cos(progress * math.Pi)
+						vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+					} else {
+						vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+					}
+					vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineHintThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineHintThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+				} else {
+					vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2, float32(layoutY), float32(easedProgress)*float32(config.Config.WindowWidth)/2, float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+				}
+			}
+			layoutY += config.Config.MetronomeHeight + config.Config.MetronomePadding
+		}
+		if config.Config.ShowBPM {
+			op := &text.DrawOptions{}
+			op.GeoM.Translate(float64(config.Config.WindowWidth)/2, float64(layoutY))
+			op.LayoutOptions.PrimaryAlign = text.AlignCenter
+			op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
+			text.Draw(screen, fmt.Sprintf("%0.2f BPM", beatdetect.InterpolatedBPM), &text.GoTextFace{
+				Source: fonts.Font,
+				Size:   config.Config.BPMTextSize,
+			}, op)
 		}
 	}
 
@@ -311,12 +342,13 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func Init() {
-	numSamples := config.Config.ReadBufferSize / audio.SampleSizeInBytes * 4
+	numSamples := config.Config.ReadBufferSize / 2
 	FFTBuffer = make([]float64, numSamples)
 	lowCutOff := flag.Float64("lo", 0.0, "low frequency cutoff fraction (discernable details are around 0.001 increments for a 4096 buffer size and 192kHz sample rate)")
 	highCutOff := flag.Float64("hi", 1.0, "high frequency cutoff fraction (discernable details are around 0.001 increments for a 4096 buffer size and 192kHz sample rate)")
 	useRightChannel = flag.Bool("right", false, "Use the right channel instead of the left for the single axis oscilloscope")
 	mixChannels = flag.Bool("mix", false, "Mix channels instead of just using a single channel for the single axis oscilloscope")
+	beatDetectOverride = flag.Bool("beatdetect", false, "Enable beat detection (bypassing configuration)")
 
 	overrideGain := flag.Float64("gain", -1.0, "override gain multiplier")
 
@@ -346,7 +378,6 @@ func Init() {
 	if *overrideGain != -1.0 {
 		config.Config.Gain = float32(*overrideGain)
 	}
-
 }
 
 func main() {
@@ -356,6 +387,9 @@ func main() {
 	fonts.Init()
 	icons.Init()
 	go audio.Start()
+	if config.Config.BeatDetect {
+		go beatdetect.Start()
+	}
 	if config.Config.ShowMPRIS {
 		go media.Start()
 	}

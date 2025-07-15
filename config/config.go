@@ -14,53 +14,69 @@ import (
 )
 
 type ConfigS struct {
-	FPSCounter                       bool
-	ShowFilterInfo                   bool
-	ShowMPRIS                        bool
-	MPRISTextOpacity                 uint8
-	TargetFPS                        int32
-	WindowWidth                      int32
-	WindowHeight                     int32
-	CaptureDeviceIndex               int
-	CaptureDeviceName                string
-	CaptureDeviceSampleRate          int
-	SampleRate                       uint32
-	AudioCaptureBufferSize           uint32
-	RingBufferSize                   uint32
-	ReadBufferSize                   uint32
-	Gain                             float32
-	LineOpacity                      uint8
-	LineBrightness                   float64
-	LineThickness                    float32
-	LineInvSqrtOpacityControl        bool
-	Particles                        bool
-	ParticleGenPerFrameEveryXSamples int
-	ParticleMaxCount                 int
-	ParticleMinSize                  float32
-	ParticleMaxSize                  float32
-	ParticleAcceleration             float32
-	ParticleDrag                     float32
-	DefaultToSingleChannel           bool
-	PeakDetectSeparator              int
-	OscilloscopeStartPeakDetection   bool
-	PeakDetectEdgeGuardBufferSize    uint32
-	SingleChannelWindow              uint32
-	PeriodCrop                       bool
-	PeriodCropCount                  int
-	PeriodCropLoopOverCount          uint32
-	FFTBufferOffset                  uint32
-	ForceColors                      bool
-	AccentColor                      string
-	FirstColor                       string
-	ThirdColor                       string
-	ParticleColor                    string
-	BGColor                          string
-	DisableTransparency              bool
-	CopyPreviousFrame                bool
-	CopyPreviousFrameAlpha           float32
-	UseShaders                       bool
-	Shaders                          []Shader
-	CustomShaderCode                 map[string]string
+	FPSCounter                                   bool
+	ShowFilterInfo                               bool
+	ShowMPRIS                                    bool
+	MPRISTextOpacity                             uint8
+	TargetFPS                                    int32
+	WindowWidth                                  int32
+	WindowHeight                                 int32
+	CaptureDeviceIndex                           int
+	CaptureDeviceName                            string
+	CaptureDeviceSampleRate                      int
+	SampleRate                                   uint32
+	AudioCaptureBufferSize                       uint32
+	RingBufferSize                               uint32
+	ReadBufferSize                               uint32
+	BeatDetectReadBufferSize                     uint32
+	BeatDetectDownSampleFactor                   uint32
+	Gain                                         float32
+	LineOpacity                                  uint8
+	LineBrightness                               float64
+	LineThickness                                float32
+	LineInvSqrtOpacityControl                    bool
+	Particles                                    bool
+	ParticleGenPerFrameEveryXSamples             int
+	ParticleMaxCount                             int
+	ParticleMinSize                              float32
+	ParticleMaxSize                              float32
+	ParticleAcceleration                         float32
+	ParticleDrag                                 float32
+	DefaultToSingleChannel                       bool
+	PeakDetectSeparator                          int
+	OscilloscopeStartPeakDetection               bool
+	PeakDetectEdgeGuardBufferSize                uint32
+	SingleChannelWindow                          uint32
+	PeriodCrop                                   bool
+	PeriodCropCount                              int
+	PeriodCropLoopOverCount                      uint32
+	FFTBufferOffset                              uint32
+	ForceColors                                  bool
+	AccentColor                                  string
+	FirstColor                                   string
+	ThirdColor                                   string
+	ParticleColor                                string
+	BGColor                                      string
+	DisableTransparency                          bool
+	CopyPreviousFrame                            bool
+	CopyPreviousFrameAlpha                       float32
+	BeatDetect                                   bool
+	BeatDetectInterval                           int64 //ms
+	BeatDetectBPMCorrectionSpeed                 float64
+	BeatDetectTimeCorrectionSpeed                float64
+	BeatDetectMaxBPM                             float64
+	ShowMetronome                                bool
+	MetronomeHeight                              float64
+	MetronomePadding                             float64
+	MetronomeThinLineMode                        bool
+	MetronomeThinLineThicknessChangeWithVelocity bool
+	MetronomeThinLineThickness                   float64
+	MetronomeThinLineHintThickness               float64
+	ShowBPM                                      bool
+	BPMTextSize                                  float64
+	UseShaders                                   bool
+	Shaders                                      []Shader
+	CustomShaderCode                             map[string]string
 }
 
 var DefaultConfig = ConfigS{
@@ -74,10 +90,12 @@ var DefaultConfig = ConfigS{
 	CaptureDeviceIndex:               0,
 	CaptureDeviceName:                "",
 	CaptureDeviceSampleRate:          0, // In case there are multiple outputs with different sample rates and you want to pick a specific one, else leave equal to 0
-	SampleRate:                       96000,
-	AudioCaptureBufferSize:           512, // Affects latency
-	RingBufferSize:                   9600,
+	SampleRate:                       192000,
+	AudioCaptureBufferSize:           64, // Affects latency
+	RingBufferSize:                   262144 * 16,
 	ReadBufferSize:                   9600,
+	BeatDetectReadBufferSize:         262144 * 16,
+	BeatDetectDownSampleFactor:       4,
 	Gain:                             1,
 	LineOpacity:                      200,
 	LineBrightness:                   1,
@@ -108,7 +126,21 @@ var DefaultConfig = ConfigS{
 	DisableTransparency:              false,
 	CopyPreviousFrame:                true,
 	CopyPreviousFrameAlpha:           0.4,
-	UseShaders:                       true,
+	BeatDetect:                       true,
+	BeatDetectInterval:               100, // ms
+	BeatDetectBPMCorrectionSpeed:     0.01,
+	BeatDetectTimeCorrectionSpeed:    0.001,
+	BeatDetectMaxBPM:                 500.0,
+	ShowMetronome:                    true,
+	MetronomeHeight:                  8,
+	MetronomePadding:                 8,
+	MetronomeThinLineMode:            true,
+	MetronomeThinLineThicknessChangeWithVelocity: true,
+	MetronomeThinLineThickness:                   64,
+	MetronomeThinLineHintThickness:               2,
+	ShowBPM:                                      true,
+	BPMTextSize:                                  24,
+	UseShaders:                                   true,
 	Shaders: []Shader{
 		{
 			Name: "glow",

@@ -1,23 +1,24 @@
 package audio
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"os"
 	"xyosc/config"
 	"xyosc/utils"
 
 	"github.com/gen2brain/malgo"
-	"github.com/smallnest/ringbuffer"
 )
 
-var SampleRingBuffer *ringbuffer.RingBuffer
+var SampleRingBufferUnsafe []float32
 var SampleSizeInBytes uint32
 var WriteHeadPosition uint32
 
 const format = malgo.FormatF32
 
 func Init() {
-	SampleRingBuffer = ringbuffer.New(int(config.Config.RingBufferSize)).SetBlocking(true)
+	SampleRingBufferUnsafe = make([]float32, int(config.Config.RingBufferSize))
 	SampleSizeInBytes = uint32(malgo.SampleSizeInBytes(format))
 	WriteHeadPosition = 0
 }
@@ -68,8 +69,19 @@ func Start() {
 	deviceConfig.PeriodSizeInFrames = config.Config.AudioCaptureBufferSize
 
 	onRecvFrames := func(pSample2, pSample []byte, framecount uint32) {
-		SampleRingBuffer.Write(pSample)
-		WriteHeadPosition = (WriteHeadPosition + uint32(len(pSample))) % config.Config.RingBufferSize
+		buf := bytes.NewReader(pSample)
+		var AX float32
+		var AY float32
+		i := 0
+		for {
+			if binary.Read(buf, binary.NativeEndian, &AX) != nil || binary.Read(buf, binary.NativeEndian, &AY) != nil {
+				break
+			}
+			SampleRingBufferUnsafe[int(WriteHeadPosition)+i*2] = AX
+			SampleRingBufferUnsafe[int(WriteHeadPosition)+i*2+1] = AY
+			i++
+		}
+		WriteHeadPosition = (WriteHeadPosition + uint32(len(pSample))/4) % config.Config.RingBufferSize
 	}
 	captureCallbacks := malgo.DeviceCallbacks{
 		Data: onRecvFrames,

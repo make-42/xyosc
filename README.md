@@ -97,8 +97,11 @@ windowwidth: 1000
 windowheight: 1000
 capturedeviceindex: 0
 samplerate: 192000
-ringbuffersize: 4096
-readbuffersize: 4096
+audiocapturebuffersize: 64
+ringbuffersize: 4194304
+readbuffersize: 2048
+beatdetectreadbuffersize: 4194304
+beatdetectdownsamplefactor: 4
 gain: 1
 lineopacity: 200
 linebrightness: 1
@@ -127,6 +130,20 @@ bgcolor: "#1F1F29"
 disabletransparency: false
 copypreviousframe: true
 copypreviousframealpha: 0.1
+beatdetect: true
+beatdetectinterval: 100
+beatdetectbpmcorrectionspeed: 0.01
+beatdetecttimecorrectionspeed: 0.001
+beatdetectmaxbpm: 500.0
+showmetronome: true
+metronomeheight: 8
+metronomepadding: 8
+metronomethinlinemode: true
+metronomethinlinethicknesschangewithvelocity: true
+metronomethinlinethickness: 64
+metronomethinlinehintthickness: 2
+showbpm: true
+bpmtextsize: 24
 useshaders: true
 shaders:
 - name: glow

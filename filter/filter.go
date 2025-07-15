@@ -17,3 +17,22 @@ func FilterBufferInPlace(inputArray *[]complex128, lowCutOffFrac float64, highCu
 	err = gofft.IFFT(*inputArray)
 	utils.CheckError(err)
 }
+
+func FilterBufferInPlaceDomains(inputArray *[]complex128, domains [][2]float64) {
+	err := gofft.FFT(*inputArray)
+	utils.CheckError(err)
+	for x := range len(*inputArray) {
+		keep := false
+		for _, domain := range domains {
+			if x > int(float64(len(*inputArray))*domain[0]) && x <= int(float64(len(*inputArray))*domain[1]) {
+				keep = true
+				break
+			}
+		}
+		if !keep {
+			(*inputArray)[x] = 0
+		}
+	}
+	err = gofft.IFFT(*inputArray)
+	utils.CheckError(err)
+}
