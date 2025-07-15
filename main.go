@@ -387,7 +387,7 @@ func main() {
 	fonts.Init()
 	icons.Init()
 	go audio.Start()
-	if config.Config.BeatDetect {
+	if config.Config.BeatDetect || *beatDetectOverride {
 		go beatdetect.Start()
 	}
 	if config.Config.ShowMPRIS {
