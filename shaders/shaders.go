@@ -15,6 +15,9 @@ var glowCode []byte
 //go:embed assets/chromaticabberation.go
 var chromaticabberationCode []byte
 
+//go:embed assets/chromaticabberation2.go
+var chromaticabberation2Code []byte
+
 //go:embed assets/noise.go
 var noiseCode []byte
 
@@ -35,6 +38,8 @@ func Init() {
 	Shaders["glow"], err = ebiten.NewShader([]byte(glowCode))
 	utils.CheckError(err)
 	Shaders["chromaticabberation"], err = ebiten.NewShader([]byte(chromaticabberationCode))
+	utils.CheckError(err)
+	Shaders["chromaticabberation2"], err = ebiten.NewShader([]byte(chromaticabberation2Code))
 	utils.CheckError(err)
 	Shaders["noise"], err = ebiten.NewShader([]byte(noiseCode))
 	utils.CheckError(err)
