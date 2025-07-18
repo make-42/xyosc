@@ -84,7 +84,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var AY float32
 	var BX float32
 	var BY float32
-	posStartRead := (config.Config.RingBufferSize + audio.WriteHeadPosition - numSamples*2) % config.Config.RingBufferSize
+	posStartRead := (config.Config.RingBufferSize + audio.WriteHeadPosition - numSamples*2 - config.Config.ReadBufferDelay) % config.Config.RingBufferSize
 	if slices.Contains(pressedKeys, ebiten.KeyF) {
 		if !StillSamePressFromToggleKey {
 			StillSamePressFromToggleKey = true

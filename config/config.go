@@ -28,6 +28,7 @@ type ConfigS struct {
 	AudioCaptureBufferSize                       uint32
 	RingBufferSize                               uint32
 	ReadBufferSize                               uint32
+	ReadBufferDelay                              uint32
 	BeatDetectReadBufferSize                     uint32
 	BeatDetectDownSampleFactor                   uint32
 	Gain                                         float32
@@ -94,6 +95,7 @@ var DefaultConfig = ConfigS{
 	AudioCaptureBufferSize:           64, // Affects latency
 	RingBufferSize:                   262144 * 16,
 	ReadBufferSize:                   9600,
+	ReadBufferDelay:                  32,
 	BeatDetectReadBufferSize:         262144 * 16,
 	BeatDetectDownSampleFactor:       4,
 	Gain:                             1,
