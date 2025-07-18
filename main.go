@@ -57,6 +57,7 @@ var highCutOffFrac = 1.0
 var useRightChannel *bool
 var mixChannels *bool
 var beatDetectOverride *bool
+var peakDetectOverride *bool
 var overrideX *int
 var overrideY *int
 
@@ -201,7 +202,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				offset = uint32(indices[1])
 			}
 		}
-		if !config.Config.OscilloscopeStartPeakDetection {
+		if !(config.Config.OscilloscopeStartPeakDetection || *peakDetectOverride) {
 			offset = 0
 		}
 		if config.Config.PeriodCrop && len(indices) > 1 {
@@ -349,6 +350,7 @@ func Init() {
 	useRightChannel = flag.Bool("right", false, "Use the right channel instead of the left for the single axis oscilloscope")
 	mixChannels = flag.Bool("mix", false, "Mix channels instead of just using a single channel for the single axis oscilloscope")
 	beatDetectOverride = flag.Bool("beatdetect", false, "Enable beat detection (bypassing configuration)")
+	peakDetectOverride = flag.Bool("peakdetect", false, "Enable peak detection (bypassing configuration)")
 
 	overrideGain := flag.Float64("gain", -1.0, "override gain multiplier")
 
