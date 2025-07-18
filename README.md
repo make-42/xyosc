@@ -100,6 +100,7 @@ samplerate: 192000
 audiocapturebuffersize: 64
 ringbuffersize: 4194304
 readbuffersize: 2048
+readbufferdelay: 32
 beatdetectreadbuffersize: 4194304
 beatdetectdownsamplefactor: 4
 gain: 1
