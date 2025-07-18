@@ -215,7 +215,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 			}
 		} else {
-			for i := uint32(0); i < numSamples-1; i++ {
+			for i := uint32(0); i < config.Config.SingleChannelWindow/2-1; i++ {
 				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
