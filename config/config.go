@@ -66,6 +66,7 @@ type ConfigS struct {
 	BeatDetectBPMCorrectionSpeed                 float64
 	BeatDetectTimeCorrectionSpeed                float64
 	BeatDetectMaxBPM                             float64
+	BeatDetectHalfDisplayedBPM                   bool
 	ShowMetronome                                bool
 	MetronomeHeight                              float64
 	MetronomePadding                             float64
@@ -133,6 +134,7 @@ var DefaultConfig = ConfigS{
 	BeatDetectBPMCorrectionSpeed:     0.01,
 	BeatDetectTimeCorrectionSpeed:    0.001,
 	BeatDetectMaxBPM:                 500.0,
+	BeatDetectHalfDisplayedBPM:       false,
 	ShowMetronome:                    true,
 	MetronomeHeight:                  8,
 	MetronomePadding:                 8,

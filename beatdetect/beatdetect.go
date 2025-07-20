@@ -73,12 +73,16 @@ func DetectBeat() {
 		defer isSafeToInterpolateBPMAndTiming.Unlock()
 		CurrentBPM = 60.0 * float64(config.Config.SampleRate) / float64(config.Config.BeatDetectDownSampleFactor) / avg
 		CurrentBeatTime = timeAtDump.Add(time.Duration(int64(avgOffset) * 1000000000 / int64(config.Config.SampleRate) * int64(config.Config.BeatDetectDownSampleFactor)))
+		MultFactor := 2.0
+		if config.Config.BeatDetectHalfDisplayedBPM {
+			MultFactor = 4
+		}
 		if InterpolatedBPM != .0 {
-			for CurrentBeatTime.Sub(InterpolatedBeatTime) > time.Duration(1000000000*60/InterpolatedBPM*2) { // The 2x is here to ensure that the metronome representation is accurate and doesn't flip flop comes from one side or the other
-				InterpolatedBeatTime = InterpolatedBeatTime.Add(time.Duration(1000000000 * 60 / InterpolatedBPM * 2))
+			for CurrentBeatTime.Sub(InterpolatedBeatTime) > time.Duration(1000000000*60/InterpolatedBPM*MultFactor) { // The 2x is here to ensure that the metronome representation is accurate and doesn't flip flop comes from one side or the other
+				InterpolatedBeatTime = InterpolatedBeatTime.Add(time.Duration(1000000000 * 60 / InterpolatedBPM * MultFactor))
 			}
-			if CurrentBeatTime.Sub(InterpolatedBeatTime) > -CurrentBeatTime.Sub(InterpolatedBeatTime.Add(time.Duration(1000000000*60/InterpolatedBPM*2))) {
-				InterpolatedBeatTime = InterpolatedBeatTime.Add(time.Duration(1000000000 * 60 / InterpolatedBPM * 2))
+			if CurrentBeatTime.Sub(InterpolatedBeatTime) > -CurrentBeatTime.Sub(InterpolatedBeatTime.Add(time.Duration(1000000000*60/InterpolatedBPM*MultFactor))) {
+				InterpolatedBeatTime = InterpolatedBeatTime.Add(time.Duration(1000000000 * 60 / InterpolatedBPM * MultFactor))
 			}
 		}
 	}

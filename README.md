@@ -136,6 +136,7 @@ beatdetectinterval: 100
 beatdetectbpmcorrectionspeed: 0.01
 beatdetecttimecorrectionspeed: 0.001
 beatdetectmaxbpm: 500.0
+beatdetecthalfdisplayedbpm: false
 showmetronome: true
 metronomeheight: 8
 metronomepadding: 8

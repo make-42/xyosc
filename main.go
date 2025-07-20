@@ -252,7 +252,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			op.GeoM.Translate(float64(config.Config.WindowWidth)/2, float64(layoutY))
 			op.LayoutOptions.PrimaryAlign = text.AlignCenter
 			op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
-			text.Draw(screen, fmt.Sprintf("%0.2f BPM", beatdetect.InterpolatedBPM), &text.GoTextFace{
+			displayedBPM := beatdetect.InterpolatedBPM
+			if config.Config.BeatDetectHalfDisplayedBPM {
+				displayedBPM /= 2
+			}
+			text.Draw(screen, fmt.Sprintf("%0.2f BPM", displayedBPM), &text.GoTextFace{
 				Source: fonts.Font,
 				Size:   config.Config.BPMTextSize,
 			}, op)
