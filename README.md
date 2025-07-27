@@ -154,6 +154,7 @@ barspaddingedge: 4
 barspaddingbetween: 4
 barsautogain: true
 barsautogainspeed: 0.5
+barsautogainminvolume: 0.000000001
 barsinterpolatepos: true
 barsinterpolateaccel: 20
 barsinterpolatedrag: 2

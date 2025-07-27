@@ -63,6 +63,7 @@ func InterpolateBars(deltaTime float64) {
 			max = math.Max(max, value)
 		}
 		InterpolatedMaxVolume += (max - InterpolatedMaxVolume) * deltaTime * config.Config.BarsAutoGainSpeed
+		InterpolatedMaxVolume = math.Max(config.Config.BarsAutoGainMinVolume, InterpolatedMaxVolume)
 	}
 	if config.Config.BarsInterpolatePos {
 		for i := range TargetBarsPos {

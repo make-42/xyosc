@@ -84,6 +84,7 @@ type ConfigS struct {
 	BarsPaddingBetween                           float64
 	BarsAutoGain                                 bool
 	BarsAutoGainSpeed                            float64
+	BarsAutoGainMinVolume                        float64
 	BarsInterpolatePos                           bool
 	BarsInterpolateAccel                         float64
 	BarsInterpolateDrag                          float64
@@ -164,6 +165,7 @@ var DefaultConfig = ConfigS{
 	BarsPaddingBetween:                           4,
 	BarsAutoGain:                                 true,
 	BarsAutoGainSpeed:                            0.5,
+	BarsAutoGainMinVolume:                        0.000000001,
 	BarsInterpolatePos:                           true,
 	BarsInterpolateAccel:                         20.,
 	BarsInterpolateDrag:                          2.,
