@@ -11,6 +11,7 @@ import (
 var InterpolatedBarsPos []float64
 var InterpolatedBarsVel []float64
 var TargetBarsPos []float64
+var InterpolatedMaxVolume float64 = 2000. // sane starting point
 
 func Init() {
 	barCount := (float64(config.Config.WindowWidth) - config.Config.BarsPaddingEdge*2 + config.Config.BarsPaddingBetween) / (config.Config.BarsPaddingBetween + config.Config.BarsWidth)
@@ -48,5 +49,31 @@ func CalcBars(inputArray *[]complex128, lowCutOffFrac float64, highCutOffFrac fl
 	}
 	if nSamples != 0 {
 		TargetBarsPos[int(nthBar)] = sum / nSamples
+	}
+}
+
+func InterpolateBars(deltaTime float64) {
+	if config.Config.BarsAutoGain {
+		max := 0.0
+		if len(TargetBarsPos) != 0 {
+			max = TargetBarsPos[0]
+		}
+
+		for _, value := range TargetBarsPos {
+			max = math.Max(max, value)
+		}
+		InterpolatedMaxVolume += (max - InterpolatedMaxVolume) * deltaTime * config.Config.BarsAutoGainSpeed
+	}
+	if config.Config.BarsInterpolatePos {
+		for i := range TargetBarsPos {
+			InterpolatedBarsPos[i] += (TargetBarsPos[i] - InterpolatedBarsPos[i]) * min(1.0, deltaTime*config.Config.BarsInterpolateDirect)
+			InterpolatedBarsVel[i] += (TargetBarsPos[i] - InterpolatedBarsPos[i]) * deltaTime * config.Config.BarsInterpolateAccel
+			InterpolatedBarsVel[i] -= InterpolatedBarsVel[i] * min(1.0, deltaTime*config.Config.BarsInterpolateDrag)
+			InterpolatedBarsPos[i] += InterpolatedBarsVel[i] * deltaTime
+		}
+	} else {
+		for i := range TargetBarsPos {
+			InterpolatedBarsPos[i] = TargetBarsPos[i]
+		}
 	}
 }

@@ -136,8 +136,8 @@ copypreviousframe: true
 copypreviousframealpha: 0.1
 beatdetect: true
 beatdetectinterval: 100
-beatdetectbpmcorrectionspeed: 0.01
-beatdetecttimecorrectionspeed: 0.001
+beatdetectbpmcorrectionspeed: 2
+beatdetecttimecorrectionspeed: 0.2
 beatdetectmaxbpm: 500.0
 beatdetecthalfdisplayedbpm: false
 showmetronome: true
@@ -152,6 +152,12 @@ bpmtextsize: 24
 barswidth: 4
 barspaddingedge: 4
 barspaddingbetween: 4
+barsautogain: true
+barsautogainspeed: 0.5
+barsinterpolatepos: true
+barsinterpolateaccel: 20
+barsinterpolatedrag: 2
+barsinterpolatedirect: 20
 useshaders: true
 shaders:
 - name: glow

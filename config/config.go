@@ -82,6 +82,12 @@ type ConfigS struct {
 	BarsWidth                                    float64
 	BarsPaddingEdge                              float64
 	BarsPaddingBetween                           float64
+	BarsAutoGain                                 bool
+	BarsAutoGainSpeed                            float64
+	BarsInterpolatePos                           bool
+	BarsInterpolateAccel                         float64
+	BarsInterpolateDrag                          float64
+	BarsInterpolateDirect                        float64
 	UseShaders                                   bool
 	Shaders                                      []Shader
 	CustomShaderCode                             map[string]string
@@ -140,8 +146,8 @@ var DefaultConfig = ConfigS{
 	CopyPreviousFrameAlpha:           0.4,
 	BeatDetect:                       true,
 	BeatDetectInterval:               100, // ms
-	BeatDetectBPMCorrectionSpeed:     0.01,
-	BeatDetectTimeCorrectionSpeed:    0.001,
+	BeatDetectBPMCorrectionSpeed:     2,
+	BeatDetectTimeCorrectionSpeed:    0.2,
 	BeatDetectMaxBPM:                 500.0,
 	BeatDetectHalfDisplayedBPM:       false,
 	ShowMetronome:                    true,
@@ -156,6 +162,12 @@ var DefaultConfig = ConfigS{
 	BarsWidth:                                    4,
 	BarsPaddingEdge:                              4,
 	BarsPaddingBetween:                           4,
+	BarsAutoGain:                                 true,
+	BarsAutoGainSpeed:                            0.5,
+	BarsInterpolatePos:                           true,
+	BarsInterpolateAccel:                         20.,
+	BarsInterpolateDrag:                          2.,
+	BarsInterpolateDirect:                        20.,
 	UseShaders:                                   true,
 	Shaders: []Shader{
 		{

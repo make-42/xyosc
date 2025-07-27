@@ -67,6 +67,9 @@ var XYComplexFFTBufferR []complex128
 
 var StillSamePressFromToggleKey bool
 
+var barsLastFrameTime time.Time
+var beatTimeLastFrameTime time.Time
+
 func (g *Game) Draw(screen *ebiten.Image) {
 	var numSamples = config.Config.ReadBufferSize / 2
 	if config.Config.CopyPreviousFrame {
@@ -244,18 +247,22 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		} else {
 			bars.CalcBars(&complexFFTBuffer, 0.0, 1.0)
 		}
+		barsDeltaTime := min(time.Since(barsLastFrameTime).Seconds(), 1.0)
+		barsLastFrameTime = time.Now()
+		bars.InterpolateBars(barsDeltaTime)
 		for x := range bars.TargetBarsPos {
 			if filtersApplied && config.Config.ShowFilterInfo {
-				vector.DrawFilledRect(screen, float32(config.Config.BarsPaddingEdge)+float32(x)*float32(config.Config.BarsWidth+config.Config.BarsPaddingBetween), float32(config.Config.WindowHeight)-float32(config.Config.BarsPaddingEdge)-float32(config.Config.FilterInfoTextSize)-float32(config.Config.FilterInfoTextPaddingBottom), float32(config.Config.BarsWidth), -(float32(config.Config.WindowHeight)-2*float32(config.Config.BarsPaddingEdge)-float32(config.Config.FilterInfoTextSize)-float32(config.Config.FilterInfoTextPaddingBottom))*float32(bars.TargetBarsPos[x])*0.001, config.ThirdColorAdj, true)
+				vector.DrawFilledRect(screen, float32(config.Config.BarsPaddingEdge)+float32(x)*float32(config.Config.BarsWidth+config.Config.BarsPaddingBetween), float32(config.Config.WindowHeight)-float32(config.Config.BarsPaddingEdge)-float32(config.Config.FilterInfoTextSize)-float32(config.Config.FilterInfoTextPaddingBottom), float32(config.Config.BarsWidth), -(float32(config.Config.WindowHeight)-2*float32(config.Config.BarsPaddingEdge)-float32(config.Config.FilterInfoTextSize)-float32(config.Config.FilterInfoTextPaddingBottom))*float32(bars.InterpolatedBarsPos[x])/float32(bars.InterpolatedMaxVolume), config.ThirdColorAdj, true)
 			} else {
-				vector.DrawFilledRect(screen, float32(config.Config.BarsPaddingEdge)+float32(x)*float32(config.Config.BarsWidth+config.Config.BarsPaddingBetween), float32(config.Config.WindowHeight)-float32(config.Config.BarsPaddingEdge), float32(config.Config.BarsWidth), -(float32(config.Config.WindowHeight)-2*float32(config.Config.BarsPaddingEdge))*float32(bars.TargetBarsPos[x])*0.001, config.ThirdColorAdj, true)
-
+				vector.DrawFilledRect(screen, float32(config.Config.BarsPaddingEdge)+float32(x)*float32(config.Config.BarsWidth+config.Config.BarsPaddingBetween), float32(config.Config.WindowHeight)-float32(config.Config.BarsPaddingEdge), float32(config.Config.BarsWidth), -(float32(config.Config.WindowHeight)-2*float32(config.Config.BarsPaddingEdge))*float32(bars.InterpolatedBarsPos[x])/float32(bars.InterpolatedMaxVolume), config.ThirdColorAdj, true)
 			}
 		}
 	}
 
 	if config.Config.BeatDetect || *beatDetectOverride {
-		beatdetect.InterpolateBeatTime()
+		beatTimeDeltaTime := min(time.Since(beatTimeLastFrameTime).Seconds(), 1.0)
+		beatTimeLastFrameTime = time.Now()
+		beatdetect.InterpolateBeatTime(beatTimeDeltaTime)
 		layoutY := config.Config.MetronomePadding
 		if config.Config.ShowMetronome {
 			if beatdetect.InterpolatedBPM != 0 {
