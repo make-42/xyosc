@@ -38,10 +38,12 @@ func CalcBars(inputArray *[]complex128, lowCutOffFrac float64, highCutOffFrac fl
 				break
 			}
 			if (nthBar+1)/numBars <= frac {
-				if nSamples != 0 {
-					TargetBarsPos[int(nthBar)] = sum / nSamples
+				for (nthBar+1)/numBars <= frac {
+					if nSamples != 0 {
+						TargetBarsPos[int(nthBar)] = sum / nSamples
+					}
+					nthBar++
 				}
-				nthBar++
 				sum = 0.0
 				nSamples = 0.0
 			}

@@ -38,7 +38,7 @@ func Start() {
 func InterpolateBeatTime(deltaTime float64) {
 	if isSafeToInterpolateBPMAndTiming.TryLock() {
 		defer isSafeToInterpolateBPMAndTiming.Unlock()
-		InterpolatedBPM = (InterpolatedBPM*(1-config.Config.BeatDetectBPMCorrectionSpeed*deltaTime) + CurrentBPM*(config.Config.BeatDetectBPMCorrectionSpeed*deltaTime))
+		InterpolatedBPM = max(0, (InterpolatedBPM*(1-config.Config.BeatDetectBPMCorrectionSpeed*deltaTime) + CurrentBPM*(config.Config.BeatDetectBPMCorrectionSpeed*deltaTime)))
 		InterpolatedBeatTime = InterpolatedBeatTime.Add(time.Duration(float64(CurrentBeatTime.Sub(InterpolatedBeatTime).Nanoseconds()) * (config.Config.BeatDetectTimeCorrectionSpeed * deltaTime)))
 	}
 }
