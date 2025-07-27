@@ -90,6 +90,9 @@ Here is an example of how to configure `xyosc` using Nix.
 ```yaml
 fpscounter: false
 showfilterinfo: true
+filterinfotextsize: 16
+filterinfotextpaddingleft: 16
+filterinfotextpaddingbottom: 4
 showmpris: false
 mpristextopacity: 255
 targetfps: 240
@@ -115,7 +118,7 @@ particleminsize: 1.0
 particlemaxsize: 3.0
 particleacceleration: 0.2
 particledrag: 5.0
-defaulttosinglechannel: true
+defaultmode: 0
 peakdetectseparator: 200
 singlechannelwindow: 1200
 periodcrop: true
@@ -146,6 +149,9 @@ metronomethinlinethickness: 64
 metronomethinlinehintthickness: 2
 showbpm: true
 bpmtextsize: 24
+barswidth: 4
+barspaddingedge: 4
+barspaddingbetween: 4
 useshaders: true
 shaders:
 - name: glow

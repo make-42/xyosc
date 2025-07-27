@@ -11,6 +11,7 @@ import (
 	"sort"
 	"time"
 	"xyosc/audio"
+	"xyosc/bars"
 	"xyosc/beatdetect"
 	"xyosc/config"
 	"xyosc/fastsqrt"
@@ -88,12 +89,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if slices.Contains(pressedKeys, ebiten.KeyF) {
 		if !StillSamePressFromToggleKey {
 			StillSamePressFromToggleKey = true
-			config.SingleChannel = !config.SingleChannel
+			config.Config.DefaultMode = (config.Config.DefaultMode + 1) % 3
 		}
 	} else {
 		StillSamePressFromToggleKey = false
 	}
-	if !config.SingleChannel {
+	if config.Config.DefaultMode == 0 {
 		if filtersApplied {
 			for i := uint32(0); i < numSamples; i++ {
 				AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
@@ -158,7 +159,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			particles.Particles[i].VX += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.X / norm / float32(ebiten.ActualTPS())
 			particles.Particles[i].VY += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.Y / norm / float32(ebiten.ActualTPS())
 		}
-	} else {
+	} else if config.Config.DefaultMode == 1 {
 		for i := uint32(0); i < numSamples; i++ {
 			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
 			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
@@ -222,6 +223,33 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
 					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2))/float32((config.Config.SingleChannelWindow/2)), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2)+1)/float32(config.Config.SingleChannelWindow/2), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
 				}
+			}
+		}
+	} else {
+		for i := uint32(0); i < numSamples; i++ {
+			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
+			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
+			if *mixChannels {
+				complexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
+			} else {
+				if *useRightChannel {
+					complexFFTBuffer[i] = complex(float64(AY), 0.0)
+				} else {
+					complexFFTBuffer[i] = complex(float64(AX), 0.0)
+				}
+			}
+		}
+		if filtersApplied {
+			bars.CalcBars(&complexFFTBuffer, lowCutOffFrac, highCutOffFrac)
+		} else {
+			bars.CalcBars(&complexFFTBuffer, 0.0, 1.0)
+		}
+		for x := range bars.TargetBarsPos {
+			if filtersApplied && config.Config.ShowFilterInfo {
+				vector.DrawFilledRect(screen, float32(config.Config.BarsPaddingEdge)+float32(x)*float32(config.Config.BarsWidth+config.Config.BarsPaddingBetween), float32(config.Config.WindowHeight)-float32(config.Config.BarsPaddingEdge)-float32(config.Config.FilterInfoTextSize)-float32(config.Config.FilterInfoTextPaddingBottom), float32(config.Config.BarsWidth), -(float32(config.Config.WindowHeight)-2*float32(config.Config.BarsPaddingEdge)-float32(config.Config.FilterInfoTextSize)-float32(config.Config.FilterInfoTextPaddingBottom))*float32(bars.TargetBarsPos[x])*0.001, config.ThirdColorAdj, true)
+			} else {
+				vector.DrawFilledRect(screen, float32(config.Config.BarsPaddingEdge)+float32(x)*float32(config.Config.BarsWidth+config.Config.BarsPaddingBetween), float32(config.Config.WindowHeight)-float32(config.Config.BarsPaddingEdge), float32(config.Config.BarsWidth), -(float32(config.Config.WindowHeight)-2*float32(config.Config.BarsPaddingEdge))*float32(bars.TargetBarsPos[x])*0.001, config.ThirdColorAdj, true)
+
 			}
 		}
 	}
@@ -324,12 +352,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		hiFreq := highCutOffFrac * float64(config.Config.SampleRate)
 
 		op = &text.DrawOptions{}
-		op.GeoM.Translate(16, float64(config.Config.WindowHeight-16))
+		op.GeoM.Translate(config.Config.FilterInfoTextPaddingLeft, float64(config.Config.WindowHeight)-config.Config.FilterInfoTextSize-config.Config.FilterInfoTextPaddingBottom)
 		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
 
 		text.Draw(screen, fmt.Sprintf("Lo: %0.2f Hz; Hi: %0.2f Hz", loFreq, hiFreq), &text.GoTextFace{
 			Source: fonts.Font,
-			Size:   16,
+			Size:   config.Config.FilterInfoTextSize,
 		}, op)
 	}
 
@@ -373,8 +401,9 @@ func Init() {
 		filtersApplied = true
 		highCutOffFrac = *highCutOff
 	}
+
+	complexFFTBuffer = make([]complex128, numSamples)
 	if filtersApplied {
-		complexFFTBuffer = make([]complex128, numSamples)
 		XYComplexFFTBufferL = make([]complex128, numSamples)
 		XYComplexFFTBufferR = make([]complex128, numSamples)
 	}
@@ -402,6 +431,7 @@ func main() {
 	if config.Config.UseShaders {
 		shaders.Init()
 	}
+	bars.Init()
 	ebiten.SetWindowIcon([]image.Image{icons.WindowIcon48, icons.WindowIcon32, icons.WindowIcon16})
 	ebiten.SetWindowSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	ebiten.SetWindowTitle("xyosc")

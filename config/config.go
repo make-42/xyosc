@@ -16,6 +16,9 @@ import (
 type ConfigS struct {
 	FPSCounter                                   bool
 	ShowFilterInfo                               bool
+	FilterInfoTextSize                           float64
+	FilterInfoTextPaddingLeft                    float64
+	FilterInfoTextPaddingBottom                  float64
 	ShowMPRIS                                    bool
 	MPRISTextOpacity                             uint8
 	TargetFPS                                    int32
@@ -43,7 +46,7 @@ type ConfigS struct {
 	ParticleMaxSize                              float32
 	ParticleAcceleration                         float32
 	ParticleDrag                                 float32
-	DefaultToSingleChannel                       bool
+	DefaultMode                                  int // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
 	PeakDetectSeparator                          int
 	OscilloscopeStartPeakDetection               bool
 	PeakDetectEdgeGuardBufferSize                uint32
@@ -76,6 +79,9 @@ type ConfigS struct {
 	MetronomeThinLineHintThickness               float64
 	ShowBPM                                      bool
 	BPMTextSize                                  float64
+	BarsWidth                                    float64
+	BarsPaddingEdge                              float64
+	BarsPaddingBetween                           float64
 	UseShaders                                   bool
 	Shaders                                      []Shader
 	CustomShaderCode                             map[string]string
@@ -84,6 +90,9 @@ type ConfigS struct {
 var DefaultConfig = ConfigS{
 	FPSCounter:                       false,
 	ShowFilterInfo:                   true,
+	FilterInfoTextSize:               16,
+	FilterInfoTextPaddingLeft:        16,
+	FilterInfoTextPaddingBottom:      4,
 	ShowMPRIS:                        true,
 	MPRISTextOpacity:                 255,
 	TargetFPS:                        240,
@@ -111,7 +120,7 @@ var DefaultConfig = ConfigS{
 	ParticleMaxSize:                  2.0,
 	ParticleAcceleration:             0.015,
 	ParticleDrag:                     5.0,
-	DefaultToSingleChannel:           false,
+	DefaultMode:                      0, // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
 	PeakDetectSeparator:              100,
 	OscilloscopeStartPeakDetection:   true,
 	PeakDetectEdgeGuardBufferSize:    100,
@@ -144,6 +153,9 @@ var DefaultConfig = ConfigS{
 	MetronomeThinLineHintThickness:               2,
 	ShowBPM:                                      true,
 	BPMTextSize:                                  24,
+	BarsWidth:                                    4,
+	BarsPaddingEdge:                              4,
+	BarsPaddingBetween:                           4,
 	UseShaders:                                   true,
 	Shaders: []Shader{
 		{
@@ -200,8 +212,6 @@ var BGColor color.RGBA
 
 var watcher *fsnotify.Watcher
 
-var SingleChannel bool = false
-
 var HannWindow []float64
 
 func Init() {
@@ -231,7 +241,6 @@ func Init() {
 		decoder := yaml.NewDecoder(fh)
 		decoder.Decode(&Config)
 	}
-	SingleChannel = Config.DefaultToSingleChannel
 
 	// Get pywal accent color
 	watcher, err = fsnotify.NewWatcher()
