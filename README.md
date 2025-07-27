@@ -103,6 +103,7 @@ samplerate: 192000
 audiocapturebuffersize: 64
 ringbuffersize: 4194304
 readbuffersize: 2048
+xyoscilloscopereadbuffersize: 2048
 readbufferdelay: 32
 beatdetectreadbuffersize: 4194304
 beatdetectdownsamplefactor: 4
@@ -110,7 +111,13 @@ gain: 1
 lineopacity: 200
 linebrightness: 1
 linethickness: 3
-lineinvsqrtopacitycontrol: false
+lineinvsqrtopacitycontrol: true
+lineinvsqrtopacitycontroluselogdecrement: true
+lineinvsqrtopacitycontrollogdecrementbase: 200.0
+lineinvsqrtopacitycontrollogdecrementoffset: 0.99
+linetimedependentopacitycontrol: true
+linetimedependentopacitycontrolbase: 0.999
+lineopacitycontrolalsoappliestothickness: true
 particles: false
 particlegenperframeeveryxsamples: 4000
 particlemaxcount: 100
@@ -133,7 +140,8 @@ particlecolor: "#E4E0EF"
 bgcolor: "#1F1F29"
 disabletransparency: false
 copypreviousframe: true
-copypreviousframealpha: 0.1
+copypreviousframealphadecaybase: 0.0000001
+copypreviousframealphadecayspeed: 2.0
 beatdetect: true
 beatdetectinterval: 100
 beatdetectbpmcorrectionspeed: 2

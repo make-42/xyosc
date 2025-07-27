@@ -32,6 +32,7 @@ type ConfigS struct {
 	RingBufferSize                               uint32
 	ReadBufferSize                               uint32
 	ReadBufferDelay                              uint32
+	XYOscilloscopeReadBufferSize                 uint32
 	BeatDetectReadBufferSize                     uint32
 	BeatDetectDownSampleFactor                   uint32
 	Gain                                         float32
@@ -39,6 +40,12 @@ type ConfigS struct {
 	LineBrightness                               float64
 	LineThickness                                float32
 	LineInvSqrtOpacityControl                    bool
+	LineInvSqrtOpacityControlUseLogDecrement     bool
+	LineInvSqrtOpacityControlLogDecrementBase    float64
+	LineInvSqrtOpacityControlLogDecrementOffset  float64
+	LineTimeDependentOpacityControl              bool
+	LineTimeDependentOpacityControlBase          float64
+	LineOpacityControlAlsoAppliesToThickness     bool
 	Particles                                    bool
 	ParticleGenPerFrameEveryXSamples             int
 	ParticleMaxCount                             int
@@ -63,7 +70,8 @@ type ConfigS struct {
 	BGColor                                      string
 	DisableTransparency                          bool
 	CopyPreviousFrame                            bool
-	CopyPreviousFrameAlpha                       float32
+	CopyPreviousFrameAlphaDecayBase              float64
+	CopyPreviousFrameAlphaDecaySpeed             float64
 	BeatDetect                                   bool
 	BeatDetectInterval                           int64 //ms
 	BeatDetectBPMCorrectionSpeed                 float64
@@ -95,66 +103,74 @@ type ConfigS struct {
 }
 
 var DefaultConfig = ConfigS{
-	FPSCounter:                       false,
-	ShowFilterInfo:                   true,
-	FilterInfoTextSize:               16,
-	FilterInfoTextPaddingLeft:        16,
-	FilterInfoTextPaddingBottom:      4,
-	ShowMPRIS:                        true,
-	MPRISTextOpacity:                 255,
-	TargetFPS:                        240,
-	WindowWidth:                      1300,
-	WindowHeight:                     1300,
-	CaptureDeviceIndex:               0,
-	CaptureDeviceName:                "",
-	CaptureDeviceSampleRate:          0, // In case there are multiple outputs with different sample rates and you want to pick a specific one, else leave equal to 0
-	SampleRate:                       192000,
-	AudioCaptureBufferSize:           64, // Affects latency
-	RingBufferSize:                   262144 * 16,
-	ReadBufferSize:                   9600,
-	ReadBufferDelay:                  32,
-	BeatDetectReadBufferSize:         262144 * 16,
-	BeatDetectDownSampleFactor:       4,
-	Gain:                             1,
-	LineOpacity:                      200,
-	LineBrightness:                   1,
-	LineThickness:                    3,
-	LineInvSqrtOpacityControl:        false,
-	Particles:                        true,
-	ParticleGenPerFrameEveryXSamples: 2000,
-	ParticleMaxCount:                 600,
-	ParticleMinSize:                  0.2,
-	ParticleMaxSize:                  2.0,
-	ParticleAcceleration:             0.015,
-	ParticleDrag:                     5.0,
-	DefaultMode:                      0, // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
-	PeakDetectSeparator:              100,
-	OscilloscopeStartPeakDetection:   true,
-	PeakDetectEdgeGuardBufferSize:    100,
-	SingleChannelWindow:              1200,
-	PeriodCrop:                       true,
-	PeriodCropCount:                  2,
-	PeriodCropLoopOverCount:          1,
-	FFTBufferOffset:                  3200,
-	ForceColors:                      false,
-	AccentColor:                      "#FF0000",
-	FirstColor:                       "#FF0000",
-	ThirdColor:                       "#FF0000",
-	ParticleColor:                    "#FF0000",
-	BGColor:                          "#222222",
-	DisableTransparency:              false,
-	CopyPreviousFrame:                true,
-	CopyPreviousFrameAlpha:           0.4,
-	BeatDetect:                       true,
-	BeatDetectInterval:               100, // ms
-	BeatDetectBPMCorrectionSpeed:     2,
-	BeatDetectTimeCorrectionSpeed:    0.2,
-	BeatDetectMaxBPM:                 500.0,
-	BeatDetectHalfDisplayedBPM:       false,
-	ShowMetronome:                    true,
-	MetronomeHeight:                  8,
-	MetronomePadding:                 8,
-	MetronomeThinLineMode:            true,
+	FPSCounter:                               false,
+	ShowFilterInfo:                           true,
+	FilterInfoTextSize:                       16,
+	FilterInfoTextPaddingLeft:                16,
+	FilterInfoTextPaddingBottom:              4,
+	ShowMPRIS:                                true,
+	MPRISTextOpacity:                         255,
+	TargetFPS:                                240,
+	WindowWidth:                              1300,
+	WindowHeight:                             1300,
+	CaptureDeviceIndex:                       0,
+	CaptureDeviceName:                        "",
+	CaptureDeviceSampleRate:                  0, // In case there are multiple outputs with different sample rates and you want to pick a specific one, else leave equal to 0
+	SampleRate:                               192000,
+	AudioCaptureBufferSize:                   64, // Affects latency
+	RingBufferSize:                           262144 * 16,
+	ReadBufferSize:                           9600,
+	XYOscilloscopeReadBufferSize:             2048,
+	ReadBufferDelay:                          32,
+	BeatDetectReadBufferSize:                 262144 * 16,
+	BeatDetectDownSampleFactor:               4,
+	Gain:                                     1,
+	LineOpacity:                              200,
+	LineBrightness:                           1,
+	LineThickness:                            3,
+	LineInvSqrtOpacityControl:                false,
+	LineInvSqrtOpacityControlUseLogDecrement: true,
+	LineInvSqrtOpacityControlLogDecrementBase:    200.0,
+	LineInvSqrtOpacityControlLogDecrementOffset:  0.99,
+	LineTimeDependentOpacityControl:              true,
+	LineTimeDependentOpacityControlBase:          0.999,
+	LineOpacityControlAlsoAppliesToThickness:     true,
+	Particles:                                    true,
+	ParticleGenPerFrameEveryXSamples:             2000,
+	ParticleMaxCount:                             600,
+	ParticleMinSize:                              0.2,
+	ParticleMaxSize:                              2.0,
+	ParticleAcceleration:                         0.015,
+	ParticleDrag:                                 5.0,
+	DefaultMode:                                  0, // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
+	PeakDetectSeparator:                          100,
+	OscilloscopeStartPeakDetection:               true,
+	PeakDetectEdgeGuardBufferSize:                100,
+	SingleChannelWindow:                          1200,
+	PeriodCrop:                                   true,
+	PeriodCropCount:                              2,
+	PeriodCropLoopOverCount:                      1,
+	FFTBufferOffset:                              3200,
+	ForceColors:                                  false,
+	AccentColor:                                  "#FF0000",
+	FirstColor:                                   "#FF0000",
+	ThirdColor:                                   "#FF0000",
+	ParticleColor:                                "#FF0000",
+	BGColor:                                      "#222222",
+	DisableTransparency:                          false,
+	CopyPreviousFrame:                            true,
+	CopyPreviousFrameAlphaDecayBase:              0.0000001,
+	CopyPreviousFrameAlphaDecaySpeed:             2.0,
+	BeatDetect:                                   true,
+	BeatDetectInterval:                           100, // ms
+	BeatDetectBPMCorrectionSpeed:                 2,
+	BeatDetectTimeCorrectionSpeed:                0.2,
+	BeatDetectMaxBPM:                             500.0,
+	BeatDetectHalfDisplayedBPM:                   false,
+	ShowMetronome:                                true,
+	MetronomeHeight:                              8,
+	MetronomePadding:                             8,
+	MetronomeThinLineMode:                        true,
 	MetronomeThinLineThicknessChangeWithVelocity: true,
 	MetronomeThinLineThickness:                   64,
 	MetronomeThinLineHintThickness:               2,

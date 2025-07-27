@@ -69,13 +69,16 @@ var StillSamePressFromToggleKey bool
 
 var barsLastFrameTime time.Time
 var beatTimeLastFrameTime time.Time
+var lastFrameTime time.Time
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	deltaTime := min(time.Since(lastFrameTime).Seconds(), 1.0)
+	lastFrameTime = time.Now()
 	var numSamples = config.Config.ReadBufferSize / 2
 	if config.Config.CopyPreviousFrame {
 		if !firstFrame {
 			op := &ebiten.DrawImageOptions{}
-			op.ColorScale.ScaleAlpha(config.Config.CopyPreviousFrameAlpha)
+			op.ColorScale.ScaleAlpha(float32(math.Pow(float64(config.Config.CopyPreviousFrameAlphaDecayBase), deltaTime*config.Config.CopyPreviousFrameAlphaDecaySpeed)))
 			screen.DrawImage(prevFrame, op)
 		}
 	} else {
@@ -126,12 +129,29 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			fAY := -float32(AY) * config.Config.Gain * float32(scale)
 			fBX := float32(BX) * config.Config.Gain * float32(scale)
 			fBY := -float32(BY) * config.Config.Gain * float32(scale)
-			if config.Config.LineInvSqrtOpacityControl {
-				inv := fastsqrt.FastInvSqrt32((fBX-fAX)*(fBX-fAX) + (fBY-fBY)*(fBY-fBY))
-				colorAdjusted := color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, uint8(float32(config.Config.LineOpacity) * inv)}
-				vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness, colorAdjusted, true)
-			} else {
-				vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness, config.ThirdColorAdj, true)
+			if i >= numSamples-config.Config.XYOscilloscopeReadBufferSize {
+				if config.Config.LineInvSqrtOpacityControl || config.Config.LineTimeDependentOpacityControl {
+					mult := 1.0
+					if config.Config.LineInvSqrtOpacityControl {
+						invStrength := min(float64(fastsqrt.FastInvSqrt32((fBX-fAX)*(fBX-fAX)+(fBY-fBY)*(fBY-fBY))), 1.0)
+						if config.Config.LineInvSqrtOpacityControlUseLogDecrement {
+							mult *= config.Config.LineInvSqrtOpacityControlLogDecrementOffset + math.Log(invStrength)/math.Log(config.Config.LineInvSqrtOpacityControlLogDecrementBase)
+						} else {
+							mult *= invStrength
+						}
+					}
+					if config.Config.LineTimeDependentOpacityControl {
+						mult *= math.Pow(config.Config.LineTimeDependentOpacityControlBase, float64(numSamples-i-1))
+					}
+					colorAdjusted := color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, uint8(float64(config.Config.LineOpacity) * mult)}
+					if config.Config.LineOpacityControlAlsoAppliesToThickness {
+						vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness*float32(mult), colorAdjusted, true)
+					} else {
+						vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness, colorAdjusted, true)
+					}
+				} else {
+					vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness, config.ThirdColorAdj, true)
+				}
 			}
 			S += float32(AX)*float32(AX) + float32(AY)*float32(AY)
 			if config.Config.Particles {
