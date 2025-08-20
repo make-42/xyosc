@@ -56,6 +56,7 @@ type ConfigS struct {
 	DefaultMode                                  int // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
 	PeakDetectSeparator                          int
 	OscilloscopeStartPeakDetection               bool
+	UseBetterPeakDetectionAlgorithm              bool // ACF etc
 	PeakDetectEdgeGuardBufferSize                uint32
 	SingleChannelWindow                          uint32
 	PeriodCrop                                   bool
@@ -119,7 +120,7 @@ var DefaultConfig = ConfigS{
 	SampleRate:                               192000,
 	AudioCaptureBufferSize:                   64, // Affects latency
 	RingBufferSize:                           262144 * 16,
-	ReadBufferSize:                           9600,
+	ReadBufferSize:                           2048,
 	XYOscilloscopeReadBufferSize:             2048,
 	ReadBufferDelay:                          32,
 	BeatDetectReadBufferSize:                 262144 * 16,
@@ -145,6 +146,7 @@ var DefaultConfig = ConfigS{
 	DefaultMode:                                  0, // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
 	PeakDetectSeparator:                          100,
 	OscilloscopeStartPeakDetection:               true,
+	UseBetterPeakDetectionAlgorithm:              true,
 	PeakDetectEdgeGuardBufferSize:                100,
 	SingleChannelWindow:                          1200,
 	PeriodCrop:                                   true,

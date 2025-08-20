@@ -10,6 +10,7 @@ import (
 	"slices"
 	"sort"
 	"time"
+	"xyosc/align"
 	"xyosc/audio"
 	"xyosc/bars"
 	"xyosc/beatdetect"
@@ -52,6 +53,7 @@ var shaderWorkBuffer *ebiten.Image
 var firstFrame = true
 var FFTBuffer []float64
 var complexFFTBuffer []complex128
+var complexFFTBufferFlipped []complex128
 var filtersApplied = false
 var lowCutOffFrac = 0.0
 var highCutOffFrac = 1.0
@@ -186,7 +188,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		for i := uint32(0); i < numSamples; i++ {
 			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
 			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
-			if filtersApplied {
+			if filtersApplied || config.Config.UseBetterPeakDetectionAlgorithm {
 				if *mixChannels {
 					complexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
 				} else {
@@ -196,7 +198,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 						complexFFTBuffer[i] = complex(float64(AX), 0.0)
 					}
 				}
-			} else {
+			}
+			if !filtersApplied || config.Config.UseBetterPeakDetectionAlgorithm {
 				if *mixChannels {
 					FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = (float64(AY) + float64(AX)) / 2
 				} else {
@@ -215,19 +218,29 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 		}
 
-		indices := peaks.Get(FFTBuffer, config.Config.PeakDetectSeparator)
-		sort.Ints(indices)
+		indices := []int{}
 		offset := uint32(0)
-		if len(indices) != 0 {
-			offset = uint32(indices[0])
-		}
-		if (offset+config.Config.FFTBufferOffset)%numSamples < config.Config.PeakDetectEdgeGuardBufferSize || (numSamples-((offset+config.Config.FFTBufferOffset)%numSamples)) < config.Config.PeakDetectEdgeGuardBufferSize {
-			if len(indices) >= 2 {
-				offset = uint32(indices[1])
+
+		if config.Config.PeriodCrop || config.Config.OscilloscopeStartPeakDetection || *peakDetectOverride {
+			if config.Config.UseBetterPeakDetectionAlgorithm {
+				for i := range len(complexFFTBuffer) {
+					complexFFTBufferFlipped[len(complexFFTBufferFlipped)-i-1] = complexFFTBuffer[i]
+				}
+				offset, indices = align.AutoCorrelate(&complexFFTBuffer, &complexFFTBufferFlipped)
+
+			} else {
+				indices = peaks.Get(FFTBuffer, config.Config.PeakDetectSeparator)
+				sort.Ints(indices)
+				offset = uint32(0)
+				if len(indices) != 0 {
+					offset = uint32(indices[0])
+				}
+				if (offset+config.Config.FFTBufferOffset)%numSamples < config.Config.PeakDetectEdgeGuardBufferSize || (numSamples-((offset+config.Config.FFTBufferOffset)%numSamples)) < config.Config.PeakDetectEdgeGuardBufferSize {
+					if len(indices) >= 2 {
+						offset = uint32(indices[1])
+					}
+				}
 			}
-		}
-		if !(config.Config.OscilloscopeStartPeakDetection || *peakDetectOverride) {
-			offset = 0
 		}
 		if config.Config.PeriodCrop && len(indices) > 1 {
 			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.PeriodCropCount)])
@@ -430,6 +443,10 @@ func Init() {
 	}
 
 	complexFFTBuffer = make([]complex128, numSamples)
+	if config.Config.UseBetterPeakDetectionAlgorithm {
+		complexFFTBufferFlipped = make([]complex128, numSamples)
+		align.Init()
+	}
 	if filtersApplied {
 		XYComplexFFTBufferL = make([]complex128, numSamples)
 		XYComplexFFTBufferR = make([]complex128, numSamples)
