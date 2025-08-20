@@ -152,7 +152,7 @@ var DefaultConfig = ConfigS{
 	PeriodCrop:                                   true,
 	PeriodCropCount:                              2,
 	PeriodCropLoopOverCount:                      1,
-	FFTBufferOffset:                              3200,
+	FFTBufferOffset:                              3200, // For peak detection
 	ForceColors:                                  false,
 	AccentColor:                                  "#FF0000",
 	FirstColor:                                   "#FF0000",
