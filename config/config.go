@@ -57,6 +57,7 @@ type ConfigS struct {
 	PeakDetectSeparator                          int
 	OscilloscopeStartPeakDetection               bool
 	UseBetterPeakDetectionAlgorithm              bool // ACF etc
+	FrequencyDetectionUseMedian                  bool
 	TriggerThroughoutWindow                      bool
 	UseComplexTriggeringAlgorithm                bool
 	CenterPeak                                   bool
@@ -151,6 +152,7 @@ var DefaultConfig = ConfigS{
 	PeakDetectSeparator:                          100,
 	OscilloscopeStartPeakDetection:               true,
 	UseBetterPeakDetectionAlgorithm:              true,
+	FrequencyDetectionUseMedian:                  true,
 	TriggerThroughoutWindow:                      true,
 	UseComplexTriggeringAlgorithm:                true,
 	CenterPeak:                                   true,

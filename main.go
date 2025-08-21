@@ -157,7 +157,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 			S += float32(AX)*float32(AX) + float32(AY)*float32(AY)
 			if config.Config.Particles {
-				if rand.IntN(config.Config.ParticleGenPerFrameEveryXSamples) == 0 {
+				if rand.IntN(int(float64(config.Config.ParticleGenPerFrameEveryXSamples)/deltaTime)) == 0 {
 					if len(particles.Particles) >= config.Config.ParticleMaxCount {
 						particles.Particles = particles.Particles[1:]
 					}
@@ -178,11 +178,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		for i, particle := range particles.Particles {
 			vector.DrawFilledCircle(screen, float32(config.Config.WindowWidth/2)+particle.X*float32(scale), float32(config.Config.WindowHeight/2)+particle.Y*float32(scale), particle.Size, config.ParticleColor, true)
 			norm := math32.Sqrt(particles.Particles[i].X*particles.Particles[i].X + particles.Particles[i].Y*particles.Particles[i].Y)
-			particles.Particles[i].X += particle.VX / float32(ebiten.ActualTPS())
-			particles.Particles[i].Y += particle.VY / float32(ebiten.ActualTPS())
+			particles.Particles[i].X += particle.VX * float32(deltaTime)
+			particles.Particles[i].Y += particle.VY * float32(deltaTime)
 			speed := math32.Sqrt(particle.VX*particle.VX + particle.VY*particle.VY)
-			particles.Particles[i].VX += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.X / norm / float32(ebiten.ActualTPS())
-			particles.Particles[i].VY += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.Y / norm / float32(ebiten.ActualTPS())
+			particles.Particles[i].VX += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.X / norm * float32(deltaTime)
+			particles.Particles[i].VY += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.Y / norm * float32(deltaTime)
 		}
 	} else if config.Config.DefaultMode == 1 {
 		for i := uint32(0); i < numSamples; i++ {

@@ -31,12 +31,31 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 	}
 	indicesACFPeaks := peaks.Get(realBuffer, config.Config.PeakDetectSeparator)
 	sort.Ints(indicesACFPeaks)
-	avgPeriodSum := 0
-	for i := range len(indicesACFPeaks) - 1 {
-		avgPeriodSum += indicesACFPeaks[i+1] - indicesACFPeaks[i]
+	avgPeriod := 0.
+	if config.Config.FrequencyDetectionUseMedian {
+		periods := []int{}
+		for i := range len(indicesACFPeaks) - 1 {
+			periods = append(periods, indicesACFPeaks[i+1]-indicesACFPeaks[i])
+		}
+		sort.Ints(periods)
+		avgPeriodSum := 0
+		n := 0
+		for j := range len(periods) {
+			pos := float64(j+1) / float64(len(periods)+1)
+			if (pos >= 1./3. && pos <= 2./3.) || len(periods) <= 3 {
+				avgPeriodSum += periods[j]
+				n++
+			}
+		}
+		avgPeriod = float64(avgPeriodSum) / float64(n)
+	} else {
+		avgPeriodSum := 0
+		for i := range len(indicesACFPeaks) - 1 {
+			avgPeriodSum += indicesACFPeaks[i+1] - indicesACFPeaks[i]
+		}
+		avgPeriod = float64(avgPeriodSum) / float64(len(indicesACFPeaks)-1)
 	}
 
-	avgPeriod := float64(avgPeriodSum) / float64(len(indicesACFPeaks)-1)
 	offset := uint32(0)
 	if avgPeriod == 0 || len(indicesACFPeaks) <= 1 {
 		return 0, []int{}
