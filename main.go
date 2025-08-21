@@ -242,9 +242,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 			}
 		}
+
 		if config.Config.PeriodCrop && len(indices) > 1 {
 			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.PeriodCropCount)])
 			samplesPerCrop := lastPeriodOffset - offset
+			if config.Config.CenterPeak {
+				offset -= samplesPerCrop / 4
+			}
 			for i := uint32(0); i < min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount)-1; i++ {
 				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
@@ -253,6 +257,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 			}
 		} else {
+			if config.Config.CenterPeak {
+				offset -= config.Config.SingleChannelWindow / 4
+			}
 			for i := uint32(0); i < config.Config.SingleChannelWindow/2-1; i++ {
 				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)

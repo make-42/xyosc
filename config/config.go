@@ -57,6 +57,10 @@ type ConfigS struct {
 	PeakDetectSeparator                          int
 	OscilloscopeStartPeakDetection               bool
 	UseBetterPeakDetectionAlgorithm              bool // ACF etc
+	TriggerThroughoutWindow                      bool
+	UseComplexTriggeringAlgorithm                bool
+	CenterPeak                                   bool
+	QuadratureOffset                             bool
 	PeakDetectEdgeGuardBufferSize                uint32
 	SingleChannelWindow                          uint32
 	PeriodCrop                                   bool
@@ -147,6 +151,10 @@ var DefaultConfig = ConfigS{
 	PeakDetectSeparator:                          100,
 	OscilloscopeStartPeakDetection:               true,
 	UseBetterPeakDetectionAlgorithm:              true,
+	TriggerThroughoutWindow:                      true,
+	UseComplexTriggeringAlgorithm:                true,
+	CenterPeak:                                   true,
+	QuadratureOffset:                             true,
 	PeakDetectEdgeGuardBufferSize:                100,
 	SingleChannelWindow:                          1200,
 	PeriodCrop:                                   true,

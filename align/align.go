@@ -37,30 +37,54 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 	}
 
 	avgPeriod := float64(avgPeriodSum) / float64(len(indicesACFPeaks)-1)
-	minVal := 0.
 	offset := uint32(0)
-
 	if avgPeriod == 0 || len(indicesACFPeaks) <= 1 {
 		return 0, []int{}
 	}
+	if config.Config.UseComplexTriggeringAlgorithm {
+		minVal := 0.
+		for i := uint32(0); i < numSamples && (config.Config.TriggerThroughoutWindow || (i < uint32(avgPeriod))); i++ {
+			n := 0
+			sum := 0.
+			for j := uint32(0); i+uint32((float64(j)+0.75)*avgPeriod) < numSamples; j++ {
+				sum += realBufferUnchanged[i+uint32(float64(j)*avgPeriod)]
+				sum += realBufferUnchanged[i+uint32((float64(j)+0.25)*avgPeriod)] * realBufferUnchanged[i+uint32((float64(j)+0.25)*avgPeriod)]
+				sum -= realBufferUnchanged[i+uint32((float64(j)+0.5)*avgPeriod)]
+				sum += realBufferUnchanged[i+uint32((float64(j)+0.75)*avgPeriod)] * realBufferUnchanged[i+uint32((float64(j)+0.75)*avgPeriod)]
+				n++
+			}
+			avg := sum / float64(n)
 
-	for i := uint32(0); i < numSamples && i < uint32(avgPeriod); i++ {
+			if i == 0 {
+				minVal = avg
+			}
+			if avg < minVal {
+				minVal = avg
+				offset = i
+			}
+		}
+	} else {
+		minVal := 0.
+		for i := uint32(0); i < numSamples && (config.Config.TriggerThroughoutWindow || (i < uint32(avgPeriod))); i++ {
+			n := 0
+			sum := 0.
+			for j := uint32(0); i+uint32(float64(j)*avgPeriod) < numSamples; j++ {
+				sum += realBufferUnchanged[i+uint32(float64(j)*avgPeriod)]
+				n++
+			}
+			avg := sum / float64(n)
 
-		n := 0
-		sum := 0.
-		for j := uint32(0); i+uint32(float64(j)*avgPeriod) < numSamples; j++ {
-			sum += realBufferUnchanged[i+uint32(float64(j)*avgPeriod)]
-			n++
+			if i == 0 {
+				minVal = avg
+			}
+			if avg < minVal {
+				minVal = avg
+				offset = i
+			}
 		}
-		avg := sum / float64(n)
-
-		if i == 0 {
-			minVal = avg
-		}
-		if avg < minVal {
-			minVal = avg
-			offset = i
-		}
+	}
+	if config.Config.QuadratureOffset {
+		offset += uint32(0.75 * avgPeriod)
 	}
 	indices := []int{}
 	for j := uint32(0); offset+uint32(float64(j)*avgPeriod) < numSamples; j++ {
