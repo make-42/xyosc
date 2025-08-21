@@ -220,13 +220,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		indices := []int{}
 		offset := uint32(0)
+		freq := uint32(0)
 
 		if config.Config.PeriodCrop || config.Config.OscilloscopeStartPeakDetection || *peakDetectOverride {
 			if config.Config.UseBetterPeakDetectionAlgorithm {
 				for i := range len(complexFFTBuffer) {
 					complexFFTBufferFlipped[len(complexFFTBufferFlipped)-i-1] = complexFFTBuffer[i]
 				}
-				offset, indices = align.AutoCorrelate(&complexFFTBuffer, &complexFFTBufferFlipped)
+				offset, indices, freq = align.AutoCorrelate(&complexFFTBuffer, &complexFFTBufferFlipped)
 
 			} else {
 				indices = peaks.Get(FFTBuffer, config.Config.PeakDetectSeparator)
@@ -246,6 +247,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if config.Config.PeriodCrop && len(indices) > 1 {
 			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.PeriodCropCount)])
 			samplesPerCrop := lastPeriodOffset - offset
+			if config.Config.UseBetterPeakDetectionAlgorithm {
+				samplesPerCrop = freq * 2
+			}
 			if config.Config.CenterPeak {
 				offset -= samplesPerCrop / 4
 			}

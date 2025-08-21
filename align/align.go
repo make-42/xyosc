@@ -17,7 +17,7 @@ func Init() {
 	realBufferUnchanged = make([]float64, config.Config.ReadBufferSize/2)
 }
 
-func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (uint32, []int) {
+func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (uint32, []int, uint32) {
 
 	numSamples := config.Config.ReadBufferSize / 2
 	for i := uint32(0); i < numSamples; i++ {
@@ -58,7 +58,7 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 
 	offset := uint32(0)
 	if avgPeriod == 0 || len(indicesACFPeaks) <= 1 {
-		return 0, []int{}
+		return 0, []int{}, 0
 	}
 	if config.Config.UseComplexTriggeringAlgorithm {
 		minVal := 0.
@@ -106,8 +106,15 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 		offset += uint32(0.75 * avgPeriod)
 	}
 	indices := []int{}
+
+	j := 0
+	for j = 0; int(offset)-int(float64(j)*avgPeriod) >= 0; j++ {
+	}
+	for j := j - 1; j > 0; j-- {
+		indices = append(indices, int(offset)-int(float64(j)*avgPeriod))
+	}
 	for j := uint32(0); offset+uint32(float64(j)*avgPeriod) < numSamples; j++ {
 		indices = append(indices, int(offset)+int(float64(j)*avgPeriod))
 	}
-	return offset, indices
+	return offset, indices, uint32(avgPeriod)
 }
