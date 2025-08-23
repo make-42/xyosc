@@ -105,6 +105,40 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 	if config.Config.QuadratureOffset {
 		offset += uint32(0.75 * avgPeriod)
 	}
+
+	if config.Config.AlignToLastPossiblePeak {
+		if config.Config.PeriodCrop {
+			div := 1.
+			if config.Config.CenterPeak {
+				div = 2.
+			}
+			if avgPeriod*float64(config.Config.PeriodCropCount)/div < float64(numSamples) {
+				addValue := 0.
+				for offset+uint32(addValue+avgPeriod*float64(config.Config.PeriodCropCount)/div) < numSamples {
+					addValue += avgPeriod
+				}
+				for offset+uint32(addValue+avgPeriod*float64(config.Config.PeriodCropCount)/div) >= numSamples {
+					addValue -= avgPeriod
+				}
+				offset += uint32(addValue)
+			}
+		} else {
+			addValue := 0.
+			div := 1.
+			if config.Config.CenterPeak {
+				div = 2.
+			}
+			for offset+uint32(addValue+float64(config.Config.SingleChannelWindow)/2./div) < numSamples {
+				addValue += avgPeriod
+			}
+			for offset+uint32(addValue+float64(config.Config.SingleChannelWindow)/2./div) >= numSamples {
+				addValue -= avgPeriod
+			}
+			offset += uint32(addValue)
+		}
+
+	}
+
 	indices := []int{}
 
 	j := 0

@@ -61,13 +61,14 @@ type ConfigS struct {
 	TriggerThroughoutWindow                      bool
 	UseComplexTriggeringAlgorithm                bool
 	CenterPeak                                   bool
+	AlignToLastPossiblePeak                      bool
 	QuadratureOffset                             bool
 	PeakDetectEdgeGuardBufferSize                uint32
 	SingleChannelWindow                          uint32
 	PeriodCrop                                   bool
 	PeriodCropCount                              int
 	PeriodCropLoopOverCount                      uint32
-	FFTBufferOffset                              uint32
+	FFTBufferOffset                              uint32 // Set it to 0 if AlignToLastPossiblePeak enabled
 	ForceColors                                  bool
 	AccentColor                                  string
 	FirstColor                                   string
@@ -114,39 +115,39 @@ var DefaultConfig = ConfigS{
 	FilterInfoTextSize:                       16,
 	FilterInfoTextPaddingLeft:                16,
 	FilterInfoTextPaddingBottom:              4,
-	ShowMPRIS:                                true,
+	ShowMPRIS:                                false,
 	MPRISTextOpacity:                         255,
 	TargetFPS:                                240,
-	WindowWidth:                              1300,
-	WindowHeight:                             1300,
+	WindowWidth:                              1000,
+	WindowHeight:                             1000,
 	CaptureDeviceIndex:                       0,
 	CaptureDeviceName:                        "",
 	CaptureDeviceSampleRate:                  0, // In case there are multiple outputs with different sample rates and you want to pick a specific one, else leave equal to 0
 	SampleRate:                               192000,
-	AudioCaptureBufferSize:                   64, // Affects latency
-	RingBufferSize:                           262144 * 16,
-	ReadBufferSize:                           2048,
+	AudioCaptureBufferSize:                   512, // Affects latency
+	RingBufferSize:                           2097152,
+	ReadBufferSize:                           16384,
 	XYOscilloscopeReadBufferSize:             2048,
 	ReadBufferDelay:                          32,
-	BeatDetectReadBufferSize:                 262144 * 16,
+	BeatDetectReadBufferSize:                 2097152,
 	BeatDetectDownSampleFactor:               4,
 	Gain:                                     1,
 	LineOpacity:                              200,
 	LineBrightness:                           1,
 	LineThickness:                            3,
-	LineInvSqrtOpacityControl:                false,
+	LineInvSqrtOpacityControl:                true,
 	LineInvSqrtOpacityControlUseLogDecrement: true,
 	LineInvSqrtOpacityControlLogDecrementBase:    200.0,
 	LineInvSqrtOpacityControlLogDecrementOffset:  0.99,
 	LineTimeDependentOpacityControl:              true,
 	LineTimeDependentOpacityControlBase:          0.999,
 	LineOpacityControlAlsoAppliesToThickness:     true,
-	Particles:                                    true,
-	ParticleGenPerFrameEveryXSamples:             2000,
-	ParticleMaxCount:                             600,
-	ParticleMinSize:                              0.2,
-	ParticleMaxSize:                              2.0,
-	ParticleAcceleration:                         0.015,
+	Particles:                                    false,
+	ParticleGenPerFrameEveryXSamples:             4000,
+	ParticleMaxCount:                             100,
+	ParticleMinSize:                              1.0,
+	ParticleMaxSize:                              3.0,
+	ParticleAcceleration:                         0.2,
 	ParticleDrag:                                 5.0,
 	DefaultMode:                                  0, // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
 	PeakDetectSeparator:                          100,
@@ -156,27 +157,28 @@ var DefaultConfig = ConfigS{
 	TriggerThroughoutWindow:                      true,
 	UseComplexTriggeringAlgorithm:                true,
 	CenterPeak:                                   true,
+	AlignToLastPossiblePeak:                      true,
 	QuadratureOffset:                             true,
-	PeakDetectEdgeGuardBufferSize:                100,
-	SingleChannelWindow:                          1200,
-	PeriodCrop:                                   true,
+	PeakDetectEdgeGuardBufferSize:                30,
+	SingleChannelWindow:                          8192,
+	PeriodCrop:                                   false,
 	PeriodCropCount:                              2,
 	PeriodCropLoopOverCount:                      1,
-	FFTBufferOffset:                              3200, // For peak detection
-	ForceColors:                                  false,
-	AccentColor:                                  "#FF0000",
-	FirstColor:                                   "#FF0000",
-	ThirdColor:                                   "#FF0000",
-	ParticleColor:                                "#FF0000",
-	BGColor:                                      "#222222",
+	FFTBufferOffset:                              0, // For peak detection
+	ForceColors:                                  true,
+	AccentColor:                                  "#E7BDB9",
+	FirstColor:                                   "#E7BDB9",
+	ThirdColor:                                   "#E7BDB9",
+	ParticleColor:                                "#F9DCD9",
+	BGColor:                                      "#2B1C1A",
 	DisableTransparency:                          false,
 	CopyPreviousFrame:                            true,
 	CopyPreviousFrameAlphaDecayBase:              0.0000001,
 	CopyPreviousFrameAlphaDecaySpeed:             2.0,
-	BeatDetect:                                   true,
+	BeatDetect:                                   false,
 	BeatDetectInterval:                           100, // ms
-	BeatDetectBPMCorrectionSpeed:                 2,
-	BeatDetectTimeCorrectionSpeed:                0.2,
+	BeatDetectBPMCorrectionSpeed:                 4,
+	BeatDetectTimeCorrectionSpeed:                0.4,
 	BeatDetectMaxBPM:                             500.0,
 	BeatDetectHalfDisplayedBPM:                   false,
 	ShowMetronome:                                true,

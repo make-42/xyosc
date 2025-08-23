@@ -99,13 +99,15 @@ targetfps: 240
 windowwidth: 1000
 windowheight: 1000
 capturedeviceindex: 0
+capturedevicename: ""
+capturedevicesamplerate: 0
 samplerate: 192000
-audiocapturebuffersize: 64
-ringbuffersize: 4194304
-readbuffersize: 2048
+audiocapturebuffersize: 512
+ringbuffersize: 2097152
+readbuffersize: 16384
 xyoscilloscopereadbuffersize: 2048
 readbufferdelay: 32
-beatdetectreadbuffersize: 4194304
+beatdetectreadbuffersize: 2097152
 beatdetectdownsamplefactor: 4
 gain: 1
 lineopacity: 200
@@ -126,26 +128,34 @@ particlemaxsize: 3.0
 particleacceleration: 0.2
 particledrag: 5.0
 defaultmode: 0
-peakdetectseparator: 200
-singlechannelwindow: 1200
-periodcrop: true
+peakdetectseparator: 100
+oscilloscopestartpeakdetection: true
+usebetterpeakdetectionalgorithm: true
+triggerthroughoutwindow: true
+usecomplextriggeringalgorithm: true
+frequencydetectionusemedian: true
+centerpeak: true
+quadratureoffset: true
+peakdetectedgeguardbuffersize: 30
+singlechannelwindow: 8192
+periodcrop: false
 periodcropcount: 2
 periodcroploopovercount: 1
-fftbufferoffset: 2000
+fftbufferoffset: 0
 forcecolors: true
-accentcolor: "#C7C4DD"
-firstcolor: "#C7C4DD"
-thirdcolor: "#C7C4DD"
-particlecolor: "#E4E0EF"
-bgcolor: "#1F1F29"
+accentcolor: "#E7BDB9"
+firstcolor: "#E7BDB9"
+thirdcolor: "#E7BDB9"
+particlecolor: "#F9DCD9"
+bgcolor: "#2B1C1A"
 disabletransparency: false
 copypreviousframe: true
 copypreviousframealphadecaybase: 0.0000001
 copypreviousframealphadecayspeed: 2.0
-beatdetect: true
+beatdetect: false
 beatdetectinterval: 100
-beatdetectbpmcorrectionspeed: 2
-beatdetecttimecorrectionspeed: 0.2
+beatdetectbpmcorrectionspeed: 4
+beatdetecttimecorrectionspeed: 0.4
 beatdetectmaxbpm: 500.0
 beatdetecthalfdisplayedbpm: false
 showmetronome: true
@@ -171,18 +181,13 @@ useshaders: true
 shaders:
 - name: glow
   arguments:
-    Strength: 0.05
+    Strength: 0.02
 - name: glow
   arguments:
-    Strength: 0.05
-- name: chromaticabberation
+    Strength: 0.02
+- name: chromaticabberation2
   arguments:
     Strength: 0.005
-- name: custom/noise
-  arguments:
-    Strength: 0.1
-    Scale: 1000.0
-  timescale: 4.0
 customshadercode:
   noise: "//go:build ignore\n\n//kage:unit pixels\n\npackage main\n\nvar Strength
       float\nvar Time float\nvar Scale float\n\nfunc Fragment(dstPos vec4, srcPos vec2,
