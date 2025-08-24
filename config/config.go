@@ -56,10 +56,12 @@ type ConfigS struct {
 	DefaultMode                                  int // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
 	PeakDetectSeparator                          int
 	OscilloscopeStartPeakDetection               bool
-	UseBetterPeakDetectionAlgorithm              bool // ACF etc
+	UseBetterPeakDetectionAlgorithm              bool // ACF
+	BetterPeakDetectionAlgorithmUseWindow        bool
 	FrequencyDetectionUseMedian                  bool
 	TriggerThroughoutWindow                      bool
 	UseComplexTriggeringAlgorithm                bool
+	ComplexTriggeringAlgorithmUseCorrelation     bool
 	CenterPeak                                   bool
 	AlignToLastPossiblePeak                      bool
 	QuadratureOffset                             bool
@@ -153,9 +155,11 @@ var DefaultConfig = ConfigS{
 	PeakDetectSeparator:                          100,
 	OscilloscopeStartPeakDetection:               true,
 	UseBetterPeakDetectionAlgorithm:              true,
+	BetterPeakDetectionAlgorithmUseWindow:        true,
 	FrequencyDetectionUseMedian:                  true,
 	TriggerThroughoutWindow:                      true,
 	UseComplexTriggeringAlgorithm:                true,
+	ComplexTriggeringAlgorithmUseCorrelation:     true,
 	CenterPeak:                                   true,
 	AlignToLastPossiblePeak:                      true,
 	QuadratureOffset:                             true,

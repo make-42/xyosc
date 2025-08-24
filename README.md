@@ -131,8 +131,10 @@ defaultmode: 0
 peakdetectseparator: 100
 oscilloscopestartpeakdetection: true
 usebetterpeakdetectionalgorithm: true
+betterpeakdetectionalgorithmusewindow: true
 triggerthroughoutwindow: true
 usecomplextriggeringalgorithm: true
+complextriggeringalgorithmusecorrelation: true
 frequencydetectionusemedian: true
 centerpeak: true
 quadratureoffset: true
