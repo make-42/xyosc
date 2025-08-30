@@ -38,7 +38,14 @@ func CalcBars(inputArray *[]complex128, lowCutOffFrac float64, highCutOffFrac fl
 		X := x + 1 // Offset by 1 to avoid having an infinite log scale
 		if X <= int(float64(len(*inputArray))*highCutOffFrac) || X >= int(float64(len(*inputArray))*lowCutOffFracAdj) {
 			frac := (math.Log2(float64(X)/float64(len(*inputArray))) - math.Log2(lowCutOffFracAdj)) / (math.Log2(highCutOffFrac) - math.Log2(lowCutOffFracAdj))
-			sum += math.Sqrt(real((*inputArray)[X])*real((*inputArray)[X]) + imag((*inputArray)[X])*imag((*inputArray)[X]))
+			val := math.Sqrt(real((*inputArray)[X])*real((*inputArray)[X]) + imag((*inputArray)[X])*imag((*inputArray)[X]))
+			if config.Config.BarsPreserveParsevalEnergy {
+				val = val * math.Sqrt(float64(X))
+			}
+			if X >= int((config.Config.BarsPreventSpectralLeakageAboveFreq/float64(config.Config.SampleRate))*float64(len(*inputArray))) {
+				val = 0
+			}
+			sum += val
 			nSamples++
 			if frac >= 1 {
 				break

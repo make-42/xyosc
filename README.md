@@ -170,6 +170,8 @@ metronomethinlinehintthickness: 2
 showbpm: true
 bpmtextsize: 24
 barsusewindow: true
+barspreserveparsevalenergy: true
+barspreventspectralleakageabovefreq: 170000
 barswidth: 4
 barspaddingedge: 4
 barspaddingbetween: 4

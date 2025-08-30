@@ -97,6 +97,8 @@ type ConfigS struct {
 	ShowBPM                                      bool
 	BPMTextSize                                  float64
 	BarsUseWindow                                bool
+	BarsPreserveParsevalEnergy                   bool
+	BarsPreventSpectralLeakageAboveFreq          float64
 	BarsWidth                                    float64
 	BarsPaddingEdge                              float64
 	BarsPaddingBetween                           float64
@@ -198,6 +200,8 @@ var DefaultConfig = ConfigS{
 	ShowBPM:                                      true,
 	BPMTextSize:                                  24,
 	BarsUseWindow:                                true,
+	BarsPreserveParsevalEnergy:                   true,
+	BarsPreventSpectralLeakageAboveFreq:          170000, //Hz
 	BarsWidth:                                    4,
 	BarsPaddingEdge:                              4,
 	BarsPaddingBetween:                           4,
