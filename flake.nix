@@ -16,6 +16,14 @@
         inherit system;
       };
 
+      # Cross-compilation packages for Windows
+      pkgsCross = import nixpkgs {
+        inherit system;
+        crossSystem = {
+          config = "i686-w64-mingw32";
+        };
+      };
+
       xyosc = pkgs.buildGoModule rec {
         pname = "xyosc";
         version = "0.0.1";
@@ -86,6 +94,8 @@
           go
           pkg-config
           makeWrapper
+          pkgsCross.stdenv.cc
+          pkgsCross.buildPackages.gcc
         ];
         shellHook = ''
           export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [
@@ -102,6 +112,8 @@
             pkgs.libpulseaudio
             pkgs.alsa-lib
             pkgs.libjack2
+            pkgsCross.stdenv.cc
+            pkgsCross.buildPackages.gcc
           ]}:$LD_LIBRARY_PATH
         '';
         buildInputs = with pkgs; [
@@ -117,6 +129,8 @@
           libpulseaudio
           alsa-lib
           libjack2
+          pkgsCross.stdenv.cc
+          pkgsCross.buildPackages.gcc
         ];
       };
     });
