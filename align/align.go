@@ -9,14 +9,12 @@ import (
 
 	"github.com/argusdusty/gofft"
 	"github.com/goccmack/godsp/peaks"
-	"github.com/mjibson/go-dsp/window"
 )
 
 var realBuffer []float64
 var realBufferUnchanged []float64
 var inputBufferCopied []complex128
 var sineWaveBuffer []complex128
-var windowBuffer []float64
 
 func Init() {
 	realBuffer = make([]float64, config.Config.ReadBufferSize/2)
@@ -25,13 +23,6 @@ func Init() {
 		inputBufferCopied = make([]complex128, config.Config.ReadBufferSize/2)
 		sineWaveBuffer = make([]complex128, config.Config.ReadBufferSize/2)
 	}
-	if config.Config.BetterPeakDetectionAlgorithmUseWindow || config.Config.ComplexTriggeringAlgorithmUseCorrelation {
-		if config.Config.UseKaiserInsteadOfHannWindow {
-			windowBuffer = kaiser.Kaiser(int(config.Config.ReadBufferSize/2), config.Config.KaiserWindowParam)
-		} else {
-			windowBuffer = window.Hann(int(config.Config.ReadBufferSize / 2))
-		}
-	}
 }
 
 func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (uint32, []int, uint32) {
@@ -39,10 +30,10 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 	for i := uint32(0); i < numSamples; i++ {
 		realBufferUnchanged[(i+config.Config.FFTBufferOffset)%numSamples] = real((*inputArray)[i])
 		if config.Config.ComplexTriggeringAlgorithmUseCorrelation {
-			inputBufferCopied[(i+config.Config.FFTBufferOffset)%numSamples] = complex(real((*inputArray)[i])*windowBuffer[i], 0)
+			inputBufferCopied[(i+config.Config.FFTBufferOffset)%numSamples] = complex(real((*inputArray)[i])*kaiser.WindowBuffer[i], 0)
 		}
 		if config.Config.BetterPeakDetectionAlgorithmUseWindow {
-			(*inputArray)[i] = complex(real((*inputArray)[i])*windowBuffer[i], 0)
+			(*inputArray)[i] = complex(real((*inputArray)[i])*kaiser.WindowBuffer[i], 0)
 		}
 	}
 	err := gofft.FastConvolve(*inputArray, *inputArrayFlipped)

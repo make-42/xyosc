@@ -2,9 +2,14 @@ package kaiser
 
 import (
 	"math"
+	"xyosc/config"
+
+	"github.com/mjibson/go-dsp/window"
 )
 
 var Prec int = 20
+
+var WindowBuffer []float64
 
 func factorial(n uint64) uint64 {
 	p := uint64(1)
@@ -29,4 +34,14 @@ func Kaiser(n int, alpha float64) []float64 {
 		out[i] = bessel0(math.Pi*alpha*math.Sqrt(1-(2*x/float64(n))*(2*x/float64(n)))) / (bessel0(math.Pi * alpha))
 	}
 	return out
+}
+
+func Init() {
+	if config.Config.BarsUseWindow || config.Config.BetterPeakDetectionAlgorithmUseWindow || config.Config.ComplexTriggeringAlgorithmUseCorrelation {
+		if config.Config.UseKaiserInsteadOfHannWindow {
+			WindowBuffer = Kaiser(int(config.Config.ReadBufferSize/2), config.Config.KaiserWindowParam)
+		} else {
+			WindowBuffer = window.Hann(int(config.Config.ReadBufferSize / 2))
+		}
+	}
 }
