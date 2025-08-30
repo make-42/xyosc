@@ -3,24 +3,39 @@ package bars
 import (
 	"math"
 	"xyosc/config"
+	"xyosc/kaiser"
 	"xyosc/utils"
 
 	"github.com/argusdusty/gofft"
+	"github.com/mjibson/go-dsp/window"
 )
 
 var InterpolatedBarsPos []float64
 var InterpolatedBarsVel []float64
 var TargetBarsPos []float64
 var InterpolatedMaxVolume float64 = 2000. // sane starting point
+var windowBuffer []float64
 
 func Init() {
 	barCount := (float64(config.Config.WindowWidth) - config.Config.BarsPaddingEdge*2 + config.Config.BarsPaddingBetween) / (config.Config.BarsPaddingBetween + config.Config.BarsWidth)
 	TargetBarsPos = make([]float64, int(barCount))
 	InterpolatedBarsPos = make([]float64, int(barCount))
 	InterpolatedBarsVel = make([]float64, int(barCount))
+	if config.Config.BarsUseWindow {
+		if config.Config.UseKaiserInsteadOfHannWindow {
+			windowBuffer = kaiser.Kaiser(int(config.Config.ReadBufferSize/2), config.Config.KaiserWindowParam)
+		} else {
+			windowBuffer = window.Hann(int(config.Config.ReadBufferSize / 2))
+		}
+	}
 }
 
 func CalcBars(inputArray *[]complex128, lowCutOffFrac float64, highCutOffFrac float64) {
+	if config.Config.BarsUseWindow {
+		for i := uint32(0); i < config.Config.ReadBufferSize/2; i++ {
+			(*inputArray)[i] = complex(real((*inputArray)[i])*windowBuffer[i], 0)
+		}
+	}
 	err := gofft.FFT(*inputArray)
 	utils.CheckError(err)
 	numBars := float64(len(TargetBarsPos))

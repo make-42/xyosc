@@ -169,6 +169,7 @@ metronomethinlinethickness: 64
 metronomethinlinehintthickness: 2
 showbpm: true
 bpmtextsize: 24
+barsusewindow: true
 barswidth: 4
 barspaddingedge: 4
 barspaddingbetween: 4
@@ -179,6 +180,8 @@ barsinterpolatepos: true
 barsinterpolateaccel: 20
 barsinterpolatedrag: 2
 barsinterpolatedirect: 20
+usekaiserinsteadofhannwindow: true
+kaiserwindowparam: 8
 useshaders: true
 shaders:
 - name: glow

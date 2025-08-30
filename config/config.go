@@ -96,6 +96,7 @@ type ConfigS struct {
 	MetronomeThinLineHintThickness               float64
 	ShowBPM                                      bool
 	BPMTextSize                                  float64
+	BarsUseWindow                                bool
 	BarsWidth                                    float64
 	BarsPaddingEdge                              float64
 	BarsPaddingBetween                           float64
@@ -106,6 +107,8 @@ type ConfigS struct {
 	BarsInterpolateAccel                         float64
 	BarsInterpolateDrag                          float64
 	BarsInterpolateDirect                        float64
+	UseKaiserInsteadOfHannWindow                 bool
+	KaiserWindowParam                            float64
 	UseShaders                                   bool
 	Shaders                                      []Shader
 	CustomShaderCode                             map[string]string
@@ -194,6 +197,7 @@ var DefaultConfig = ConfigS{
 	MetronomeThinLineHintThickness:               2,
 	ShowBPM:                                      true,
 	BPMTextSize:                                  24,
+	BarsUseWindow:                                true,
 	BarsWidth:                                    4,
 	BarsPaddingEdge:                              4,
 	BarsPaddingBetween:                           4,
@@ -204,6 +208,8 @@ var DefaultConfig = ConfigS{
 	BarsInterpolateAccel:                         20.,
 	BarsInterpolateDrag:                          2.,
 	BarsInterpolateDirect:                        20.,
+	UseKaiserInsteadOfHannWindow:                 true,
+	KaiserWindowParam:                            8.,
 	UseShaders:                                   true,
 	Shaders: []Shader{
 		{
