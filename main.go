@@ -19,6 +19,7 @@ import (
 	"xyosc/filter"
 	"xyosc/fonts"
 	"xyosc/icons"
+	"xyosc/kaiser"
 	"xyosc/media"
 	"xyosc/particles"
 	"xyosc/shaders"
@@ -487,6 +488,7 @@ func main() {
 		shaders.Init()
 	}
 	bars.Init()
+	kaiser.Init()
 	ebiten.SetWindowIcon([]image.Image{icons.WindowIcon48, icons.WindowIcon32, icons.WindowIcon16})
 	ebiten.SetWindowSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	ebiten.SetWindowTitle("xyosc")
