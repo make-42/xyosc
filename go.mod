@@ -7,6 +7,7 @@ require (
 	github.com/chewxy/math32 v1.11.1
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gen2brain/malgo v0.11.23
+	github.com/go-text/typesetting v0.2.1
 	github.com/goccmack/godsp v0.1.1
 	github.com/godbus/dbus v4.1.0+incompatible
 	github.com/hajimehoshi/ebiten/v2 v2.8.6
@@ -21,7 +22,6 @@ require (
 	github.com/ebitengine/gomobile v0.0.0-20241016134836-cc2e38a7c0ee // indirect
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
 	github.com/ebitengine/purego v0.8.2 // indirect
-	github.com/go-text/typesetting v0.2.1 // indirect
 	github.com/goccmack/goutil v0.4.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect

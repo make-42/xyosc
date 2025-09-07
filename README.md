@@ -88,6 +88,8 @@ Here is an example of how to configure `xyosc` using Nix.
 
 # Typical configuration file
 ```yaml
+usesystemfonts: true
+systemfont: "Maple Mono NF"
 fpscounter: false
 showfilterinfo: true
 filterinfotextsize: 16

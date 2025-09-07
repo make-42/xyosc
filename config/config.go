@@ -14,6 +14,8 @@ import (
 )
 
 type ConfigS struct {
+	UseSystemFonts                               bool
+	SystemFont                                   string
 	FPSCounter                                   bool
 	ShowFilterInfo                               bool
 	FilterInfoTextSize                           float64
@@ -117,6 +119,8 @@ type ConfigS struct {
 }
 
 var DefaultConfig = ConfigS{
+	UseSystemFonts:                           true,
+	SystemFont:                               "Maple Mono NF",
 	FPSCounter:                               false,
 	ShowFilterInfo:                           true,
 	FilterInfoTextSize:                       16,

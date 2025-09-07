@@ -41,6 +41,7 @@ github.com/go-text/typesetting/font/cff
 github.com/go-text/typesetting/font/cff/interpreter
 github.com/go-text/typesetting/font/opentype
 github.com/go-text/typesetting/font/opentype/tables
+github.com/go-text/typesetting/fontscan
 github.com/go-text/typesetting/harfbuzz
 github.com/go-text/typesetting/language
 github.com/go-text/typesetting/segmenter
