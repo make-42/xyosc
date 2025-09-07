@@ -11,6 +11,7 @@ require (
 	github.com/goccmack/godsp v0.1.1
 	github.com/godbus/dbus v4.1.0+incompatible
 	github.com/hajimehoshi/ebiten/v2 v2.8.6
+	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/kirsle/configdir v0.0.0-20170128060238-e45d2f54772f
 	github.com/leberKleber/go-mpris v1.1.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12

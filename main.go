@@ -23,6 +23,7 @@ import (
 	"xyosc/media"
 	"xyosc/particles"
 	"xyosc/shaders"
+	"xyosc/utils"
 
 	"fmt"
 
@@ -103,6 +104,61 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	} else {
 		StillSamePressFromToggleKey = false
 	}
+
+	if (config.Config.DefaultMode == 0 || config.Config.DefaultMode == 1) && config.Config.ScaleEnable {
+		if config.Config.ScaleMainAxisEnable {
+			vector.StrokeLine(screen, 0, float32(config.Config.WindowHeight/2), float32(config.Config.WindowWidth), float32(config.Config.WindowHeight/2), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
+			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2), 0, float32(config.Config.WindowWidth/2), float32(config.Config.WindowHeight), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
+		}
+		if config.Config.ScaleVertTickEnable {
+			for i := range config.Config.ScaleVertDiv + 1 {
+				y := float32(config.Config.WindowHeight) / float32(config.Config.ScaleVertDiv) * float32(i)
+				if config.Config.ScaleVertTickExpandToGrid {
+					vector.StrokeLine(screen, 0, y, float32(config.Config.WindowWidth), y, config.Config.ScaleVertTickExpandToGridThickness, config.ThirdColorAdj, true)
+				}
+				vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)-config.Config.ScaleVertTickLength/2, y, float32(config.Config.WindowWidth/2)+config.Config.ScaleVertTickLength/2, y, config.Config.ScaleVertTickStrokeThickness, config.ThirdColorAdj, true)
+				if config.Config.ScaleVertTextEnable {
+					op := &text.DrawOptions{}
+					op.GeoM.Translate(float64(config.Config.WindowWidth)/2+float64(config.Config.ScaleVertTickLength/2)+config.Config.ScaleVertTextPadding, float64(y))
+					op.LayoutOptions.PrimaryAlign = text.AlignStart
+					op.LayoutOptions.SecondaryAlign = text.AlignCenter
+					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.ScaleTextOpacity})
+					text.Draw(screen, fmt.Sprintf("%.*f", int(math.Ceil(math.Log10(float64(config.Config.ScaleVertDiv)/2))), 2/float32(config.Config.ScaleVertDiv)*float32(i)-1), &text.GoTextFace{
+						Source: fonts.Font,
+						Size:   config.Config.ScaleVertTextSize,
+					}, op)
+				}
+			}
+		}
+	}
+
+	if (config.Config.DefaultMode == 0) && config.Config.ScaleEnable {
+		if config.Config.ScaleMainAxisEnable {
+			vector.StrokeLine(screen, 0, float32(config.Config.WindowHeight/2), float32(config.Config.WindowWidth), float32(config.Config.WindowHeight/2), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
+			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2), 0, float32(config.Config.WindowWidth/2), float32(config.Config.WindowHeight), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
+		}
+		if config.Config.ScaleHorzTickEnable {
+			for i := range config.Config.ScaleHorzDiv + 1 {
+				x := float32(config.Config.WindowWidth) / float32(config.Config.ScaleHorzDiv) * float32(i)
+				if config.Config.ScaleHorzTickExpandToGrid {
+					vector.StrokeLine(screen, x, 0, x, float32(config.Config.WindowHeight), config.Config.ScaleHorzTickExpandToGridThickness, config.ThirdColorAdj, true)
+				}
+				vector.StrokeLine(screen, x, float32(config.Config.WindowHeight/2)-config.Config.ScaleHorzTickLength/2, x, float32(config.Config.WindowHeight/2)+config.Config.ScaleHorzTickLength/2, config.Config.ScaleHorzTickStrokeThickness, config.ThirdColorAdj, true)
+				if config.Config.ScaleHorzTextEnable {
+					op := &text.DrawOptions{}
+					op.GeoM.Translate(float64(x), float64(config.Config.WindowHeight)/2+float64(config.Config.ScaleHorzTickLength/2)+config.Config.ScaleHorzTextPadding)
+					op.LayoutOptions.PrimaryAlign = text.AlignCenter
+					op.LayoutOptions.SecondaryAlign = text.AlignStart
+					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.ScaleTextOpacity})
+					text.Draw(screen, fmt.Sprintf("%.*f", int(math.Ceil(math.Log10(float64(config.Config.ScaleHorzDiv)/2))), 2/float32(config.Config.ScaleHorzDiv)*float32(i)-1), &text.GoTextFace{
+						Source: fonts.Font,
+						Size:   config.Config.ScaleHorzTextSize,
+					}, op)
+				}
+			}
+		}
+	}
+
 	if config.Config.DefaultMode == 0 {
 		if filtersApplied {
 			for i := uint32(0); i < numSamples; i++ {
@@ -245,14 +301,52 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 		}
 
+		var samplesPerCrop uint32
+
 		if config.Config.PeriodCrop && len(indices) > 1 {
 			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.PeriodCropCount)])
-			samplesPerCrop := lastPeriodOffset - offset
+			samplesPerCrop = lastPeriodOffset - offset
 			if config.Config.UseBetterPeakDetectionAlgorithm {
 				samplesPerCrop = freq * 2
 			}
+		} else {
+			samplesPerCrop = numSamples
+		}
+		if (config.Config.DefaultMode == 1) && config.Config.ScaleEnable {
+			visibleSampleCount := min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount)
+			timeSpanVisible := float64(visibleSampleCount) / float64(2*config.Config.SampleRate) //s
+			if config.Config.ScaleMainAxisEnable {
+				vector.StrokeLine(screen, 0, float32(config.Config.WindowHeight/2), float32(config.Config.WindowWidth), float32(config.Config.WindowHeight/2), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
+				vector.StrokeLine(screen, float32(config.Config.WindowWidth/2), 0, float32(config.Config.WindowWidth/2), float32(config.Config.WindowHeight), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
+			}
+			scaleScale := 1.
+			if config.Config.ScaleHorzDivDynamicPos {
+				scaleScale = math.Pow10(int(math.Ceil(math.Log10(timeSpanVisible)))) / timeSpanVisible
+			}
+			if config.Config.ScaleHorzTickEnable {
+				for i := range config.Config.ScaleHorzDiv + 1 {
+					x := float32(config.Config.WindowWidth)/2 + float32(scaleScale)*float32(config.Config.WindowWidth)/float32(config.Config.ScaleHorzDiv)*(float32(i)-float32(config.Config.ScaleHorzDiv)/2)
+					if config.Config.ScaleHorzTickExpandToGrid {
+						vector.StrokeLine(screen, x, 0, x, float32(config.Config.WindowHeight), config.Config.ScaleHorzTickExpandToGridThickness, config.ThirdColorAdj, true)
+					}
+					vector.StrokeLine(screen, x, float32(config.Config.WindowHeight/2)-config.Config.ScaleHorzTickLength/2, x, float32(config.Config.WindowHeight/2)+config.Config.ScaleHorzTickLength/2, config.Config.ScaleHorzTickStrokeThickness, config.ThirdColorAdj, true)
+					if config.Config.ScaleHorzTextEnable {
+						op := &text.DrawOptions{}
+						op.GeoM.Translate(float64(x), float64(config.Config.WindowHeight)/2+float64(config.Config.ScaleHorzTickLength/2)+config.Config.ScaleHorzTextPadding)
+						op.LayoutOptions.PrimaryAlign = text.AlignCenter
+						op.LayoutOptions.SecondaryAlign = text.AlignStart
+						op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.ScaleTextOpacity})
+						text.Draw(screen, fmt.Sprintf("%s", utils.FormatDuration(scaleScale*float64(timeSpanVisible/2)*(2/float64(config.Config.ScaleHorzDiv)*float64(i)-1))), &text.GoTextFace{
+							Source: fonts.Font,
+							Size:   config.Config.ScaleHorzTextSize,
+						}, op)
+					}
+				}
+			}
+		}
+		if config.Config.PeriodCrop && len(indices) > 1 {
 			if config.Config.CenterPeak {
-				offset -= samplesPerCrop / 4
+				offset -= samplesPerCrop / 2
 			}
 			for i := uint32(0); i < min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount)-1; i++ {
 				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)

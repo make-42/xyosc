@@ -56,6 +56,29 @@ type ConfigS struct {
 	ParticleAcceleration                         float32
 	ParticleDrag                                 float32
 	DefaultMode                                  int // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
+	ScaleEnable                                  bool
+	ScaleVertTextEnable                          bool
+	ScaleHorzTextEnable                          bool
+	ScaleMainAxisEnable                          bool
+	ScaleVertTextSize                            float64
+	ScaleHorzTextSize                            float64
+	ScaleVertTextPadding                         float64
+	ScaleHorzTextPadding                         float64
+	ScaleTextOpacity                             uint8
+	ScaleMainAxisStrokeThickness                 float32
+	ScaleVertTickEnable                          bool
+	ScaleHorzTickEnable                          bool
+	ScaleVertTickExpandToGrid                    bool
+	ScaleHorzTickExpandToGrid                    bool
+	ScaleVertTickExpandToGridThickness           float32
+	ScaleHorzTickExpandToGridThickness           float32
+	ScaleVertTickStrokeThickness                 float32
+	ScaleHorzTickStrokeThickness                 float32
+	ScaleVertDiv                                 int
+	ScaleHorzDiv                                 int
+	ScaleHorzDivDynamicPos                       bool
+	ScaleVertTickLength                          float32
+	ScaleHorzTickLength                          float32
 	PeakDetectSeparator                          int
 	OscilloscopeStartPeakDetection               bool
 	UseBetterPeakDetectionAlgorithm              bool // ACF
@@ -161,6 +184,29 @@ var DefaultConfig = ConfigS{
 	ParticleAcceleration:                         0.2,
 	ParticleDrag:                                 5.0,
 	DefaultMode:                                  0, // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
+	ScaleEnable:                                  true,
+	ScaleTextOpacity:                             255,
+	ScaleMainAxisEnable:                          true,
+	ScaleVertTextEnable:                          true,
+	ScaleHorzTextEnable:                          true,
+	ScaleVertTextSize:                            10,
+	ScaleHorzTextSize:                            10,
+	ScaleVertTextPadding:                         5,
+	ScaleHorzTextPadding:                         5,
+	ScaleVertTickEnable:                          true,
+	ScaleHorzTickEnable:                          true,
+	ScaleVertTickExpandToGrid:                    false,
+	ScaleHorzTickExpandToGrid:                    false,
+	ScaleMainAxisStrokeThickness:                 2,
+	ScaleVertTickExpandToGridThickness:           0.5,
+	ScaleHorzTickExpandToGridThickness:           0.5,
+	ScaleVertTickStrokeThickness:                 1,
+	ScaleHorzTickStrokeThickness:                 1,
+	ScaleVertTickLength:                          10,
+	ScaleHorzTickLength:                          10,
+	ScaleVertDiv:                                 20,
+	ScaleHorzDiv:                                 20,
+	ScaleHorzDivDynamicPos:                       true,
 	PeakDetectSeparator:                          100,
 	OscilloscopeStartPeakDetection:               true,
 	UseBetterPeakDetectionAlgorithm:              true,

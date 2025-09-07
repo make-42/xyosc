@@ -103,6 +103,9 @@ github.com/hajimehoshi/ebiten/v2/internal/vibrate
 github.com/hajimehoshi/ebiten/v2/internal/winver
 github.com/hajimehoshi/ebiten/v2/text/v2
 github.com/hajimehoshi/ebiten/v2/vector
+# github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
+## explicit; go 1.11
+github.com/hako/durafmt
 # github.com/jezek/xgb v1.1.1
 ## explicit; go 1.11
 github.com/jezek/xgb
