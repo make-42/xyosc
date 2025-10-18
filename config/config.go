@@ -386,7 +386,7 @@ func updatePywalColors() {
 	/* This is not synced to pywal */
 	BGColorParsed, err := ParseHexColor(Config.BGColor)
 	utils.CheckError(err)
-	BGColor = color.RGBA{BGColorParsed.R, BGColorParsed.G, BGColorParsed.B, 100}
+	BGColor = color.RGBA{BGColorParsed.R, BGColorParsed.G, BGColorParsed.B, 255}
 	/* end */
 
 	walPath := configdir.LocalCache("wal")

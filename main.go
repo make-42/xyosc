@@ -617,7 +617,7 @@ func main() {
 	ebiten.SetWindowPosition(*overrideX, *overrideY)
 	ebiten.SetVsyncEnabled(true)
 	InitBuffersAtSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
-	gameOptions := ebiten.RunGameOptions{ScreenTransparent: true}
+	gameOptions := ebiten.RunGameOptions{SingleThread: true, ScreenTransparent: !config.Config.DisableTransparency}
 	if config.Config.DisableTransparency {
 		gameOptions.ScreenTransparent = false
 	}
