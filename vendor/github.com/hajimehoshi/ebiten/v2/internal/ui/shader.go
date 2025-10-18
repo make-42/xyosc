@@ -27,9 +27,9 @@ import (
 type Shader struct {
 	shader *atlas.Shader
 
-	uniformNames       []string
-	uniformTypes       []shaderir.Type
-	uniformUint32Count int
+	uniformNames      []string
+	uniformTypes      []shaderir.Type
+	uniformDwordCount int
 }
 
 func NewShader(ir *shaderir.Program, name string) *Shader {
@@ -45,20 +45,20 @@ func (s *Shader) Deallocate() {
 }
 
 func (s *Shader) AppendUniforms(dst []uint32, uniforms map[string]any) []uint32 {
-	if s.uniformUint32Count == 0 {
+	if s.uniformDwordCount == 0 {
 		for _, typ := range s.uniformTypes {
-			s.uniformUint32Count += typ.Uint32Count()
+			s.uniformDwordCount += typ.DwordCount()
 		}
 	}
 
 	origLen := len(dst)
-	if cap(dst)-len(dst) >= s.uniformUint32Count {
-		dst = dst[:len(dst)+s.uniformUint32Count]
+	if cap(dst)-len(dst) >= s.uniformDwordCount {
+		dst = dst[:len(dst)+s.uniformDwordCount]
 		for i := origLen; i < len(dst); i++ {
 			dst[i] = 0
 		}
 	} else {
-		dst = append(dst, make([]uint32, s.uniformUint32Count)...)
+		dst = append(dst, make([]uint32, s.uniformDwordCount)...)
 	}
 
 	idx := origLen
@@ -70,27 +70,44 @@ func (s *Shader) AppendUniforms(dst []uint32, uniforms map[string]any) []uint32 
 			v := reflect.ValueOf(uv)
 			t := v.Type()
 			switch t.Kind() {
+			case reflect.Bool:
+				if typ.DwordCount() != 1 {
+					panic(fmt.Sprintf("ui: unexpected uniform value for %s (%s)", name, typ.String()))
+				}
+				if v.Bool() {
+					dst[idx] = 1
+				} else {
+					dst[idx] = 0
+				}
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				if typ.Uint32Count() != 1 {
+				if typ.DwordCount() != 1 {
 					panic(fmt.Sprintf("ui: unexpected uniform value for %s (%s)", name, typ.String()))
 				}
 				dst[idx] = uint32(v.Int())
 			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-				if typ.Uint32Count() != 1 {
+				if typ.DwordCount() != 1 {
 					panic(fmt.Sprintf("ui: unexpected uniform value for %s (%s)", name, typ.String()))
 				}
 				dst[idx] = uint32(v.Uint())
 			case reflect.Float32, reflect.Float64:
-				if typ.Uint32Count() != 1 {
+				if typ.DwordCount() != 1 {
 					panic(fmt.Sprintf("ui: unexpected uniform value for %s (%s)", name, typ.String()))
 				}
 				dst[idx] = math.Float32bits(float32(v.Float()))
 			case reflect.Slice, reflect.Array:
 				l := v.Len()
-				if typ.Uint32Count() != l {
+				if typ.DwordCount() != l {
 					panic(fmt.Sprintf("ui: unexpected uniform value for %s (%s)", name, typ.String()))
 				}
 				switch t.Elem().Kind() {
+				case reflect.Bool:
+					for i := 0; i < l; i++ {
+						if v.Index(i).Bool() {
+							dst[idx+i] = 1
+						} else {
+							dst[idx+i] = 0
+						}
+					}
 				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 					for i := 0; i < l; i++ {
 						dst[idx+i] = uint32(v.Index(i).Int())
@@ -111,7 +128,7 @@ func (s *Shader) AppendUniforms(dst []uint32, uniforms map[string]any) []uint32 
 			}
 		}
 
-		idx += typ.Uint32Count()
+		idx += typ.DwordCount()
 	}
 
 	return dst

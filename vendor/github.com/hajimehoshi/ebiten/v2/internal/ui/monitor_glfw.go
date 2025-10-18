@@ -18,6 +18,7 @@ package ui
 
 import (
 	"image"
+	"slices"
 	"sync"
 	"sync/atomic"
 
@@ -81,6 +82,15 @@ func (m *monitors) append(ms []*Monitor) []*Monitor {
 	return append(ms, m.monitors...)
 }
 
+func (m *monitors) contains(monitor *Monitor) bool {
+	if !m.updateCalled.Load() {
+		return false
+	}
+	m.m.Lock()
+	defer m.m.Unlock()
+	return slices.Contains(m.monitors, monitor)
+}
+
 func (m *monitors) primaryMonitor() *Monitor {
 	if !m.updateCalled.Load() {
 		panic("ui: (*monitors).update must be called before (*monitors).primaryMonitor is called")
@@ -89,7 +99,7 @@ func (m *monitors) primaryMonitor() *Monitor {
 	m.m.Lock()
 	defer m.m.Unlock()
 
-	// GetMonitors might return nil in theory (#1878, #1887).
+	// GetMonitors might return nil in theory (#1878, #1887, #3241).
 	// primaryMonitor can be called at the initialization, so monitors can be nil.
 	if len(m.monitors) == 0 {
 		return nil

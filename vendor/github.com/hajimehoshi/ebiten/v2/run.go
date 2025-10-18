@@ -23,6 +23,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2/internal/clock"
 	"github.com/hajimehoshi/ebiten/v2/internal/graphicsdriver"
+	"github.com/hajimehoshi/ebiten/v2/internal/inputstate"
 	"github.com/hajimehoshi/ebiten/v2/internal/ui"
 )
 
@@ -58,9 +59,9 @@ type Game interface {
 
 	// Draw draws the game screen by one frame.
 	//
-	// The give argument represents a screen image. The updated content is adopted as the game screen.
+	// The provided argument represents a screen image. The updated content is adopted as the game screen.
 	//
-	// The frequency of Draw calls depends on the user's environment, especially the monitors refresh rate.
+	// The frequency of Draw calls depends on the user's environment, especially the monitor's refresh rate.
 	// For portability, you should not put your game logic in Draw in general.
 	Draw(screen *Image)
 
@@ -72,15 +73,15 @@ type Game interface {
 	// element. On mobiles, the outside is the view's size.
 	//
 	// Even though the outside size and the screen size differ, the rendering scale is automatically adjusted to
-	// fit with the outside.
+	// fit with the outside dimensions.
 	//
 	// Layout is called almost every frame.
 	//
 	// It is ensured that Layout is invoked before Update is called in the first frame.
 	//
-	// If Layout returns non-positive numbers, the caller can panic.
+	// If Layout returns non-positive numbers, the caller may panic.
 	//
-	// You can return a fixed screen size if you don't care, or you can also return a calculated screen size
+	// You can return a fixed screen size if desired, or you can also return a calculated screen size
 	// adjusted with the given outside size.
 	//
 	// If the game implements the interface LayoutFer, Layout is never called and LayoutF is called instead.
@@ -107,8 +108,10 @@ type FinalScreen interface {
 
 	DrawImage(img *Image, options *DrawImageOptions)
 	DrawTriangles(vertices []Vertex, indices []uint16, img *Image, options *DrawTrianglesOptions)
+	DrawTriangles32(vertices []Vertex, indices []uint32, img *Image, options *DrawTrianglesOptions)
 	DrawRectShader(width, height int, shader *Shader, options *DrawRectShaderOptions)
 	DrawTrianglesShader(vertices []Vertex, indices []uint16, shader *Shader, options *DrawTrianglesShaderOptions)
+	DrawTrianglesShader32(vertices []Vertex, indices []uint32, shader *Shader, options *DrawTrianglesShaderOptions)
 	Clear()
 	Fill(clr color.Color)
 
@@ -221,7 +224,7 @@ var Termination = ui.RegularTermination
 // TPS (ticks per second) is 60 by default.
 // This is not related to framerate (display's refresh rate).
 //
-// RunGame returns error when 1) an error happens in the underlying graphics driver, 2) an audio error happens
+// RunGame returns an error when 1) an error happens in the underlying graphics driver, 2) an audio error happens
 // or 3) Update returns an error. In the case of 3), RunGame returns the same error so far, but it is recommended to
 // use errors.Is when you check the returned error is the error you want, rather than comparing the values
 // with == or != directly.
@@ -292,7 +295,18 @@ type RunGameOptions struct {
 	// The default (zero) value is ColorSpaceDefault, which means that color space depends on the environment.
 	ColorSpace ColorSpace
 
-	// X11DisplayName is a class name in the ICCCM WM_CLASS window property.
+	// ApplePressAndHoldEnabled indicates whether the press-and-hold feature is enabled or not.
+	// If true, pressing and holding a key might show a menu to select a character glyph variant.
+	// This is useful for GUI applications, but some APIs like [AppendInputChars]'s behavior is changed:
+	// for example, pressing and holding Q key would not repeat 'q' by [AppendInputChars].
+	// If false, pressing and holding a key repeats the key event.
+	//
+	// ApplePressAndHoldEnabled is available only on macOS.
+	//
+	// The default (zero) value is false, which means that the press-and-hold feature is disabled.
+	ApplePressAndHoldEnabled bool
+
+	// X11ClassName is a class name in the ICCCM WM_CLASS window property.
 	X11ClassName string
 
 	// X11InstanceName is an instance name in the ICCCM WM_CLASS window property.
@@ -400,7 +414,7 @@ func CursorMode() CursorModeType {
 //
 // On browsers, capturing a cursor requires a user gesture, otherwise SetCursorMode does nothing but leave an error message in console.
 // This behavior varies across browser implementations.
-// Check a user interaction before calling capturing a cursor e.g. by IsMouseButtonPressed or IsKeyPressed.
+// Check for user interaction before calling capturing a cursor e.g. by IsMouseButtonPressed or IsKeyPressed.
 //
 // SetCursorMode does nothing on mobiles.
 //
@@ -428,7 +442,7 @@ func IsFullscreen() bool {
 //
 // On browsers, triggering fullscreen requires a user gesture, otherwise SetFullscreen does nothing but leave an error message in console.
 // This behavior varies across browser implementations.
-// Check a user interaction before triggering fullscreen e.g. by IsMouseButtonPressed or IsKeyPressed.
+// Check for user interaction before triggering fullscreen e.g. by IsMouseButtonPressed or IsKeyPressed.
 //
 // SetFullscreen does nothing on mobiles.
 //
@@ -721,15 +735,16 @@ func toUIRunOptions(options *RunGameOptions) *ui.RunOptions {
 	// The default (zero) value is false.
 
 	return &ui.RunOptions{
-		GraphicsLibrary:   ui.GraphicsLibrary(options.GraphicsLibrary),
-		InitUnfocused:     options.InitUnfocused,
-		ScreenTransparent: options.ScreenTransparent,
-		SkipTaskbar:       options.SkipTaskbar,
-		SingleThread:      options.SingleThread,
-		DisableHiDPI:      options.DisableHiDPI,
-		ColorSpace:        graphicsdriver.ColorSpace(options.ColorSpace),
-		X11ClassName:      options.X11ClassName,
-		X11InstanceName:   options.X11InstanceName,
+		GraphicsLibrary:          ui.GraphicsLibrary(options.GraphicsLibrary),
+		InitUnfocused:            options.InitUnfocused,
+		ScreenTransparent:        options.ScreenTransparent,
+		SkipTaskbar:              options.SkipTaskbar,
+		SingleThread:             options.SingleThread,
+		DisableHiDPI:             options.DisableHiDPI,
+		ColorSpace:               graphicsdriver.ColorSpace(options.ColorSpace),
+		ApplePressAndHoldEnabled: options.ApplePressAndHoldEnabled,
+		X11ClassName:             options.X11ClassName,
+		X11InstanceName:          options.X11InstanceName,
 	}
 }
 
@@ -738,7 +753,17 @@ func toUIRunOptions(options *RunGameOptions) *ui.RunOptions {
 //
 // DroppedFiles works on desktops and browsers.
 //
+// As of Ebitengine 2.9, the returned value also implements [io/fs.ReadDirFS].
+//
 // DroppedFiles is concurrent-safe.
 func DroppedFiles() fs.FS {
-	return theInputState.droppedFiles()
+	return inputstate.Get().DroppedFiles()
+}
+
+// Tick returns the current tick count.
+// The tick count starts with 0 and is incremented by one on every Update call.
+//
+// Tick is concurrent-safe.
+func Tick() int64 {
+	return ui.Get().Tick()
 }

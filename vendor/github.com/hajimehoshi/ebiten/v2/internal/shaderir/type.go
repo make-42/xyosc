@@ -87,8 +87,11 @@ func (t Type) String() string {
 	}
 }
 
-func (t Type) Uint32Count() int {
+func (t Type) DwordCount() int {
 	switch t.Main {
+	case Bool:
+		// The size of a bool varies by the shader language, but use 1 for simplicity.
+		return 1
 	case Int:
 		return 1
 	case Float:
@@ -112,7 +115,7 @@ func (t Type) Uint32Count() int {
 	case Mat4:
 		return 16
 	case Array:
-		return t.Length * t.Sub[0].Uint32Count()
+		return t.Length * t.Sub[0].DwordCount()
 	default: // TODO: Parse a struct correctly
 		return -1
 	}

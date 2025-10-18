@@ -16,8 +16,23 @@
 
 package ui
 
-func (u *UserInterface) updateInputState() error {
-	// TODO: Implement this
+import (
+	"github.com/hajimehoshi/ebiten/v2/internal/gamepad"
+)
+
+func (u *UserInterface) updateInputStateForFrame() error {
+	var err error
+	u.mainThread.Call(func() {
+		err = u.updateInputStateForFrameImpl()
+	})
+	return err
+}
+
+// updateInputStateForFrameImpl must be called from the main thread.
+func (u *UserInterface) updateInputStateForFrameImpl() error {
+	if err := gamepad.Update(); err != nil {
+		return err
+	}
 	return nil
 }
 

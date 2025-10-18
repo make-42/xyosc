@@ -24,7 +24,7 @@ Ebitengine (formerly known as Ebiten) is an open source game engine for the Go p
 * [iOS](https://ebitengine.org/en/documents/mobile.html)
 * [WebAssembly](https://ebitengine.org/en/documents/webassembly.html)
 * Nintendo Switch
-* Xbox
+* Xbox (Xbox support is limited and not available to everyone. Negotiations are currently underway to make it accessible to all.)
 
 For installation on desktops, see [the installation instruction](https://ebitengine.org/en/documents/install.html).
 
@@ -60,7 +60,7 @@ For installation on desktops, see [the installation instruction](https://ebiteng
 
 Ebitengine is licensed under Apache license version 2.0. See [LICENSE](LICENSE) file.
 
-[The Ebitengine logo](https://ebitengine.org/images/logo.png) by Hajime Hoshi is licensed under [the Creative Commons Attribution-NoDerivatives 4.0](https://creativecommons.org/licenses/by-nd/4.0/).
+[The Ebitengine logo](https://ebitengine.org/images/logo.png) by Hajime Hoshi is licensed under [the Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 ### GLFW
 

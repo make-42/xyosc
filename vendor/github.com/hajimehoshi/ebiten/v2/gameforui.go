@@ -15,13 +15,12 @@
 package ebiten
 
 import (
-	"fmt"
 	"image"
 	"math"
 	"sync/atomic"
 
 	"github.com/hajimehoshi/ebiten/v2/internal/atlas"
-	"github.com/hajimehoshi/ebiten/v2/internal/builtinshader"
+	"github.com/hajimehoshi/ebiten/v2/internal/inputstate"
 	"github.com/hajimehoshi/ebiten/v2/internal/ui"
 )
 
@@ -32,12 +31,11 @@ func init() {
 }
 
 type gameForUI struct {
-	game         Game
-	offscreen    *Image
-	screen       *Image
-	screenShader *Shader
-	imageDumper  imageDumper
-	transparent  bool
+	game        Game
+	offscreen   *Image
+	screen      *Image
+	imageDumper imageDumper
+	transparent bool
 }
 
 func newGameForUI(game Game, transparent bool) *gameForUI {
@@ -45,13 +43,6 @@ func newGameForUI(game Game, transparent bool) *gameForUI {
 		game:        game,
 		transparent: transparent,
 	}
-
-	s, err := newShader(builtinshader.ScreenShaderSource, "screen")
-	if err != nil {
-		panic(fmt.Sprintf("ebiten: compiling the screen shader failed: %v", err))
-	}
-	g.screenShader = s
-
 	return g
 }
 
@@ -99,13 +90,12 @@ func (g *gameForUI) Layout(outsideWidth, outsideHeight float64) (float64, float6
 		outsideHeight = 1
 	}
 
-	// TODO: Add a new Layout function taking float values (#2285).
 	sw, sh := g.game.Layout(int(outsideWidth), int(outsideHeight))
 	return float64(sw), float64(sh)
 }
 
 func (g *gameForUI) UpdateInputState(fn func(*ui.InputState)) {
-	theInputState.update(fn)
+	inputstate.Get().Update(fn)
 }
 
 func (g *gameForUI) Update() error {
@@ -136,21 +126,30 @@ func (g *gameForUI) DrawFinalScreen(scale, offsetX, offsetY float64) {
 		return
 	}
 
+	DefaultDrawFinalScreen(g.screen, g.offscreen, geoM)
+}
+
+// DefaultDrawFinalScreen is the default implementation of [FinalScreenDrawer.DrawFinalScreen],
+// used when a [Game] doesn't implement [FinalScreenDrawer].
+//
+// You can use DefaultDrawFinalScreen when you need the default implementation of [FinalScreenDrawer.DrawFinalScreen]
+// in your implementation of [FinalScreenDrawer], for example.
+func DefaultDrawFinalScreen(screen FinalScreen, offscreen *Image, geoM GeoM) {
+	scale := geoM.Element(0, 0)
 	switch {
 	case !screenFilterEnabled.Load(), math.Floor(scale) == scale:
 		op := &DrawImageOptions{}
 		op.GeoM = geoM
-		g.screen.DrawImage(g.offscreen, op)
+		screen.DrawImage(offscreen, op)
 	case scale < 1:
 		op := &DrawImageOptions{}
 		op.GeoM = geoM
 		op.Filter = FilterLinear
-		g.screen.DrawImage(g.offscreen, op)
+		screen.DrawImage(offscreen, op)
 	default:
-		op := &DrawRectShaderOptions{}
-		op.Images[0] = g.offscreen
+		op := &DrawImageOptions{}
 		op.GeoM = geoM
-		w, h := g.offscreen.Bounds().Dx(), g.offscreen.Bounds().Dy()
-		g.screen.DrawRectShader(w, h, g.screenShader, op)
+		op.Filter = FilterPixelated
+		screen.DrawImage(offscreen, op)
 	}
 }

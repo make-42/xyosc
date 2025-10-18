@@ -326,7 +326,6 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
                                     const _GLFWctxconfig* ctxconfig)
 {
     int i;
-    _GLFWwindow* previous;
     const char* version;
     const char* prefixes[] =
     {
@@ -339,10 +338,9 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
     window->context.source = ctxconfig->source;
     window->context.client = GLFW_OPENGL_API;
 
-    previous = _glfwPlatformGetTls(&_glfw.contextSlot);
+    // In Ebitengine, only one window is created.
+    // Always assume that the current context is not set.
     glfwMakeContextCurrent((GLFWwindow*) window);
-    if (_glfwPlatformGetTls(&_glfw.contextSlot) != window)
-        return GLFW_FALSE;
 
     window->context.GetIntegerv = (PFNGLGETINTEGERVPROC)
         window->context.getProcAddress("glGetIntegerv");
@@ -351,7 +349,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
     if (!window->context.GetIntegerv || !window->context.GetString)
     {
         _glfwInputError(GLFW_PLATFORM_ERROR, "Entry point retrieval is broken");
-        glfwMakeContextCurrent((GLFWwindow*) previous);
+        glfwMakeContextCurrent(NULL);
         return GLFW_FALSE;
     }
 
@@ -369,7 +367,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
                             "OpenGL ES version string retrieval is broken");
         }
 
-        glfwMakeContextCurrent((GLFWwindow*) previous);
+        glfwMakeContextCurrent(NULL);
         return GLFW_FALSE;
     }
 
@@ -401,7 +399,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
                             "No version found in OpenGL ES version string");
         }
 
-        glfwMakeContextCurrent((GLFWwindow*) previous);
+        glfwMakeContextCurrent(NULL);
         return GLFW_FALSE;
     }
 
@@ -431,7 +429,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
                             window->context.major, window->context.minor);
         }
 
-        glfwMakeContextCurrent((GLFWwindow*) previous);
+        glfwMakeContextCurrent(NULL);
         return GLFW_FALSE;
     }
 
@@ -447,7 +445,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
         {
             _glfwInputError(GLFW_PLATFORM_ERROR,
                             "Entry point retrieval is broken");
-            glfwMakeContextCurrent((GLFWwindow*) previous);
+            glfwMakeContextCurrent(NULL);
             return GLFW_FALSE;
         }
     }
@@ -465,7 +463,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
 
             if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
                 window->context.debug = GLFW_TRUE;
-            else if (glfwExtensionSupported("GL_ARB_debug_output") &&
+            else if (glfwExtensionSupported((GLFWwindow*) window, "GL_ARB_debug_output") &&
                      ctxconfig->debug)
             {
                 // HACK: This is a workaround for older drivers (pre KHR_debug)
@@ -489,7 +487,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
                 window->context.profile = GLFW_OPENGL_COMPAT_PROFILE;
             else if (mask & GL_CONTEXT_CORE_PROFILE_BIT)
                 window->context.profile = GLFW_OPENGL_CORE_PROFILE;
-            else if (glfwExtensionSupported("GL_ARB_compatibility"))
+            else if (glfwExtensionSupported((GLFWwindow*) window, "GL_ARB_compatibility"))
             {
                 // HACK: This is a workaround for the compatibility profile bit
                 //       not being set in the context flags if an OpenGL 3.2+
@@ -500,7 +498,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
         }
 
         // Read back robustness strategy
-        if (glfwExtensionSupported("GL_ARB_robustness"))
+        if (glfwExtensionSupported((GLFWwindow*) window, "GL_ARB_robustness"))
         {
             // NOTE: We avoid using the context flags for detection, as they are
             //       only present from 3.0 while the extension applies from 1.1
@@ -518,7 +516,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
     else
     {
         // Read back robustness strategy
-        if (glfwExtensionSupported("GL_EXT_robustness"))
+        if (glfwExtensionSupported((GLFWwindow*) window, "GL_EXT_robustness"))
         {
             // NOTE: The values of these constants match those of the OpenGL ARB
             //       one, so we can reuse them here
@@ -534,7 +532,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
         }
     }
 
-    if (glfwExtensionSupported("GL_KHR_context_flush_control"))
+    if (glfwExtensionSupported((GLFWwindow*) window, "GL_KHR_context_flush_control"))
     {
         GLint behavior;
         window->context.GetIntegerv(GL_CONTEXT_RELEASE_BEHAVIOR, &behavior);
@@ -556,7 +554,7 @@ GLFWbool _glfwRefreshContextAttribs(_GLFWwindow* window,
             window->context.swapBuffers(window);
     }
 
-    glfwMakeContextCurrent((GLFWwindow*) previous);
+    glfwMakeContextCurrent(NULL);
     return GLFW_TRUE;
 }
 
@@ -642,37 +640,23 @@ GLFWAPI void glfwSwapBuffers(GLFWwindow* handle)
     window->context.swapBuffers(window);
 }
 
-GLFWAPI void glfwSwapInterval(int interval)
+GLFWAPI void glfwSwapInterval(GLFWwindow* handle, int interval)
 {
-    _GLFWwindow* window;
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
 
     _GLFW_REQUIRE_INIT();
 
-    window = _glfwPlatformGetTls(&_glfw.contextSlot);
-    if (!window)
-    {
-        _glfwInputError(GLFW_NO_CURRENT_CONTEXT,
-                        "Cannot set swap interval without a current OpenGL or OpenGL ES context");
-        return;
-    }
-
-    window->context.swapInterval(interval);
+    window->context.swapInterval(window, interval);
 }
 
-GLFWAPI int glfwExtensionSupported(const char* extension)
+GLFWAPI int glfwExtensionSupported(GLFWwindow* handle, const char* extension)
 {
-    _GLFWwindow* window;
+    _GLFWwindow* window = (_GLFWwindow*) handle;
+    assert(window != NULL);
     assert(extension != NULL);
 
     _GLFW_REQUIRE_INIT_OR_RETURN(GLFW_FALSE);
-
-    window = _glfwPlatformGetTls(&_glfw.contextSlot);
-    if (!window)
-    {
-        _glfwInputError(GLFW_NO_CURRENT_CONTEXT,
-                        "Cannot query extension without a current OpenGL or OpenGL ES context");
-        return GLFW_FALSE;
-    }
 
     if (*extension == '\0')
     {

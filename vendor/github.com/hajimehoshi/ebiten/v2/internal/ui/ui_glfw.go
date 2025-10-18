@@ -26,6 +26,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hajimehoshi/ebiten/v2/internal/clock"
 	"github.com/hajimehoshi/ebiten/v2/internal/file"
 	"github.com/hajimehoshi/ebiten/v2/internal/gamepad"
 	"github.com/hajimehoshi/ebiten/v2/internal/glfw"
@@ -103,6 +104,9 @@ type userInterfaceImpl struct {
 	defaultFramebufferSizeCallback glfw.FramebufferSizeCallback
 	dropCallback                   glfw.DropCallback
 	framebufferSizeCallbackCh      chan struct{}
+
+	cachedCurrentMonitor     *Monitor
+	cachedCurrentMonitorTime int64
 
 	darwinInitOnce        sync.Once
 	showWindowOnce        sync.Once
@@ -1053,6 +1057,8 @@ event:
 }
 
 func (u *UserInterface) initOnMainThread(options *RunOptions) error {
+	u.setApplePressAndHoldEnabled(options.ApplePressAndHoldEnabled)
+
 	if err := glfw.WindowHint(glfw.AutoIconify, glfw.False); err != nil {
 		return err
 	}
@@ -1869,6 +1875,21 @@ func (u *UserInterface) minimumWindowWidth() (int, error) {
 //
 // currentMonitor must be called on the main thread.
 func (u *UserInterface) currentMonitor() (*Monitor, error) {
+	if u.cachedCurrentMonitor != nil && u.cachedCurrentMonitorTime > u.Tick()-int64(clock.TPS()) && theMonitors.contains(u.cachedCurrentMonitor) {
+		return u.cachedCurrentMonitor, nil
+	}
+
+	m, err := u.currentMonitorImpl()
+	if err != nil {
+		return nil, err
+	}
+	u.cachedCurrentMonitor = m
+	u.cachedCurrentMonitorTime = u.Tick()
+	return m, nil
+}
+
+// currentMonitorImpl must be called from the main thread.
+func (u *UserInterface) currentMonitorImpl() (*Monitor, error) {
 	if u.window == nil {
 		return u.getInitMonitor(), nil
 	}
@@ -1902,7 +1923,13 @@ func (u *UserInterface) currentMonitor() (*Monitor, error) {
 		return m, nil
 	}
 
-	return theMonitors.primaryMonitor(), nil
+	if m := theMonitors.primaryMonitor(); m != nil {
+		return m, nil
+	}
+
+	// The primiary monitor might be missing even after the initialization (#3094, #3241).
+	// The reason is still unknown. As a workaround, return the initial monitor.
+	return u.getInitMonitor(), nil
 }
 
 func (u *UserInterface) readInputState(inputState *InputState) {
@@ -2113,7 +2140,12 @@ func (u *UserInterface) setWindowPositionInDIP(x, y int, monitor *Monitor) error
 	s := monitor.DeviceScaleFactor()
 	xf := dipToGLFWPixel(float64(x), s)
 	yf := dipToGLFWPixel(float64(y), s)
-	if x, y := u.adjustWindowPosition(mx+int(xf), my+int(yf), monitor); f {
+
+	x, y, err = u.adjustWindowPosition(mx+int(xf), my+int(yf), monitor)
+	if err != nil {
+		return err
+	}
+	if f {
 		u.setOrigWindowPos(x, y)
 	} else {
 		if err := u.window.SetPos(x, y); err != nil {

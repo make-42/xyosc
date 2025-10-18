@@ -102,7 +102,7 @@ func compileShader(program *shaderir.Program) (vsh, psh *_ID3DBlob, ferr error) 
 		return vsh, psh, nil
 	}
 
-	vs, ps, _ := hlsl.Compile(program)
+	vs, ps, _, _ := hlsl.Compile(program)
 	var flag uint32 = uint32(_D3DCOMPILE_OPTIMIZATION_LEVEL3)
 
 	var wg errgroup.Group
@@ -148,11 +148,14 @@ func compileShader(program *shaderir.Program) (vsh, psh *_ID3DBlob, ferr error) 
 func constantBufferSize(uniformTypes []shaderir.Type, uniformOffsets []int) int {
 	var size int
 	for i, typ := range uniformTypes {
-		if size < uniformOffsets[i]/4 {
-			size = uniformOffsets[i] / 4
+		if size < uniformOffsets[i] {
+			size = uniformOffsets[i]
 		}
 
 		switch typ.Main {
+		case shaderir.Bool:
+			// Bool is 4 bytes in HLSL.
+			size += 1
 		case shaderir.Float:
 			size += 1
 		case shaderir.Int:
@@ -172,6 +175,8 @@ func constantBufferSize(uniformTypes []shaderir.Type, uniformOffsets []int) int 
 		case shaderir.Array:
 			// Each element is aligned to the boundary.
 			switch typ.Sub[0].Main {
+			case shaderir.Bool:
+				size += 4*(typ.Length-1) + 1
 			case shaderir.Float:
 				size += 4*(typ.Length-1) + 1
 			case shaderir.Int:
@@ -198,33 +203,39 @@ func constantBufferSize(uniformTypes []shaderir.Type, uniformOffsets []int) int 
 	return size
 }
 
-func adjustUniforms(uniformTypes []shaderir.Type, uniformOffsets []int, uniforms []uint32) []uint32 {
-	var fs []uint32
+func appendAdjustedUniforms(dst []uint32, uniformTypes []shaderir.Type, uniformOffsets []int, uniforms []uint32) []uint32 {
+	// Note that HLSL's matrices are row-major, while GLSL and MSL are column-major.
+	// Transpose matrices so that users can access matrix indices in the same way as GLSL and MSL.
+	// For packing rule, see https://github.com/microsoft/DirectXShaderCompiler/wiki/Buffer-Packing
+
 	var idx int
 	for i, typ := range uniformTypes {
-		if len(fs) < uniformOffsets[i]/4 {
-			fs = append(fs, make([]uint32, uniformOffsets[i]/4-len(fs))...)
+		if len(dst) < uniformOffsets[i] {
+			dst = append(dst, make([]uint32, uniformOffsets[i]-len(dst))...)
 		}
 
-		n := typ.Uint32Count()
+		n := typ.DwordCount()
 		switch typ.Main {
+		case shaderir.Bool:
+			// Bool is 4 bytes in HLSL.
+			dst = append(dst, uniforms[idx:idx+1]...)
 		case shaderir.Float:
-			fs = append(fs, uniforms[idx:idx+1]...)
+			dst = append(dst, uniforms[idx:idx+1]...)
 		case shaderir.Int:
-			fs = append(fs, uniforms[idx:idx+1]...)
+			dst = append(dst, uniforms[idx:idx+1]...)
 		case shaderir.Vec2, shaderir.IVec2:
-			fs = append(fs, uniforms[idx:idx+2]...)
+			dst = append(dst, uniforms[idx:idx+2]...)
 		case shaderir.Vec3, shaderir.IVec3:
-			fs = append(fs, uniforms[idx:idx+3]...)
+			dst = append(dst, uniforms[idx:idx+3]...)
 		case shaderir.Vec4, shaderir.IVec4:
-			fs = append(fs, uniforms[idx:idx+4]...)
+			dst = append(dst, uniforms[idx:idx+4]...)
 		case shaderir.Mat2:
-			fs = append(fs,
+			dst = append(dst,
 				uniforms[idx+0], uniforms[idx+2], 0, 0,
 				uniforms[idx+1], uniforms[idx+3],
 			)
 		case shaderir.Mat3:
-			fs = append(fs,
+			dst = append(dst,
 				uniforms[idx+0], uniforms[idx+3], uniforms[idx+6], 0,
 				uniforms[idx+1], uniforms[idx+4], uniforms[idx+7], 0,
 				uniforms[idx+2], uniforms[idx+5], uniforms[idx+8],
@@ -234,14 +245,14 @@ func adjustUniforms(uniformTypes []shaderir.Type, uniformOffsets []int, uniforms
 				// In DirectX, the NDC's Y direction (upward) and the framebuffer's Y direction (downward) don't
 				// match. Then, the Y direction must be inverted.
 				// Invert the sign bits as float32 values.
-				fs = append(fs,
+				dst = append(dst,
 					uniforms[idx+0], uniforms[idx+4], uniforms[idx+8], uniforms[idx+12],
 					uniforms[idx+1]^(1<<31), uniforms[idx+5]^(1<<31), uniforms[idx+9]^(1<<31), uniforms[idx+13]^(1<<31),
 					uniforms[idx+2], uniforms[idx+6], uniforms[idx+10], uniforms[idx+14],
 					uniforms[idx+3], uniforms[idx+7], uniforms[idx+11], uniforms[idx+15],
 				)
 			} else {
-				fs = append(fs,
+				dst = append(dst,
 					uniforms[idx+0], uniforms[idx+4], uniforms[idx+8], uniforms[idx+12],
 					uniforms[idx+1], uniforms[idx+5], uniforms[idx+9], uniforms[idx+13],
 					uniforms[idx+2], uniforms[idx+6], uniforms[idx+10], uniforms[idx+14],
@@ -251,63 +262,70 @@ func adjustUniforms(uniformTypes []shaderir.Type, uniformOffsets []int, uniforms
 		case shaderir.Array:
 			// Each element is aligned to the boundary.
 			switch typ.Sub[0].Main {
+			case shaderir.Bool:
+				for j := 0; j < typ.Length; j++ {
+					dst = append(dst, uniforms[idx+j])
+					if j < typ.Length-1 {
+						dst = append(dst, 0, 0, 0)
+					}
+				}
 			case shaderir.Float:
 				for j := 0; j < typ.Length; j++ {
-					fs = append(fs, uniforms[idx+j])
+					dst = append(dst, uniforms[idx+j])
 					if j < typ.Length-1 {
-						fs = append(fs, 0, 0, 0)
+						dst = append(dst, 0, 0, 0)
 					}
 				}
 			case shaderir.Int:
 				for j := 0; j < typ.Length; j++ {
-					fs = append(fs, uniforms[idx+j])
+					dst = append(dst, uniforms[idx+j])
 					if j < typ.Length-1 {
-						fs = append(fs, 0, 0, 0)
+						dst = append(dst, 0, 0, 0)
 					}
 				}
 			case shaderir.Vec2, shaderir.IVec2:
 				for j := 0; j < typ.Length; j++ {
-					fs = append(fs, uniforms[idx+2*j:idx+2*(j+1)]...)
+					dst = append(dst, uniforms[idx+2*j:idx+2*(j+1)]...)
 					if j < typ.Length-1 {
-						fs = append(fs, 0, 0)
+						dst = append(dst, 0, 0)
 					}
 				}
 			case shaderir.Vec3, shaderir.IVec3:
 				for j := 0; j < typ.Length; j++ {
-					fs = append(fs, uniforms[idx+3*j:idx+3*(j+1)]...)
+					dst = append(dst, uniforms[idx+3*j:idx+3*(j+1)]...)
 					if j < typ.Length-1 {
-						fs = append(fs, 0)
+						dst = append(dst, 0)
 					}
 				}
 			case shaderir.Vec4, shaderir.IVec4:
-				fs = append(fs, uniforms[idx:idx+4*typ.Length]...)
+				dst = append(dst, uniforms[idx:idx+4*typ.Length]...)
 			case shaderir.Mat2:
 				for j := 0; j < typ.Length; j++ {
 					u := uniforms[idx+4*j : idx+4*(j+1)]
-					fs = append(fs,
+					dst = append(dst,
 						u[0], u[2], 0, 0,
-						u[1], u[3], 0, 0,
+						u[1], u[3],
 					)
-				}
-				if typ.Length > 0 {
-					fs = fs[:len(fs)-2]
+					if j < typ.Length-1 {
+						dst = append(dst, 0, 0)
+					}
 				}
 			case shaderir.Mat3:
 				for j := 0; j < typ.Length; j++ {
 					u := uniforms[idx+9*j : idx+9*(j+1)]
-					fs = append(fs,
+					dst = append(dst,
 						u[0], u[3], u[6], 0,
 						u[1], u[4], u[7], 0,
-						u[2], u[5], u[8], 0,
+						u[2], u[5], u[8],
 					)
-				}
-				if typ.Length > 0 {
-					fs = fs[:len(fs)-1]
+					if j < typ.Length-1 {
+						dst = append(dst, 0)
+					}
 				}
 			case shaderir.Mat4:
 				for j := 0; j < typ.Length; j++ {
 					u := uniforms[idx+16*j : idx+16*(j+1)]
-					fs = append(fs,
+					dst = append(dst,
 						u[0], u[4], u[8], u[12],
 						u[1], u[5], u[9], u[13],
 						u[2], u[6], u[10], u[14],
@@ -323,5 +341,5 @@ func adjustUniforms(uniformTypes []shaderir.Type, uniformOffsets []int, uniforms
 
 		idx += n
 	}
-	return fs
+	return dst
 }

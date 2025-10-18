@@ -17,6 +17,7 @@ package directx
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -48,7 +49,7 @@ type graphics12 struct {
 	renderTargets      [frameCount]*_ID3D12Resource
 	framePipelineToken _D3D12XBOX_FRAME_PIPELINE_TOKEN
 
-	fence          *_ID3D12Fence
+	fences         [frameCount]*_ID3D12Fence
 	fenceValues    [frameCount]uint64
 	fenceWaitEvent windows.Handle
 
@@ -93,6 +94,7 @@ type graphics12 struct {
 	shaders         map[graphicsdriver.ShaderID]*shader12
 	nextShaderID    graphicsdriver.ShaderID
 	disposedShaders [frameCount][]*shader12
+	tmpUniforms     []uint32
 
 	vsyncEnabled bool
 
@@ -208,7 +210,7 @@ func (g *graphics12) initializeDesktop(useWARP bool, useDebugLayer bool, feature
 	}
 	g.device = (*_ID3D12Device)(d)
 
-	if err := g.initializeMembers(g.frameIndex); err != nil {
+	if err := g.initializeMembers(); err != nil {
 		return err
 	}
 
@@ -224,8 +226,6 @@ func (g *graphics12) initializeDesktop(useWARP bool, useDebugLayer bool, feature
 }
 
 func (g *graphics12) initializeXbox(useWARP bool, useDebugLayer bool) (ferr error) {
-	g = &graphics12{}
-
 	if err := d3d12x.Load(); err != nil {
 		return err
 	}
@@ -245,7 +245,7 @@ func (g *graphics12) initializeXbox(useWARP bool, useDebugLayer bool) (ferr erro
 	}
 	g.device = (*_ID3D12Device)(d)
 
-	if err := g.initializeMembers(g.frameIndex); err != nil {
+	if err := g.initializeMembers(); err != nil {
 		return err
 	}
 
@@ -302,7 +302,7 @@ func (g *graphics12) registerFrameEventForXbox() error {
 	return nil
 }
 
-func (g *graphics12) initializeMembers(frameIndex int) (ferr error) {
+func (g *graphics12) initializeMembers() (ferr error) {
 	// Create an event for a fence.
 	e, err := windows.CreateEventEx(nil, nil, 0, windows.EVENT_MODIFY_STATE|windows.SYNCHRONIZE)
 	if err != nil {
@@ -355,18 +355,19 @@ func (g *graphics12) initializeMembers(frameIndex int) (ferr error) {
 	}
 
 	// Create a frame fence.
-	f, err := g.device.CreateFence(0, _D3D12_FENCE_FLAG_NONE)
-	if err != nil {
-		return err
-	}
-	g.fence = f
-	defer func() {
-		if ferr != nil {
-			g.fence.Release()
-			g.fence = nil
+	for i := range frameCount {
+		f, err := g.device.CreateFence(0, _D3D12_FENCE_FLAG_NONE)
+		if err != nil {
+			return err
 		}
-	}()
-	g.fenceValues[frameIndex]++
+		g.fences[i] = f
+		defer func() {
+			if ferr != nil {
+				g.fences[i].Release()
+				g.fences[i] = nil
+			}
+		}()
+	}
 
 	// Create command lists.
 	dcl, err := g.device.CreateCommandList(0, _D3D12_COMMAND_LIST_TYPE_DIRECT, g.drawCommandAllocators[0], nil)
@@ -537,7 +538,7 @@ func (g *graphics12) initSwapChainXbox(width, height int) (ferr error) {
 			},
 			Layout: _D3D12_TEXTURE_LAYOUT_UNKNOWN,
 			Flags:  _D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET,
-		}, _D3D12_RESOURCE_STATE_PRESENT, &_D3D12_CLEAR_VALUE{
+		}, _D3D12_RESOURCE_STATE_PRESENT(), &_D3D12_CLEAR_VALUE{
 			Format: _DXGI_FORMAT_B8G8R8A8_UNORM,
 		})
 		if err != nil {
@@ -568,10 +569,6 @@ func (g *graphics12) resizeSwapChainDesktop(width, height int) error {
 		return err
 	}
 	g.releaseResources(g.frameIndex)
-
-	for i := 0; i < frameCount; i++ {
-		g.fenceValues[i] = g.fenceValues[g.frameIndex]
-	}
 
 	for _, r := range g.renderTargets {
 		r.Release()
@@ -676,7 +673,7 @@ func (g *graphics12) End(present bool) error {
 
 	// screenImage can be nil in tests.
 	if present && g.screenImage != nil {
-		if rb, ok := g.screenImage.transiteState(_D3D12_RESOURCE_STATE_PRESENT); ok {
+		if rb, ok := g.screenImage.transiteState(_D3D12_RESOURCE_STATE_PRESENT()); ok {
 			g.drawCommandList.ResourceBarrier([]_D3D12_RESOURCE_BARRIER_Transition{rb})
 		}
 	}
@@ -738,6 +735,9 @@ func (g *graphics12) presentDesktop() error {
 }
 
 func (g *graphics12) presentXbox() error {
+	var pinner runtime.Pinner
+	pinner.Pin(&g.renderTargets[g.frameIndex])
+	defer pinner.Unpin()
 	return g.commandQueue.PresentX(1, &_D3D12XBOX_PRESENT_PLANE_PARAMETERS{
 		Token:         g.framePipelineToken,
 		ResourceCount: 1,
@@ -746,8 +746,9 @@ func (g *graphics12) presentXbox() error {
 }
 
 func (g *graphics12) moveToNextFrame() error {
+	g.fenceValues[g.frameIndex]++
 	fv := g.fenceValues[g.frameIndex]
-	if err := g.commandQueue.Signal(g.fence, fv); err != nil {
+	if err := g.commandQueue.Signal(g.fences[g.frameIndex], fv); err != nil {
 		return err
 	}
 
@@ -762,15 +763,14 @@ func (g *graphics12) moveToNextFrame() error {
 		g.frameIndex = idx
 	}
 
-	if g.fence.GetCompletedValue() < g.fenceValues[g.frameIndex] {
-		if err := g.fence.SetEventOnCompletion(g.fenceValues[g.frameIndex], g.fenceWaitEvent); err != nil {
+	if g.fences[g.frameIndex].GetCompletedValue() < g.fenceValues[g.frameIndex] {
+		if err := g.fences[g.frameIndex].SetEventOnCompletion(g.fenceValues[g.frameIndex], g.fenceWaitEvent); err != nil {
 			return err
 		}
 		if _, err := windows.WaitForSingleObject(g.fenceWaitEvent, windows.INFINITE); err != nil {
 			return err
 		}
 	}
-	g.fenceValues[g.frameIndex] = fv + 1
 	return nil
 }
 
@@ -858,17 +858,17 @@ func (g *graphics12) flushCommandList(commandList *_ID3D12GraphicsCommandList) e
 }
 
 func (g *graphics12) waitForCommandQueue() error {
+	g.fenceValues[g.frameIndex]++
 	fv := g.fenceValues[g.frameIndex]
-	if err := g.commandQueue.Signal(g.fence, fv); err != nil {
+	if err := g.commandQueue.Signal(g.fences[g.frameIndex], fv); err != nil {
 		return err
 	}
-	if err := g.fence.SetEventOnCompletion(fv, g.fenceWaitEvent); err != nil {
+	if err := g.fences[g.frameIndex].SetEventOnCompletion(fv, g.fenceWaitEvent); err != nil {
 		return err
 	}
 	if _, err := windows.WaitForSingleObject(g.fenceWaitEvent, windows.INFINITE); err != nil {
 		return err
 	}
-	g.fenceValues[g.frameIndex]++
 	return nil
 }
 
@@ -1073,7 +1073,7 @@ func (g *graphics12) NewShader(program *shaderir.Program) (graphicsdriver.Shader
 		graphics:       g,
 		id:             g.genNextShaderID(),
 		uniformTypes:   program.Uniforms,
-		uniformOffsets: hlsl.CalcUniformMemoryOffsets(program),
+		uniformOffsets: hlsl.UniformVariableOffsetsInDwords(program),
 		vertexShader:   vsh,
 		pixelShader:    psh,
 	}
@@ -1129,7 +1129,7 @@ func (g *graphics12) DrawTriangles(dstID graphicsdriver.ImageID, srcs [graphics.
 	}
 
 	shader := g.shaders[shaderID]
-	adjustedUniforms := adjustUniforms(shader.uniformTypes, shader.uniformOffsets, uniforms)
+	g.tmpUniforms = appendAdjustedUniforms(g.tmpUniforms[:0], shader.uniformTypes, shader.uniformOffsets, uniforms)
 
 	w, h := dst.internalSize()
 	g.needFlushDrawCommandList = true
@@ -1157,7 +1157,7 @@ func (g *graphics12) DrawTriangles(dstID graphicsdriver.ImageID, srcs [graphics.
 		Format:         _DXGI_FORMAT_R32_UINT,
 	})
 
-	if err := g.pipelineStates.drawTriangles(g.device, g.drawCommandList, g.frameIndex, dst.screen, srcImages, shader, dstRegions, adjustedUniforms, blend, indexOffset, fillRule); err != nil {
+	if err := g.pipelineStates.drawTriangles(g.device, g.drawCommandList, g.frameIndex, dst.screen, srcImages, shader, dstRegions, g.tmpUniforms, blend, indexOffset, fillRule); err != nil {
 		return err
 	}
 

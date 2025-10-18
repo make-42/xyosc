@@ -168,15 +168,8 @@ func NewImage(width, height int, imageType ImageType) *Image {
 		panic("restorable: graphics driver must be ready at NewImage but not")
 	}
 
-	var attribute string
-	if needsRestoration() {
-		switch imageType {
-		case ImageTypeVolatile:
-			attribute = "volatile"
-		}
-	}
 	i := &Image{
-		image:     graphicscommand.NewImage(width, height, imageType == ImageTypeScreen, attribute),
+		image:     graphicscommand.NewImage(width, height, imageType == ImageTypeScreen, ""),
 		width:     width,
 		height:    height,
 		imageType: imageType,
@@ -344,24 +337,39 @@ func (i *Image) DrawTriangles(srcs [graphics.ShaderSrcImageCount]*Image, vertice
 		return
 	}
 
+	// Use the fast path when this package is not enabled.
+	if !needsRestoration() || !i.needsRestoration() {
+		var srcImages [graphics.ShaderSrcImageCount]*graphicscommand.Image
+		for i, src := range srcs {
+			if src == nil {
+				continue
+			}
+			srcImages[i] = src.image
+		}
+		i.makeStale(dstRegion)
+		i.image.DrawTriangles(srcImages, vertices, indices, blend, dstRegion, srcRegions, shader.shader, uniforms, fillRule)
+		return
+	}
+
 	// makeStaleIfDependingOnAtRegion is not available here.
 	// This might create cyclic dependency.
 	theImages.makeStaleIfDependingOn(i)
 
 	// TODO: Add tests to confirm this logic.
 	var srcstale bool
-	for _, src := range srcs {
+	var srcImages [graphics.ShaderSrcImageCount]*graphicscommand.Image
+	for i, src := range srcs {
 		if src == nil {
 			continue
 		}
+		srcImages[i] = src.image
 		if src.stale || src.imageType == ImageTypeVolatile {
 			srcstale = true
-			break
 		}
 	}
 
 	// Even if the image is already stale, call makeStale to extend the stale region.
-	if srcstale || !needsRestoration() || !i.needsRestoration() {
+	if srcstale {
 		i.makeStale(dstRegion)
 	} else if i.stale {
 		var overwrite bool
@@ -383,14 +391,7 @@ func (i *Image) DrawTriangles(srcs [graphics.ShaderSrcImageCount]*Image, vertice
 		i.appendDrawTrianglesHistory(srcs, vertices, indices, blend, dstRegion, srcRegions, shader, uniforms, fillRule, hint)
 	}
 
-	var imgs [graphics.ShaderSrcImageCount]*graphicscommand.Image
-	for i, src := range srcs {
-		if src == nil {
-			continue
-		}
-		imgs[i] = src.image
-	}
-	i.image.DrawTriangles(imgs, vertices, indices, blend, dstRegion, srcRegions, shader.shader, uniforms, fillRule)
+	i.image.DrawTriangles(srcImages, vertices, indices, blend, dstRegion, srcRegions, shader.shader, uniforms, fillRule)
 }
 
 func (i *Image) areStaleRegionsIncludedIn(r image.Rectangle) bool {

@@ -17,13 +17,14 @@ package text
 import (
 	"bytes"
 	"io"
-	"sync"
+	"slices"
 
 	"github.com/go-text/typesetting/font"
 	"github.com/go-text/typesetting/font/opentype"
 	"github.com/go-text/typesetting/language"
 	"github.com/go-text/typesetting/shaping"
 	"golang.org/x/image/math/fixed"
+	xlanguage "golang.org/x/text/language"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -32,8 +33,8 @@ type goTextOutputCacheKey struct {
 	text       string
 	direction  Direction
 	size       float64
-	language   string
-	script     string
+	language   xlanguage.Tag
+	script     xlanguage.Script
 	variations string
 	features   string
 }
@@ -49,7 +50,6 @@ type glyph struct {
 type goTextOutputCacheValue struct {
 	outputs []shaping.Output
 	glyphs  []glyph
-	atime   int64
 }
 
 type goTextGlyphImageCacheKey struct {
@@ -59,19 +59,58 @@ type goTextGlyphImageCacheKey struct {
 	variations string
 }
 
+// runeToBoolMap is a map from rune to bool with performance optimizations.
+type runeToBoolMap struct {
+	m []uint64
+}
+
+func (r *runeToBoolMap) get(rune rune) (value bool, ok bool) {
+	index := rune / 32
+	if len(r.m) <= int(index) {
+		return false, false
+	}
+	shift := 2 * (rune % 32)
+	v := r.m[index] >> shift
+	return v&0b10 != 0, v&0b01 != 0
+}
+
+func (r *runeToBoolMap) set(rune rune, value bool) {
+	index := rune / 32
+	if len(r.m) <= int(index) {
+		r.m = slices.Grow(r.m, int(index)+1)[:index+1]
+	}
+	shift := 2 * (rune % 32)
+	if value {
+		r.m[index] |= 0b11 << shift
+	} else {
+		r.m[index] |= 0b01 << shift
+		r.m[index] &^= 0b10 << shift
+	}
+}
+
+type glyphDataCacheKey struct {
+	gid        font.GID
+	variations string
+	sideways   bool
+}
+
 // GoTextFaceSource is a source of a GoTextFace. This can be shared by multiple GoTextFace objects.
 type GoTextFaceSource struct {
 	f        *font.Face
 	metadata Metadata
 
-	outputCache     map[goTextOutputCacheKey]*goTextOutputCacheValue
-	glyphImageCache map[float64]*glyphImageCache[goTextGlyphImageCacheKey]
+	outputCache     *cache[goTextOutputCacheKey, goTextOutputCacheValue]
+	glyphImageCache map[float64]*cache[goTextGlyphImageCacheKey, *ebiten.Image]
+	hasGlyphCache   runeToBoolMap
+
+	unscaledMetrics Metrics
 
 	addr *GoTextFaceSource
 
 	shaper shaping.HarfbuzzShaper
 
-	m sync.Mutex
+	runes          []rune
+	glyphDataCache *cache[glyphDataCacheKey, font.GlyphData]
 }
 
 func toFontResource(source io.Reader) (font.Resource, error) {
@@ -92,6 +131,18 @@ func toFontResource(source io.Reader) (font.Resource, error) {
 	return bytes.NewReader(bs), nil
 }
 
+func newGoTextFaceSource(face *font.Face) *GoTextFaceSource {
+	s := &GoTextFaceSource{
+		f: face,
+	}
+	s.addr = s
+	s.metadata = metadataFromFace(face)
+	s.outputCache = newCache[goTextOutputCacheKey, goTextOutputCacheValue](512)
+	// 4 is an arbitrary number, which should not cause troubles.
+	s.shaper.SetFontCacheSize(4)
+	return s
+}
+
 // NewGoTextFaceSource parses an OpenType or TrueType font and returns a GoTextFaceSource object.
 func NewGoTextFaceSource(source io.Reader) (*GoTextFaceSource, error) {
 	src, err := toFontResource(source)
@@ -109,12 +160,7 @@ func NewGoTextFaceSource(source io.Reader) (*GoTextFaceSource, error) {
 		return nil, err
 	}
 
-	s := &GoTextFaceSource{
-		f: font.NewFace(f),
-	}
-	s.addr = s
-	s.metadata = metadataFromLoader(l)
-
+	s := newGoTextFaceSource(&font.Face{Font: f})
 	return s, nil
 }
 
@@ -136,11 +182,7 @@ func NewGoTextFaceSourcesFromCollection(source io.Reader) ([]*GoTextFaceSource, 
 		if err != nil {
 			return nil, err
 		}
-		s := &GoTextFaceSource{
-			f: &font.Face{Font: f},
-		}
-		s.addr = s
-		s.metadata = metadataFromLoader(l)
+		s := newGoTextFaceSource(&font.Face{Font: f})
 		sources[i] = s
 	}
 	return sources, nil
@@ -170,25 +212,30 @@ func (g *GoTextFaceSource) UnsafeInternal() any {
 func (g *GoTextFaceSource) shape(text string, face *GoTextFace) ([]shaping.Output, []glyph) {
 	g.copyCheck()
 
-	g.m.Lock()
-	defer g.m.Unlock()
-
 	key := face.outputCacheKey(text)
-	if out, ok := g.outputCache[key]; ok {
-		out.atime = now()
-		return out.outputs, out.glyphs
+	e := g.outputCache.getOrCreate(key, func() (goTextOutputCacheValue, bool) {
+		outputs, gs := g.shapeImpl(text, face)
+		return goTextOutputCacheValue{
+			outputs: outputs,
+			glyphs:  gs,
+		}, true
+	})
+	return e.outputs, e.glyphs
+}
+
+func (g *GoTextFaceSource) shapeImpl(text string, face *GoTextFace) ([]shaping.Output, []glyph) {
+	g.f.SetVariations(face.variations)
+
+	g.runes = g.runes[:0]
+	for _, r := range text {
+		g.runes = append(g.runes, r)
 	}
-
-	f := face.Source.f
-	f.SetVariations(face.variations)
-
-	runes := []rune(text)
 	input := shaping.Input{
-		Text:         runes,
+		Text:         g.runes,
 		RunStart:     0,
-		RunEnd:       len(runes),
+		RunEnd:       len(g.runes),
 		Direction:    face.diDirection(),
-		Face:         f,
+		Face:         g.f,
 		FontFeatures: face.features,
 		Size:         float64ToFixed26_6(face.Size),
 		Script:       face.gScript(),
@@ -196,13 +243,11 @@ func (g *GoTextFaceSource) shape(text string, face *GoTextFace) ([]shaping.Outpu
 	}
 
 	var seg shaping.Segmenter
-	inputs := seg.Split(input, &singleFontmap{face: f})
+	inputs := seg.Split(input, &singleFontmap{face: g.f})
 
+	// Reverse the input for RTL texts.
 	if face.Direction == DirectionRightToLeft {
-		// Reverse the input for RTL texts.
-		for i, j := 0, len(inputs)-1; i < j; i, j = i+1, j-1 {
-			inputs[i], inputs[j] = inputs[j], inputs[i]
-		}
+		slices.Reverse(inputs)
 	}
 
 	outputs := make([]shaping.Output, len(inputs))
@@ -222,11 +267,26 @@ func (g *GoTextFaceSource) shape(text string, face *GoTextFace) ([]shaping.Outpu
 		for _, gl := range out.Glyphs {
 			gl := gl
 			var segs []opentype.Segment
-			switch data := g.f.GlyphData(gl.GlyphID).(type) {
-			case font.GlyphOutline:
-				if out.Direction.IsSideways() {
-					data.Sideways(fixed26_6ToFloat32(-gl.YOffset) / fixed26_6ToFloat32(out.Size) * float32(f.Upem()))
+			if g.glyphDataCache == nil {
+				g.glyphDataCache = newCache[glyphDataCacheKey, font.GlyphData](512)
+			}
+			key := glyphDataCacheKey{
+				gid:        gl.GlyphID,
+				variations: face.ensureVariationsString(),
+				sideways:   out.Direction.IsSideways(),
+			}
+			data := g.glyphDataCache.getOrCreate(key, func() (font.GlyphData, bool) {
+				data := g.f.GlyphData(gl.GlyphID)
+				if data == nil {
+					return nil, false
 				}
+				if data, ok := data.(font.GlyphOutline); ok && out.Direction.IsSideways() {
+					data.Sideways(fixed26_6ToFloat32(-gl.YOffset) / fixed26_6ToFloat32(out.Size) * float32(g.f.Upem()))
+				}
+				return data, true
+			})
+			switch data := data.(type) {
+			case font.GlyphOutline:
 				segs = data.Segments
 			case font.GlyphSVG:
 				segs = data.Outline.Segments
@@ -255,27 +315,6 @@ func (g *GoTextFaceSource) shape(text string, face *GoTextFace) ([]shaping.Outpu
 			})
 		}
 	}
-
-	if g.outputCache == nil {
-		g.outputCache = map[goTextOutputCacheKey]*goTextOutputCacheValue{}
-	}
-	g.outputCache[key] = &goTextOutputCacheValue{
-		outputs: outputs,
-		glyphs:  gs,
-		atime:   now(),
-	}
-
-	const cacheSoftLimit = 512
-	if len(g.outputCache) > cacheSoftLimit {
-		for key, e := range g.outputCache {
-			// 60 is an arbitrary number.
-			if e.atime >= now()-60 {
-				continue
-			}
-			delete(g.outputCache, key)
-		}
-	}
-
 	return outputs, gs
 }
 
@@ -283,14 +322,53 @@ func (g *GoTextFaceSource) scale(size float64) float64 {
 	return size / float64(g.f.Upem())
 }
 
-func (g *GoTextFaceSource) getOrCreateGlyphImage(goTextFace *GoTextFace, key goTextGlyphImageCacheKey, create func() *ebiten.Image) *ebiten.Image {
+func (g *GoTextFaceSource) getOrCreateGlyphImage(goTextFace *GoTextFace, key goTextGlyphImageCacheKey, create func() (*ebiten.Image, bool)) *ebiten.Image {
 	if g.glyphImageCache == nil {
-		g.glyphImageCache = map[float64]*glyphImageCache[goTextGlyphImageCacheKey]{}
+		g.glyphImageCache = map[float64]*cache[goTextGlyphImageCacheKey, *ebiten.Image]{}
 	}
 	if _, ok := g.glyphImageCache[goTextFace.Size]; !ok {
-		g.glyphImageCache[goTextFace.Size] = &glyphImageCache[goTextGlyphImageCacheKey]{}
+		g.glyphImageCache[goTextFace.Size] = newCache[goTextGlyphImageCacheKey, *ebiten.Image](128 * glyphVariationCount(goTextFace))
 	}
-	return g.glyphImageCache[goTextFace.Size].getOrCreate(goTextFace, key, create)
+	return g.glyphImageCache[goTextFace.Size].getOrCreate(key, create)
+}
+
+func (g *GoTextFaceSource) metrics(size float64) Metrics {
+	um := g.unscaledMetrics
+	if um.HAscent == 0 && um.HDescent == 0 && um.VAscent == 0 && um.VDescent == 0 {
+		if h, ok := g.f.FontHExtents(); ok {
+			um.HLineGap = float64(h.LineGap)
+			um.HAscent = float64(h.Ascender)
+			um.HDescent = float64(-h.Descender)
+		}
+		if v, ok := g.f.FontVExtents(); ok {
+			um.VLineGap = float64(v.LineGap)
+			um.VAscent = float64(v.Ascender)
+			um.VDescent = float64(-v.Descender)
+		}
+		um.XHeight = float64(g.f.LineMetric(font.XHeight))
+		um.CapHeight = float64(g.f.LineMetric(font.CapHeight))
+	}
+
+	scale := g.scale(size)
+	return Metrics{
+		HLineGap:  um.HLineGap * scale,
+		HAscent:   um.HAscent * scale,
+		HDescent:  um.HDescent * scale,
+		VLineGap:  um.VLineGap * scale,
+		VAscent:   um.VAscent * scale,
+		VDescent:  um.VDescent * scale,
+		XHeight:   um.XHeight * scale,
+		CapHeight: um.CapHeight * scale,
+	}
+}
+
+func (g *GoTextFaceSource) hasGlyph(r rune) bool {
+	if has, ok := g.hasGlyphCache.get(r); ok {
+		return has
+	}
+	_, ok := g.f.Cmap.Lookup(r)
+	g.hasGlyphCache.set(r, ok)
+	return ok
 }
 
 type singleFontmap struct {

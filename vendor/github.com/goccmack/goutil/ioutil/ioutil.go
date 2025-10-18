@@ -24,8 +24,11 @@ import (
 	"path/filepath"
 )
 
-// FilePermission given to all created files and directories
-const FilePermission = 0731
+// FilePermission given to all non-exectable files
+const filePermission = 0644
+
+// File permission given to all created directories and executable files
+const exePermission = 0755
 
 // Exist returns true if path exists, otherwise false.
 func Exist(path string) bool {
@@ -38,18 +41,31 @@ func MkdirAll(path string) error {
 	if path == "" {
 		return nil
 	}
-	return os.MkdirAll(path, FilePermission)
+	return os.MkdirAll(path, exePermission)
 }
 
-// WriteFile creates all the non-existend directories in path before writing
-// data to path.
+// WriteFile creates all the non-existent directories in path before writing
+// data to a non-executable file, path.
 func WriteFile(path string, data []byte) error {
 	dir, _ := filepath.Split(path)
 	if err := MkdirAll(dir); err != nil {
 		return fmt.Errorf("Error creating directory %s: %s", dir, err)
 	}
-	if err := ioutil.WriteFile(path, data, FilePermission); err != nil {
-		return fmt.Errorf("Error writing file %s: %s\n", path, err)
+	if err := ioutil.WriteFile(path, data, filePermission); err != nil {
+		return fmt.Errorf("Error writing file %s: %s", path, err)
+	}
+	return nil
+}
+
+// WriteExeFile creates all the non-existent directories in path before writing
+// data to an executable file, path.
+func WriteExeFile(path string, data []byte) error {
+	dir, _ := filepath.Split(path)
+	if err := MkdirAll(dir); err != nil {
+		return fmt.Errorf("Error creating directory %s: %s", dir, err)
+	}
+	if err := ioutil.WriteFile(path, data, exePermission); err != nil {
+		return fmt.Errorf("Error writing file %s: %s", path, err)
 	}
 	return nil
 }

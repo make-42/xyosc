@@ -130,7 +130,7 @@ func (c *context) updateFrameImpl(graphicsDriver graphicsdriver.Graphics, update
 	}
 
 	// Update the input state after the layout is updated as a cursor position is affected by the layout.
-	if err := ui.updateInputState(); err != nil {
+	if err := ui.updateInputStateForFrame(); err != nil {
 		return false, err
 	}
 
@@ -160,7 +160,7 @@ func (c *context) updateFrameImpl(graphicsDriver graphicsdriver.Graphics, update
 			return false, err
 		}
 
-		ui.tick.Add(1)
+		ui.incrementTick()
 	}
 
 	// Update window icons during a frame, since an icon might be *ebiten.Image and
@@ -246,6 +246,11 @@ func (c *context) drawGame(graphicsDriver graphicsdriver.Graphics, ui *UserInter
 		return false, nil
 	}
 
+	// screen can be nil for some edge cases (#3121).
+	if c.screen == nil {
+		return false, nil
+	}
+
 	if graphicsDriver.NeedsClearingScreen() {
 		// This clear is needed for fullscreen mode or some mobile platforms (#622).
 		c.screen.clear()
@@ -284,7 +289,7 @@ func (c *context) layoutGame(outsideWidth, outsideHeight float64, deviceScaleFac
 		c.screen.Deallocate()
 		c.screen = nil
 	}
-	if c.screen == nil {
+	if c.screen == nil && sw > 0 && sh > 0 {
 		c.screen = c.game.NewScreenImage(sw, sh)
 	}
 

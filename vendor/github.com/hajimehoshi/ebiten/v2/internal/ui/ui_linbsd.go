@@ -34,6 +34,10 @@ func (u *UserInterface) initializePlatform() error {
 	return nil
 }
 
+func (u *UserInterface) setApplePressAndHoldEnabled(enabled bool) {
+	// Do nothings.
+}
+
 type graphicsDriverCreatorImpl struct {
 	transparent bool
 	colorSpace  graphicsdriver.ColorSpace
@@ -131,8 +135,8 @@ func dipToGLFWPixel(x float64, deviceScaleFactor float64) float64 {
 	return x * deviceScaleFactor
 }
 
-func (u *UserInterface) adjustWindowPosition(x, y int, monitor *Monitor) (int, int) {
-	return x, y
+func (u *UserInterface) adjustWindowPosition(x, y int, monitor *Monitor) (int, int, error) {
+	return x, y, nil
 }
 
 func initialMonitorByOS() (*Monitor, error) {

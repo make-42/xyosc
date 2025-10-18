@@ -48,6 +48,9 @@ type GoTextFace struct {
 	Direction Direction
 
 	// Size is the font size in pixels.
+	//
+	// This package creates glyph images for each size. Thus, gradual change of font size is not efficient.
+	// If you want to change the font size gradually, draw the text on an offscreen with a larger size and scale it down.
 	Size float64
 
 	// Language is a hint for a language (BCP 47).
@@ -55,6 +58,8 @@ type GoTextFace struct {
 
 	// Script is a hint for a script code hint of (ISO 15924).
 	// If this is empty, the script is guessed from the specified language.
+	//
+	// Deprecated: as of v2.9. Use Language instead.
 	Script language.Script
 
 	variations []font.Variation
@@ -187,36 +192,7 @@ func MustParseTag(str string) Tag {
 
 // Metrics implements Face.
 func (g *GoTextFace) Metrics() Metrics {
-	scale := g.Source.scale(g.Size)
-
-	var m Metrics
-	if h, ok := g.Source.f.FontHExtents(); ok {
-		m.HLineGap = float64(h.LineGap) * scale
-		m.HAscent = float64(h.Ascender) * scale
-		m.HDescent = float64(-h.Descender) * scale
-	}
-	if v, ok := g.Source.f.FontVExtents(); ok {
-		m.VLineGap = float64(v.LineGap) * scale
-		m.VAscent = float64(v.Ascender) * scale
-		m.VDescent = float64(-v.Descender) * scale
-	}
-
-	m.XHeight = float64(g.Source.f.LineMetric(font.XHeight)) * scale
-	m.CapHeight = float64(g.Source.f.LineMetric(font.CapHeight)) * scale
-
-	// XHeight and CapHeight might not be correct for some old fonts (go-text/typesetting#169).
-	if m.XHeight <= 0 {
-		if _, gs := g.Source.shape("x", g); len(gs) > 0 {
-			m.XHeight = fixed26_6ToFloat64(-gs[0].bounds.Min.Y)
-		}
-	}
-	if m.CapHeight <= 0 {
-		if _, gs := g.Source.shape("H", g); len(gs) > 0 {
-			m.CapHeight = fixed26_6ToFloat64(-gs[0].bounds.Min.Y)
-		}
-	}
-
-	return m
+	return g.Source.metrics(g.Size)
 }
 
 func (g *GoTextFace) ensureVariationsString() string {
@@ -256,8 +232,8 @@ func (g *GoTextFace) outputCacheKey(text string) goTextOutputCacheKey {
 		text:       text,
 		direction:  g.Direction,
 		size:       g.Size,
-		language:   g.Language.String(),
-		script:     g.Script.String(),
+		language:   g.Language,
+		script:     g.Script,
 		variations: g.ensureVariationsString(),
 		features:   g.ensureFeaturesString(),
 	}
@@ -306,8 +282,7 @@ func (g *GoTextFace) advance(text string) float64 {
 
 // hasGlyph implements Face.
 func (g *GoTextFace) hasGlyph(r rune) bool {
-	_, ok := g.Source.f.Cmap.Lookup(r)
-	return ok
+	return g.Source.hasGlyph(r)
 }
 
 // appendGlyphsForLine implements Face.
@@ -322,7 +297,10 @@ func (g *GoTextFace) appendGlyphsForLine(glyphs []Glyph, line string, indexOffse
 			X: glyph.shapingGlyph.XOffset,
 			Y: -glyph.shapingGlyph.YOffset,
 		})
+
+		// imgX and imgY are integers so that the nearest filter can be used.
 		img, imgX, imgY := g.glyphImage(glyph, o)
+
 		// Append a glyph even if img is nil.
 		// This is necessary to return index information for control characters.
 		glyphs = append(glyphs, Glyph{
@@ -366,8 +344,9 @@ func (g *GoTextFace) glyphImage(glyph glyph, origin fixed.Point26_6) (*ebiten.Im
 		yoffset:    subpixelOffset.Y,
 		variations: g.ensureVariationsString(),
 	}
-	img := g.Source.getOrCreateGlyphImage(g, key, func() *ebiten.Image {
-		return segmentsToImage(glyph.scaledSegments, subpixelOffset, b)
+	img := g.Source.getOrCreateGlyphImage(g, key, func() (*ebiten.Image, bool) {
+		img := segmentsToImage(glyph.scaledSegments, subpixelOffset, b)
+		return img, img != nil
 	})
 
 	imgX := (origin.X + b.Min.X).Floor()

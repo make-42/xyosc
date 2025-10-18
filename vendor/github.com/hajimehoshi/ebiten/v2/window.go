@@ -18,6 +18,7 @@ import (
 	"image"
 	"sync/atomic"
 
+	"github.com/hajimehoshi/ebiten/v2/internal/inputstate"
 	"github.com/hajimehoshi/ebiten/v2/internal/ui"
 )
 
@@ -174,7 +175,7 @@ func initializeWindowPositionIfNeeded(width, height int) {
 // WindowSize returns the window size on desktops.
 // WindowSize returns (0, 0) on other environments.
 //
-// Even if the application is in fullscreen mode, WindowSize returns the original window size
+// Even if the application is in fullscreen mode, WindowSize returns the original window size.
 // If you need the fullscreen dimensions, see Monitor().Size() instead.
 //
 // WindowSize is concurrent-safe.
@@ -293,7 +294,7 @@ func RestoreWindow() {
 //
 // IsWindowBeingClosed is concurrent-safe.
 func IsWindowBeingClosed() bool {
-	return theInputState.windowBeingClosed()
+	return inputstate.Get().WindowBeingClosed()
 }
 
 // SetWindowClosingHandled sets whether the window closing is handled or not on desktops. The default state is false.

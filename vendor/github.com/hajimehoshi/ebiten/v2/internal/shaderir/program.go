@@ -16,6 +16,7 @@
 package shaderir
 
 import (
+	"bytes"
 	"encoding/hex"
 	"go/constant"
 	"go/token"
@@ -35,7 +36,7 @@ type SourceHash [16]byte
 
 func CalcSourceHash(source []byte) SourceHash {
 	h := fnv.New128a()
-	_, _ = h.Write(source)
+	_, _ = h.Write(bytes.TrimSpace(source))
 
 	var hash SourceHash
 	h.Sum(hash[:0])
@@ -293,6 +294,7 @@ const (
 	Fwidth      BuiltinFunc = "fwidth"
 	DiscardF    BuiltinFunc = "discard"
 	TexelAt     BuiltinFunc = "__texelAt"
+	FrontFacing BuiltinFunc = "frontfacing"
 )
 
 func ParseBuiltinFunc(str string) (BuiltinFunc, bool) {
@@ -350,7 +352,8 @@ func ParseBuiltinFunc(str string) (BuiltinFunc, bool) {
 		Dfdy,
 		Fwidth,
 		DiscardF,
-		TexelAt:
+		TexelAt,
+		FrontFacing:
 		return BuiltinFunc(str), true
 	}
 	return "", false
@@ -370,21 +373,21 @@ func IsValidSwizzling(s string) bool {
 	switch {
 	case strings.IndexByte(xyzw, s[0]) >= 0:
 		for _, c := range s {
-			if strings.IndexRune(xyzw, c) == -1 {
+			if !strings.ContainsRune(xyzw, c) {
 				return false
 			}
 		}
 		return true
 	case strings.IndexByte(rgba, s[0]) >= 0:
 		for _, c := range s {
-			if strings.IndexRune(rgba, c) == -1 {
+			if !strings.ContainsRune(rgba, c) {
 				return false
 			}
 		}
 		return true
 	case strings.IndexByte(strq, s[0]) >= 0:
 		for _, c := range s {
-			if strings.IndexRune(strq, c) == -1 {
+			if !strings.ContainsRune(strq, c) {
 				return false
 			}
 		}
@@ -493,7 +496,7 @@ func (p *Program) FilterUniformVariables(uniforms []uint32) {
 		p.uniformFactors = make([]uint32, len(uniforms))
 		var idx int
 		for i, typ := range p.Uniforms {
-			c := typ.Uint32Count()
+			c := typ.DwordCount()
 			if reachableUniforms[i] {
 				for i := idx; i < idx+c; i++ {
 					p.uniformFactors[i] = 1

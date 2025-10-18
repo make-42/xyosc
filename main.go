@@ -517,7 +517,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return int(config.Config.WindowWidth), int(config.Config.WindowHeight)
+	if config.Config.WindowWidth != int32(outsideWidth) || config.Config.WindowHeight != int32(outsideHeight) {
+		config.Config.WindowWidth = int32(outsideWidth)
+		config.Config.WindowHeight = int32(outsideHeight)
+		InitBuffersAtSize(outsideWidth, outsideHeight)
+		bars.Init()
+	}
+	return outsideWidth, outsideHeight
+}
+
+func InitBuffersAtSize(width int, height int) {
+	prevFrame = ebiten.NewImage(width, height)
+	if config.Config.UseShaders {
+		shaderWorkBuffer = ebiten.NewImage(width, height)
+	}
 }
 
 func Init() {
@@ -587,6 +600,7 @@ func main() {
 	ebiten.SetWindowSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	ebiten.SetWindowTitle("xyosc")
 	ebiten.SetWindowMousePassthrough(true)
+	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	ebiten.SetTPS(int(config.Config.TargetFPS))
 	ebiten.SetWindowDecorated(false)
 	screenW, screenH := ebiten.Monitor().Size()
@@ -602,10 +616,7 @@ func main() {
 	}
 	ebiten.SetWindowPosition(*overrideX, *overrideY)
 	ebiten.SetVsyncEnabled(true)
-	prevFrame = ebiten.NewImage(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
-	if config.Config.UseShaders {
-		shaderWorkBuffer = ebiten.NewImage(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
-	}
+	InitBuffersAtSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	gameOptions := ebiten.RunGameOptions{ScreenTransparent: true}
 	if config.Config.DisableTransparency {
 		gameOptions.ScreenTransparent = false
