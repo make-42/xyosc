@@ -135,8 +135,6 @@ func InterpolateBars(deltaTime float64) {
 			InterpolatedBarsPos[i] += InterpolatedBarsVel[i] * deltaTime
 		}
 	} else {
-		for i := range TargetBarsPos {
-			InterpolatedBarsPos[i] = TargetBarsPos[i]
-		}
+		copy(InterpolatedBarsPos, TargetBarsPos)
 	}
 }
