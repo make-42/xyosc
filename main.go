@@ -608,7 +608,9 @@ func main() {
 	ebiten.SetWindowSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	ebiten.SetWindowTitle("xyosc")
 	ebiten.SetWindowMousePassthrough(true)
-	ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+	if config.Config.WindowResizable {
+		ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
+	}
 	ebiten.SetTPS(int(config.Config.TargetFPS))
 	ebiten.SetWindowDecorated(false)
 	screenW, screenH := ebiten.Monitor().Size()

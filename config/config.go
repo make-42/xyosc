@@ -26,6 +26,7 @@ type ConfigS struct {
 	TargetFPS                                    int32
 	WindowWidth                                  int32
 	WindowHeight                                 int32
+	WindowResizable                              bool
 	CaptureDeviceIndex                           int
 	CaptureDeviceName                            string
 	CaptureDeviceSampleRate                      int
@@ -168,6 +169,7 @@ var DefaultConfig = ConfigS{
 	TargetFPS:                                240,
 	WindowWidth:                              1000,
 	WindowHeight:                             1000,
+	WindowResizable:                          false,
 	CaptureDeviceIndex:                       0,
 	CaptureDeviceName:                        "",
 	CaptureDeviceSampleRate:                  0, // In case there are multiple outputs with different sample rates and you want to pick a specific one, else leave equal to 0

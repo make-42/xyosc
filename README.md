@@ -100,6 +100,7 @@ mpristextopacity: 255
 targetfps: 240
 windowwidth: 1000
 windowheight: 1000
+windowresizable: false
 capturedeviceindex: 0
 capturedevicename: ""
 capturedevicesamplerate: 0
