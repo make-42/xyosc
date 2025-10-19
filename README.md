@@ -207,6 +207,16 @@ barsinterpolatepos: true
 barsinterpolateaccel: 20
 barsinterpolatedrag: 2
 barsinterpolatedirect: 20
+barspeakfreqcursor: false
+barspeakfreqcursortextsize: 24
+barspeakfreqcursortextopacity: 255
+barspeakfreqcursortextoffset: -4
+barspeakfreqcursorbgwidth: 138
+barspeakfreqcursorbgpadding: 2
+barspeakfreqcursorinterpolatepos: true
+barspeakfreqcursorinterpolatedirect: 1
+barspeakfreqcursorinterpolateaccel: 5
+barspeakfreqcursorinterpolatedrag: 20
 usekaiserinsteadofhannwindow: true
 kaiserwindowparam: 8
 useshaders: true

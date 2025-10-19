@@ -134,6 +134,20 @@ type ConfigS struct {
 	BarsInterpolateAccel                         float64
 	BarsInterpolateDrag                          float64
 	BarsInterpolateDirect                        float64
+	BarsPeakFreqCursor                           bool
+	BarsPeakFreqCursorTextSize                   float64
+	BarsPeakFreqCursorTextOpacity                uint8
+	BarsPeakFreqCursorTextOffset                 float64
+	BarsPeakFreqCursorBGWidth                    float64
+	BarsPeakFreqCursorBGPadding                  float64
+	BarsPeakFreqCursorInterpolatePos             bool
+	BarsPeakFreqCursorInterpolateDirect          float64
+	BarsPeakFreqCursorInterpolateAccel           float64
+	BarsPeakFreqCursorInterpolateDrag            float64
+	BarsPeakFreqCursorInterpolateVal             bool
+	BarsPeakFreqCursorInterpolateValDirect       float64
+	BarsPeakFreqCursorInterpolateValAccel        float64
+	BarsPeakFreqCursorInterpolateValDrag         float64
 	UseKaiserInsteadOfHannWindow                 bool
 	KaiserWindowParam                            float64
 	UseShaders                                   bool
@@ -262,6 +276,16 @@ var DefaultConfig = ConfigS{
 	BarsInterpolateAccel:                         20.,
 	BarsInterpolateDrag:                          2.,
 	BarsInterpolateDirect:                        20.,
+	BarsPeakFreqCursor:                           false,
+	BarsPeakFreqCursorTextSize:                   24,
+	BarsPeakFreqCursorTextOpacity:                255,
+	BarsPeakFreqCursorTextOffset:                 -4,
+	BarsPeakFreqCursorBGWidth:                    138,
+	BarsPeakFreqCursorBGPadding:                  2,
+	BarsPeakFreqCursorInterpolatePos:             true,
+	BarsPeakFreqCursorInterpolateDirect:          1,
+	BarsPeakFreqCursorInterpolateAccel:           5,
+	BarsPeakFreqCursorInterpolateDrag:            20,
 	UseKaiserInsteadOfHannWindow:                 true,
 	KaiserWindowParam:                            8.,
 	UseShaders:                                   true,
@@ -319,6 +343,8 @@ var ThirdColorAdj color.RGBA
 var BGColor color.RGBA
 
 var watcher *fsnotify.Watcher
+
+var FiltersApplied bool
 
 var HannWindow []float64
 

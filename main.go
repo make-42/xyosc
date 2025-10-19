@@ -56,7 +56,6 @@ var firstFrame = true
 var FFTBuffer []float64
 var complexFFTBuffer []complex128
 var complexFFTBufferFlipped []complex128
-var filtersApplied = false
 var lowCutOffFrac = 0.0
 var highCutOffFrac = 1.0
 var useRightChannel *bool
@@ -160,7 +159,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	if config.Config.DefaultMode == 0 {
-		if filtersApplied {
+		if config.FiltersApplied {
 			for i := uint32(0); i < numSamples; i++ {
 				AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
 				AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
@@ -177,7 +176,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 		S := float32(0)
 		for i := uint32(0); i < numSamples; i++ {
-			if filtersApplied {
+			if config.FiltersApplied {
 				BX = float32(real(XYComplexFFTBufferL[i]))
 				BY = float32(real(XYComplexFFTBufferR[i]))
 			} else {
@@ -245,7 +244,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		for i := uint32(0); i < numSamples; i++ {
 			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
 			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
-			if filtersApplied || config.Config.UseBetterPeakDetectionAlgorithm {
+			if config.FiltersApplied || config.Config.UseBetterPeakDetectionAlgorithm {
 				if *mixChannels {
 					complexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
 				} else {
@@ -256,7 +255,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					}
 				}
 			}
-			if !filtersApplied || config.Config.UseBetterPeakDetectionAlgorithm {
+			if !config.FiltersApplied || config.Config.UseBetterPeakDetectionAlgorithm {
 				if *mixChannels {
 					FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = (float64(AY) + float64(AX)) / 2
 				} else {
@@ -268,7 +267,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 			}
 		}
-		if filtersApplied {
+		if config.FiltersApplied {
 			filter.FilterBufferInPlace(&complexFFTBuffer, lowCutOffFrac, highCutOffFrac)
 			for i := uint32(0); i < numSamples; i++ {
 				FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = real(complexFFTBuffer[i])
@@ -381,7 +380,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 			}
 		}
-		if filtersApplied {
+		if config.FiltersApplied {
 			bars.CalcBars(&complexFFTBuffer, lowCutOffFrac, highCutOffFrac)
 		} else {
 			bars.CalcBars(&complexFFTBuffer, 0.0, 1.0)
@@ -389,12 +388,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		barsDeltaTime := min(time.Since(barsLastFrameTime).Seconds(), 1.0)
 		barsLastFrameTime = time.Now()
 		bars.InterpolateBars(barsDeltaTime)
-		for x := range bars.TargetBarsPos {
-			if filtersApplied && config.Config.ShowFilterInfo {
-				vector.DrawFilledRect(screen, float32(config.Config.BarsPaddingEdge)+float32(x)*float32(config.Config.BarsWidth+config.Config.BarsPaddingBetween), float32(config.Config.WindowHeight)-float32(config.Config.BarsPaddingEdge)-float32(config.Config.FilterInfoTextSize)-float32(config.Config.FilterInfoTextPaddingBottom), float32(config.Config.BarsWidth), -(float32(config.Config.WindowHeight)-2*float32(config.Config.BarsPaddingEdge)-float32(config.Config.FilterInfoTextSize)-float32(config.Config.FilterInfoTextPaddingBottom))*float32(bars.InterpolatedBarsPos[x])/float32(bars.InterpolatedMaxVolume), config.ThirdColorAdj, true)
-			} else {
-				vector.DrawFilledRect(screen, float32(config.Config.BarsPaddingEdge)+float32(x)*float32(config.Config.BarsWidth+config.Config.BarsPaddingBetween), float32(config.Config.WindowHeight)-float32(config.Config.BarsPaddingEdge), float32(config.Config.BarsWidth), -(float32(config.Config.WindowHeight)-2*float32(config.Config.BarsPaddingEdge))*float32(bars.InterpolatedBarsPos[x])/float32(bars.InterpolatedMaxVolume), config.ThirdColorAdj, true)
-			}
+		for i := range bars.TargetBarsPos {
+			x, y, w, h := bars.ComputeBarLayout(i)
+			vector.FillRect(screen, float32(x), float32(y), float32(w), float32(h), config.ThirdColorAdj, true)
+		}
+		if config.Config.BarsPeakFreqCursor {
+			op := &text.DrawOptions{}
+			op.GeoM.Translate(bars.InterpolatedPeakFreqCursorX+config.Config.BarsPeakFreqCursorBGPadding, bars.InterpolatedPeakFreqCursorY+config.Config.BarsPeakFreqCursorBGPadding+config.Config.BarsPeakFreqCursorTextOffset)
+			op.LayoutOptions.PrimaryAlign = text.AlignStart
+			op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.BarsPeakFreqCursorTextOpacity})
+
+			vector.FillRect(screen, float32(bars.InterpolatedPeakFreqCursorX), float32(bars.InterpolatedPeakFreqCursorY), float32(config.Config.BarsPeakFreqCursorBGWidth), float32(config.Config.BarsPeakFreqCursorTextSize+2*config.Config.BarsPeakFreqCursorBGPadding), config.BGColor, true)
+			text.Draw(screen, fmt.Sprintf("%-6.0f Hz", bars.PeakFreqCursorVal), &text.GoTextFace{
+				Source: fonts.Font,
+				Size:   config.Config.BarsPeakFreqCursorTextSize,
+			}, op)
 		}
 	}
 
@@ -410,13 +418,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				if config.Config.MetronomeThinLineMode {
 					if config.Config.MetronomeThinLineThicknessChangeWithVelocity {
 						easedVelocityProgress := math.Cos(progress * math.Pi)
-						vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+						vector.FillRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
 					} else {
-						vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+						vector.FillRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
 					}
-					vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineHintThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineHintThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+					vector.FillRect(screen, float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineHintThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineHintThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
 				} else {
-					vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2, float32(layoutY), float32(easedProgress)*float32(config.Config.WindowWidth)/2, float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+					vector.FillRect(screen, float32(config.Config.WindowWidth)/2, float32(layoutY), float32(easedProgress)*float32(config.Config.WindowWidth)/2, float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
 				}
 			}
 			layoutY += config.Config.MetronomeHeight + config.Config.MetronomePadding
@@ -492,7 +500,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}, op)
 	}
 
-	if filtersApplied && config.Config.ShowFilterInfo {
+	if config.FiltersApplied && config.Config.ShowFilterInfo {
 		op := &text.DrawOptions{}
 		loFreq := lowCutOffFrac * float64(config.Config.SampleRate)
 		hiFreq := highCutOffFrac * float64(config.Config.SampleRate)
@@ -553,11 +561,11 @@ func Init() {
 
 	flag.Parse()
 	if *lowCutOff != 0.0 {
-		filtersApplied = true
+		config.FiltersApplied = true
 		lowCutOffFrac = *lowCutOff
 	}
 	if *highCutOff != 1.0 {
-		filtersApplied = true
+		config.FiltersApplied = true
 		highCutOffFrac = *highCutOff
 	}
 
@@ -566,7 +574,7 @@ func Init() {
 		complexFFTBufferFlipped = make([]complex128, numSamples)
 		align.Init()
 	}
-	if filtersApplied {
+	if config.FiltersApplied {
 		XYComplexFFTBufferL = make([]complex128, numSamples)
 		XYComplexFFTBufferR = make([]complex128, numSamples)
 	}
