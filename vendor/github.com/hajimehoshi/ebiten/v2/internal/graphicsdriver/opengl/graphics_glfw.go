@@ -12,22 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build (freebsd || linux || netbsd || openbsd) && !android && !nintendosdk && !playstation5
+//go:build !android && !ios && !js && !nintendosdk && !playstation5
 
 package opengl
 
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2/internal/glfw"
 	"github.com/hajimehoshi/ebiten/v2/internal/graphicsdriver"
 	"github.com/hajimehoshi/ebiten/v2/internal/graphicsdriver/opengl/gl"
+	"github.com/hajimehoshi/ebiten/v2/internal/microsoftgdk"
 )
 
 func isGLXExtensionForGL2Available() bool {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		return false
+	}
+
 	var buf bytes.Buffer
 	cmd := exec.Command("glxinfo")
 	cmd.Stdout = &buf
@@ -43,19 +50,19 @@ func isGLXExtensionForGL2Available() bool {
 	var listingExtensions bool
 	s := bufio.NewScanner(&buf)
 	for s.Scan() {
-		line := s.Text()
 		if !listingExtensions {
-			if line == "GLX extensions:" {
+			if s.Text() == "GLX extensions:" {
 				listingExtensions = true
 			}
 			continue
 		}
 
-		if !strings.HasPrefix(line, indent) {
+		if !strings.HasPrefix(s.Text(), indent) {
 			listingExtensions = false
 			break
 		}
 
+		line := s.Text()
 		for len(line) > 0 {
 			head, tail, _ := strings.Cut(line, ",")
 			if strings.TrimSpace(head) == ext {
@@ -74,6 +81,10 @@ type graphicsPlatform struct {
 // NewGraphics creates an implementation of graphicsdriver.Graphics for OpenGL.
 // The returned graphics value is nil iff the error is not nil.
 func NewGraphics() (graphicsdriver.Graphics, error) {
+	if microsoftgdk.IsXbox() {
+		return nil, fmt.Errorf("opengl: OpenGL is not supported on Xbox")
+	}
+
 	ctx, err := gl.NewDefaultContext()
 	if err != nil {
 		return nil, err
@@ -116,6 +127,15 @@ func setGLFWClientAPI(isES bool) error {
 	if err := glfw.WindowHint(glfw.ContextVersionMinor, 2); err != nil {
 		return err
 	}
+	// macOS requires forward-compatible and a core profile.
+	if runtime.GOOS == "darwin" {
+		if err := glfw.WindowHint(glfw.OpenGLForwardCompat, glfw.True); err != nil {
+			return err
+		}
+		if err := glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -135,11 +155,11 @@ func (g *Graphics) swapBuffers() error {
 	// This needs to be called at least after SetMonitor.
 	// Without SwapInterval after SetMonitor, vsynch doesn't work (#375).
 	if g.vsync {
-		if err := g.window.SwapInterval(1); err != nil {
+		if err := glfw.SwapInterval(1); err != nil {
 			return err
 		}
 	} else {
-		if err := g.window.SwapInterval(0); err != nil {
+		if err := glfw.SwapInterval(0); err != nil {
 			return err
 		}
 	}

@@ -37,8 +37,6 @@ package ui
 //   *scale = scene.screen.nativeScale;
 // }
 //
-// #cgo noescape displayInfo
-// #cgo nocallback displayInfo
 // static void displayInfo(float* width, float* height, float* scale, uintptr_t viewPtr) {
 //   *width = 0;
 //   *height = 0;

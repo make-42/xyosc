@@ -484,6 +484,7 @@ var (
 )
 
 var (
+	sel_class                                                                                                                         = objc.RegisterName("class")
 	sel_length                                                                                                                        = objc.RegisterName("length")
 	sel_isHeadless                                                                                                                    = objc.RegisterName("isHeadless")
 	sel_isLowPower                                                                                                                    = objc.RegisterName("isLowPower")
@@ -852,7 +853,12 @@ func (cb CommandBuffer) RenderCommandEncoderWithDescriptor(rpd RenderPassDescrip
 	colorAttachments0.Send(sel_setLoadAction, int(rpd.ColorAttachments[0].LoadAction))
 	colorAttachments0.Send(sel_setStoreAction, int(rpd.ColorAttachments[0].StoreAction))
 	colorAttachments0.Send(sel_setTexture, rpd.ColorAttachments[0].Texture.texture)
-	colorAttachments0.Send(sel_setClearColor, rpd.ColorAttachments[0].ClearColor)
+	sig := cocoa.NSMethodSignature_instanceMethodSignatureForSelector(colorAttachments0.Send(sel_class), sel_setClearColor)
+	inv := cocoa.NSInvocation_invocationWithMethodSignature(sig)
+	inv.SetTarget(colorAttachments0)
+	inv.SetSelector(sel_setClearColor)
+	inv.SetArgumentAtIndex(unsafe.Pointer(&rpd.ColorAttachments[0].ClearColor), 2)
+	inv.Invoke()
 	var stencilAttachment = renderPassDescriptor.Send(sel_stencilAttachment)
 	stencilAttachment.Send(sel_setLoadAction, int(rpd.StencilAttachment.LoadAction))
 	stencilAttachment.Send(sel_setStoreAction, int(rpd.StencilAttachment.StoreAction))
@@ -906,14 +912,22 @@ func (rce RenderCommandEncoder) SetRenderPipelineState(rps RenderPipelineState) 
 }
 
 func (rce RenderCommandEncoder) SetViewport(viewport Viewport) {
-	rce.commandEncoder.Send(sel_setViewport, viewport)
+	inv := cocoa.NSInvocation_invocationWithMethodSignature(cocoa.NSMethodSignature_signatureWithObjCTypes("v@:{MTLViewport=dddddd}"))
+	inv.SetTarget(rce.commandEncoder)
+	inv.SetSelector(sel_setViewport)
+	inv.SetArgumentAtIndex(unsafe.Pointer(&viewport), 2)
+	inv.Invoke()
 }
 
 // SetScissorRect sets the scissor rectangle for a fragment scissor test.
 //
 // Reference: https://developer.apple.com/documentation/metal/mtlrendercommandencoder/1515583-setscissorrect?language=objc.
 func (rce RenderCommandEncoder) SetScissorRect(scissorRect ScissorRect) {
-	rce.commandEncoder.Send(sel_setScissorRect, scissorRect)
+	inv := cocoa.NSInvocation_invocationWithMethodSignature(cocoa.NSMethodSignature_signatureWithObjCTypes("v@:{MTLScissorRect=qqqq}"))
+	inv.SetTarget(rce.commandEncoder)
+	inv.SetSelector(sel_setScissorRect)
+	inv.SetArgumentAtIndex(unsafe.Pointer(&scissorRect), 2)
+	inv.Invoke()
 }
 
 // SetVertexBuffer sets a buffer for the vertex shader function at an index
@@ -1003,7 +1017,6 @@ func (bce BlitCommandEncoder) SynchronizeTexture(texture Texture, slice int, lev
 //
 // Reference: https://developer.apple.com/documentation/metal/mtlblitcommandencoder/1400754-copyfromtexture?language=objc.
 func (bce BlitCommandEncoder) CopyFromTexture(sourceTexture Texture, sourceSlice int, sourceLevel int, sourceOrigin Origin, sourceSize Size, destinationTexture Texture, destinationSlice int, destinationLevel int, destinationOrigin Origin) {
-	// copyFromTexture requires so many arguments that Send doesn't work (#3135).
 	inv := cocoa.NSInvocation_invocationWithMethodSignature(cocoa.NSMethodSignature_signatureWithObjCTypes("v@:@QQ{MTLOrigin=qqq}{MTLSize=qqq}@QQ{MTLOrigin=qqq}"))
 	inv.SetTarget(bce.commandEncoder)
 	inv.SetSelector(sel_copyFromTexture_sourceSlice_sourceLevel_sourceOrigin_sourceSize_toTexture_destinationSlice_destinationLevel_destinationOrigin)
@@ -1070,14 +1083,28 @@ func (t Texture) Release() {
 //
 // Reference: https://developer.apple.com/documentation/metal/mtltexture/1515751-getbytes?language=objc.
 func (t Texture) GetBytes(pixelBytes *byte, bytesPerRow uintptr, region Region, level int) {
-	t.texture.Send(sel_getBytes_bytesPerRow_fromRegion_mipmapLevel, pixelBytes, bytesPerRow, region, level)
+	inv := cocoa.NSInvocation_invocationWithMethodSignature(cocoa.NSMethodSignature_signatureWithObjCTypes("v@:^vQ{MTLRegion={MTLOrigin=qqq}{MTLSize=qqq}}Q"))
+	inv.SetTarget(t.texture)
+	inv.SetSelector(sel_getBytes_bytesPerRow_fromRegion_mipmapLevel)
+	inv.SetArgumentAtIndex(unsafe.Pointer(&pixelBytes), 2)
+	inv.SetArgumentAtIndex(unsafe.Pointer(&bytesPerRow), 3)
+	inv.SetArgumentAtIndex(unsafe.Pointer(&region), 4)
+	inv.SetArgumentAtIndex(unsafe.Pointer(&level), 5)
+	inv.Invoke()
 }
 
 // ReplaceRegion copies a block of pixels from the caller's pointer into the storage allocation for slice 0 of a texture.
 //
 // Reference: https://developer.apple.com/documentation/metal/mtltexture/1515464-replaceregion?language=objc.
 func (t Texture) ReplaceRegion(region Region, level int, pixelBytes unsafe.Pointer, bytesPerRow int) {
-	t.texture.Send(sel_replaceRegion_mipmapLevel_withBytes_bytesPerRow, region, level, pixelBytes, bytesPerRow)
+	inv := cocoa.NSInvocation_invocationWithMethodSignature(cocoa.NSMethodSignature_signatureWithObjCTypes("v@:{MTLRegion={MTLOrigin=qqq}{MTLSize=qqq}}Q^vQ"))
+	inv.SetTarget(t.texture)
+	inv.SetSelector(sel_replaceRegion_mipmapLevel_withBytes_bytesPerRow)
+	inv.SetArgumentAtIndex(unsafe.Pointer(&region), 2)
+	inv.SetArgumentAtIndex(unsafe.Pointer(&level), 3)
+	inv.SetArgumentAtIndex(unsafe.Pointer(&pixelBytes), 4)
+	inv.SetArgumentAtIndex(unsafe.Pointer(&bytesPerRow), 5)
+	inv.Invoke()
 }
 
 // Width is the width of the texture image for the base level mipmap, in pixels.

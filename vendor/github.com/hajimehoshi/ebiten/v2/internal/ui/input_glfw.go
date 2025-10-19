@@ -32,52 +32,6 @@ var glfwMouseButtonToMouseButton = map[glfw.MouseButton]MouseButton{
 }
 
 func (u *UserInterface) registerInputCallbacks() error {
-	if _, err := u.window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-		// Ignore key repeats for now.
-		if action == glfw.Repeat {
-			return
-		}
-
-		// As this function is called from GLFW callbacks, the current thread is main.
-		u.m.Lock()
-		defer u.m.Unlock()
-
-		uk, ok := glfwKeyToUIKey[key]
-		if !ok {
-			return
-		}
-		if action == glfw.Press {
-			u.inputState.setKeyPressed(uk, u.InputTime())
-		} else {
-			u.inputState.setKeyReleased(uk, u.InputTime())
-		}
-	}); err != nil {
-		return err
-	}
-
-	if _, err := u.window.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
-		// Ignore key repeats for now.
-		if action == glfw.Repeat {
-			return
-		}
-
-		// As this function is called from GLFW callbacks, the current thread is main.
-		u.m.Lock()
-		defer u.m.Unlock()
-
-		ub, ok := glfwMouseButtonToMouseButton[button]
-		if !ok {
-			return
-		}
-		if action == glfw.Press {
-			u.inputState.setMouseButtonPressed(ub, u.InputTime())
-		} else {
-			u.inputState.setMouseButtonReleased(ub, u.InputTime())
-		}
-	}); err != nil {
-		return err
-	}
-
 	if _, err := u.window.SetCharModsCallback(func(w *glfw.Window, char rune, mods glfw.ModifierKey) {
 		// As this function is called from GLFW callbacks, the current thread is main.
 		u.m.Lock()
@@ -100,18 +54,33 @@ func (u *UserInterface) registerInputCallbacks() error {
 	return nil
 }
 
-func (u *UserInterface) updateInputStateForFrame() error {
+func (u *UserInterface) updateInputState() error {
 	var err error
 	u.mainThread.Call(func() {
-		err = u.updateInputStateForFrameImpl()
+		err = u.updateInputStateImpl()
 	})
 	return err
 }
 
-// updateInputStateForFrameImpl must be called from the main thread.
-func (u *UserInterface) updateInputStateForFrameImpl() error {
+// updateInputStateImpl must be called from the main thread.
+func (u *UserInterface) updateInputStateImpl() error {
 	u.m.Lock()
 	defer u.m.Unlock()
+
+	for uk, gk := range uiKeyToGLFWKey {
+		s, err := u.window.GetKey(gk)
+		if err != nil {
+			return err
+		}
+		u.inputState.KeyPressed[uk] = s == glfw.Press
+	}
+	for gb, ub := range glfwMouseButtonToMouseButton {
+		s, err := u.window.GetMouseButton(gb)
+		if err != nil {
+			return err
+		}
+		u.inputState.MouseButtonPressed[ub] = s == glfw.Press
+	}
 
 	m, err := u.currentMonitor()
 	if err != nil {

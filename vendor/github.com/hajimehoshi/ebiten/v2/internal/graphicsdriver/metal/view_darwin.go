@@ -15,22 +15,12 @@
 package metal
 
 import (
-	"runtime/cgo"
 	"sync"
-	"time"
 
-	"github.com/ebitengine/purego/objc"
-	"github.com/hajimehoshi/ebiten/v2/internal/cocoa"
 	"github.com/hajimehoshi/ebiten/v2/internal/graphicsdriver"
 	"github.com/hajimehoshi/ebiten/v2/internal/graphicsdriver/metal/ca"
 	"github.com/hajimehoshi/ebiten/v2/internal/graphicsdriver/metal/mtl"
 )
-
-// maximumDrawableCount is the maximum number of drawable objects.
-//
-// Always use 3 for macOS (#2880, #2883, #3278).
-// At least, this should work with MacBook Pro 2020 (Intel) and MacBook Pro 2023 (M3).
-const maximumDrawableCount = 3
 
 type view struct {
 	window uintptr
@@ -43,23 +33,6 @@ type view struct {
 	ml     ca.MetalLayer
 
 	once sync.Once
-
-	caDisplayLink    uintptr
-	metalDisplayLink uintptr
-
-	// The following members are used only with CAMetalDisplayLink.
-	drawableCh                    chan ca.MetalDrawable
-	drawableDoneCh                chan struct{}
-	drawableTimer                 *time.Timer
-	prevMetalDisplayLink          chan uintptr
-	notificatioObserver           objc.ID
-	metalDisplayLinkRunLoop       cocoa.NSRunLoop
-	metalDisplayLinkReleaseBlock  objc.Block
-	meltaDisplayLinkRecreateBlock objc.Block
-
-	// The following members are used only with CADisplayLink.
-	handleToSelf cgo.Handle
-	fence        *fence
 }
 
 func (v *view) setDrawableSize(width, height int) {
@@ -111,39 +84,16 @@ func (v *view) initialize(device mtl.Device, colorSpace graphicsdriver.ColorSpac
 	// nextDrawable took more than one second if the window has other controls like NSTextView (#1029).
 	v.ml.SetPresentsWithTransaction(false)
 
-	v.ml.SetMaximumDrawableCount(maximumDrawableCount)
-
-	if err := v.initializeOS(); err != nil {
-		return err
-	}
+	v.ml.SetMaximumDrawableCount(v.maximumDrawableCount())
 
 	return nil
 }
 
-type fence struct {
-	value     uint64
-	lastValue uint64
-	cond      *sync.Cond
-}
-
-func newFence() *fence {
-	return &fence{
-		cond: sync.NewCond(&sync.Mutex{}),
+func (v *view) nextDrawable() ca.MetalDrawable {
+	d, err := v.ml.NextDrawable()
+	if err != nil {
+		// Drawable is nil. This can happen at the initial state. Let's wait and see.
+		return ca.MetalDrawable{}
 	}
-}
-
-func (f *fence) wait() {
-	f.cond.L.Lock()
-	defer f.cond.L.Unlock()
-	for f.lastValue >= f.value {
-		f.cond.Wait()
-	}
-	f.lastValue = f.value
-}
-
-func (f *fence) advance() {
-	f.cond.L.Lock()
-	defer f.cond.L.Unlock()
-	f.value++
-	f.cond.Broadcast()
+	return d
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: 2022 The Ebitengine Authors
 
-//go:build (darwin || freebsd || linux || netbsd) && !android && !faketime
+//go:build (darwin || freebsd || linux) && !android && !faketime
 
 package purego
 
@@ -83,17 +83,17 @@ func loadSymbol(handle uintptr, name string) (uintptr, error) {
 // appear to work if you link directly to the C function on darwin arm64.
 
 //go:linkname dlopen dlopen
-var dlopen uint8
+var dlopen uintptr
 var dlopenABI0 = uintptr(unsafe.Pointer(&dlopen))
 
 //go:linkname dlsym dlsym
-var dlsym uint8
+var dlsym uintptr
 var dlsymABI0 = uintptr(unsafe.Pointer(&dlsym))
 
 //go:linkname dlclose dlclose
-var dlclose uint8
+var dlclose uintptr
 var dlcloseABI0 = uintptr(unsafe.Pointer(&dlclose))
 
 //go:linkname dlerror dlerror
-var dlerror uint8
+var dlerror uintptr
 var dlerrorABI0 = uintptr(unsafe.Pointer(&dlerror))

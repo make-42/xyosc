@@ -513,7 +513,7 @@ func (g *graphics11) NewShader(program *shaderir.Program) (graphicsdriver.Shader
 		graphics:         g,
 		id:               g.genNextShaderID(),
 		uniformTypes:     program.Uniforms,
-		uniformOffsets:   hlsl.UniformVariableOffsetsInDwords(program),
+		uniformOffsets:   hlsl.CalcUniformMemoryOffsets(program),
 		vertexShaderBlob: vsh,
 		pixelShaderBlob:  psh,
 	}

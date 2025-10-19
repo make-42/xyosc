@@ -10,12 +10,46 @@ import (
 
 // LangID is a compact representation of a language
 // this package has orthographic knowledge of.
-type LangID = language.LangID
+type LangID uint16
 
-// NewLangID is [language.NewLangID].
+// NewLangID returns the compact index of the given language,
+// or false if it is not supported by this package.
 //
-// Deprecated: use [language.NewLangID] instead.
-var NewLangID = language.NewLangID
+// Derived languages not exactly supported are mapped to their primary part : for instance,
+// 'fr-be' is mapped to 'fr'
+func NewLangID(l language.Language) (LangID, bool) {
+	const N = len(languagesRunes)
+	// binary search
+	i, j := 0, N
+	for i < j {
+		h := i + (j-i)/2
+		entry := languagesRunes[h]
+		if l < entry.lang {
+			j = h
+		} else if entry.lang < l {
+			i = h + 1
+		} else {
+			// extact match
+			return LangID(h), true
+		}
+	}
+	// i is the index where l should be :
+	// try to match the primary part
+	root := l.Primary()
+	for ; i >= 0; i-- {
+		entry := languagesRunes[i]
+		if entry.lang > root { // keep going
+			continue
+		} else if entry.lang < root {
+			// no root match
+			return 0, false
+		} else { // found the root
+			return LangID(i), true
+		}
+
+	}
+	return 0, false
+}
 
 // LangSet is a bit set for 512 languages
 //
@@ -28,8 +62,8 @@ type LangSet [8]uint64
 // newLangsetFromCoverage compile the languages supported by the given
 // rune coverage
 func newLangsetFromCoverage(rs RuneSet) (out LangSet) {
-	for id, runes := range languagesRunes {
-		if rs.includes(runes) {
+	for id, item := range languagesRunes {
+		if rs.includes(item.runes) {
 			out.Add(LangID(id))
 		}
 	}
@@ -41,8 +75,8 @@ func (ls LangSet) String() string {
 	for pageN, page := range ls {
 		for bit := 0; bit < 64; bit++ {
 			if page&(1<<bit) != 0 {
-				id := LangID(pageN<<6 | bit)
-				chunks = append(chunks, string(id.Language()))
+				id := pageN<<6 | bit
+				chunks = append(chunks, string(languagesRunes[id].lang))
 			}
 		}
 	}

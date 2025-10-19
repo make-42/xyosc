@@ -22,11 +22,9 @@ import (
 )
 
 type Shader struct {
-	ir      *shaderir.Program
-	shader  *restorable.Shader
-	unit    shaderir.Unit
-	name    string
-	cleanup runtime.Cleanup
+	ir     *shaderir.Program
+	shader *restorable.Shader
+	name   string
 }
 
 func NewShader(ir *shaderir.Program, name string) *Shader {
@@ -34,8 +32,15 @@ func NewShader(ir *shaderir.Program, name string) *Shader {
 	return &Shader{
 		ir:   ir,
 		name: name,
-		unit: ir.Unit,
 	}
+}
+
+func (s *Shader) finalize() {
+	// A function from finalizer must not be blocked, but disposing operation can be blocked.
+	// Defer this operation until it becomes safe. (#913)
+	appendDeferred(func() {
+		s.deallocate()
+	})
 }
 
 func (s *Shader) ensureShader() *restorable.Shader {
@@ -43,13 +48,7 @@ func (s *Shader) ensureShader() *restorable.Shader {
 		return s.shader
 	}
 	s.shader = restorable.NewShader(s.ir, s.name)
-	s.cleanup = runtime.AddCleanup(s, func(shader *restorable.Shader) {
-		// A function from cleanup must not be blocked, but disposing operation can be blocked.
-		// Defer this operation until it becomes safe. (#913)
-		appendDeferred(func() {
-			shader.Dispose()
-		})
-	}, s.shader)
+	runtime.SetFinalizer(s, (*Shader).finalize)
 	return s.shader
 }
 
@@ -69,7 +68,7 @@ func (s *Shader) Deallocate() {
 }
 
 func (s *Shader) deallocate() {
-	s.cleanup.Stop()
+	runtime.SetFinalizer(s, nil)
 	if s.shader == nil {
 		return
 	}
@@ -78,12 +77,6 @@ func (s *Shader) deallocate() {
 }
 
 var (
-	NearestFilterShader = &Shader{
-		shader: restorable.NearestFilterShader,
-		unit:   restorable.NearestFilterShader.Unit(),
-	}
-	LinearFilterShader = &Shader{
-		shader: restorable.LinearFilterShader,
-		unit:   restorable.LinearFilterShader.Unit(),
-	}
+	NearestFilterShader = &Shader{shader: restorable.NearestFilterShader}
+	LinearFilterShader  = &Shader{shader: restorable.LinearFilterShader}
 )

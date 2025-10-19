@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"image"
 	"math"
-	"slices"
 	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2/internal/graphics"
@@ -62,15 +61,14 @@ func (p *drawTrianglesCommandPool) put(v *drawTrianglesCommand) {
 
 // drawTrianglesCommand represents a drawing command to draw an image on another image.
 type drawTrianglesCommand struct {
-	dst         *Image
-	srcs        [graphics.ShaderSrcImageCount]*Image
-	vertices    []float32
-	blend       graphicsdriver.Blend
-	dstRegions  []graphicsdriver.DstRegion
-	shader      *Shader
-	uniforms    []uint32
-	fillRule    graphicsdriver.FillRule
-	firstCaller string
+	dst        *Image
+	srcs       [graphics.ShaderSrcImageCount]*Image
+	vertices   []float32
+	blend      graphicsdriver.Blend
+	dstRegions []graphicsdriver.DstRegion
+	shader     *Shader
+	uniforms   []uint32
+	fillRule   graphicsdriver.FillRule
 }
 
 func (c *drawTrianglesCommand) String() string {
@@ -82,24 +80,6 @@ func (c *drawTrianglesCommand) String() string {
 		blend = "(clear)"
 	case graphicsdriver.BlendCopy:
 		blend = "(copy)"
-	case graphicsdriver.BlendDestination:
-		blend = "(destination)"
-	case graphicsdriver.BlendSourceIn:
-		blend = "(source-in)"
-	case graphicsdriver.BlendDestinationIn:
-		blend = "(destination-in)"
-	case graphicsdriver.BlendSourceOut:
-		blend = "(source-out)"
-	case graphicsdriver.BlendDestinationOut:
-		blend = "(destination-out)"
-	case graphicsdriver.BlendSourceAtop:
-		blend = "(source-atop)"
-	case graphicsdriver.BlendDestinationAtop:
-		blend = "(destination-atop)"
-	case graphicsdriver.BlendXor:
-		blend = "(xor)"
-	case graphicsdriver.BlendLighter:
-		blend = "(lighter)"
 	default:
 		blend = fmt.Sprintf("{src-rgb: %d, src-alpha: %d, dst-rgb: %d, dst-alpha: %d, op-rgb: %d, op-alpha: %d}",
 			c.blend.BlendFactorSourceRGB,
@@ -136,11 +116,7 @@ func (c *drawTrianglesCommand) String() string {
 		shader += " (" + c.shader.name + ")"
 	}
 
-	str := fmt.Sprintf("draw-triangles: dst: %s <- src: [%s], num of dst regions: %d, num of indices: %d, blend: %s, fill rule: %s, shader: %s", dst, strings.Join(srcstrs[:], ", "), len(c.dstRegions), c.numIndices(), blend, c.fillRule, shader)
-	if c.firstCaller != "" {
-		str += "\n  first-caller: " + c.firstCaller
-	}
-	return str
+	return fmt.Sprintf("draw-triangles: dst: %s <- src: [%s], num of dst regions: %d, num of indices: %d, blend: %s, fill rule: %s, shader: %s", dst, strings.Join(srcstrs[:], ", "), len(c.dstRegions), c.numIndices(), blend, c.fillRule, shader)
 }
 
 // Exec executes the drawTrianglesCommand.
@@ -188,8 +164,13 @@ func (c *drawTrianglesCommand) CanMergeWithDrawTrianglesCommand(dst *Image, srcs
 	if c.shader != shader {
 		return false
 	}
-	if !slices.Equal(c.uniforms, uniforms) {
+	if len(c.uniforms) != len(uniforms) {
 		return false
+	}
+	for i := range c.uniforms {
+		if c.uniforms[i] != uniforms[i] {
+			return false
+		}
 	}
 	if c.dst != dst {
 		return false

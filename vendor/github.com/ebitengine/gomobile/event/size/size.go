@@ -6,7 +6,7 @@
 // orientation of the app's window.
 //
 // See the github.com/ebitengine/gomobile/app package for details on the event model.
-package size
+package size // import "github.com/ebitengine/gomobile/event/size"
 
 import (
 	"image"

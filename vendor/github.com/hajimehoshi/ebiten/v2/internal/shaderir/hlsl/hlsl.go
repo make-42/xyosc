@@ -80,84 +80,73 @@ float4x4 float4x4FromScalar(float x) {
 	return float4x4(x, 0, 0, 0, 0, x, 0, 0, 0, 0, x, 0, 0, 0, 0, x);
 }`
 
-func Compile(p *shaderir.Program) (vertexShader, pixelShader, vertexPrelude, pixelPrelude string) {
-	offsets := UniformVariableOffsetsInDwords(p)
+func Compile(p *shaderir.Program) (vertexShader, pixelShader, prelude string) {
+	offsets := CalcUniformMemoryOffsets(p)
 
 	c := &compileContext{
 		unit: p.Unit,
 	}
 
-	appendPrelude := func(lines []string, vertex bool) []string {
-		lines = append(lines, strings.Split(utilFuncs, "\n")...)
+	var lines []string
+	lines = append(lines, strings.Split(utilFuncs, "\n")...)
 
-		lines = append(lines, "", "struct Varyings {")
-		lines = append(lines, "\tfloat4 Position : SV_POSITION;")
-		if len(p.Varyings) > 0 {
-			for i, v := range p.Varyings {
-				switch i {
-				case 0:
-					lines = append(lines, fmt.Sprintf("\tfloat2 M%d : TEXCOORD;", i))
-				case 1:
-					lines = append(lines, fmt.Sprintf("\tfloat4 M%d : COLOR0;", i))
-				default:
-					// Use COLOR[n] as a general purpose varying.
-					if v.Main != shaderir.Vec4 {
-						lines = append(lines, fmt.Sprintf("\t?(unexpected type: %s) M%d : COLOR%d;", v, i, i-1))
-					} else {
-						lines = append(lines, fmt.Sprintf("\tfloat4 M%d : COLOR%d;", i, i-1))
-					}
+	lines = append(lines, "", "struct Varyings {")
+	lines = append(lines, "\tfloat4 Position : SV_POSITION;")
+	if len(p.Varyings) > 0 {
+		for i, v := range p.Varyings {
+			switch i {
+			case 0:
+				lines = append(lines, fmt.Sprintf("\tfloat2 M%d : TEXCOORD;", i))
+			case 1:
+				lines = append(lines, fmt.Sprintf("\tfloat4 M%d : COLOR0;", i))
+			default:
+				// Use COLOR[n] as a general purpose varying.
+				if v.Main != shaderir.Vec4 {
+					lines = append(lines, fmt.Sprintf("\t?(unexpected type: %s) M%d : COLOR%d;", v, i, i-1))
+				} else {
+					lines = append(lines, fmt.Sprintf("\tfloat4 M%d : COLOR%d;", i, i-1))
 				}
 			}
 		}
-		if !vertex {
-			lines = append(lines, "\tbool FrontFacing : SV_IsFrontFace;")
+	}
+	lines = append(lines, "};")
+	prelude = strings.Join(lines, "\n")
+
+	lines = append(lines, "", "{{.Structs}}")
+
+	if len(p.Uniforms) > 0 {
+		lines = append(lines, "")
+		lines = append(lines, "cbuffer Uniforms : register(b0) {")
+		for i, t := range p.Uniforms {
+			// packingoffset is not mandatory, but this is useful to ensure the correct offset is used.
+			offset := fmt.Sprintf("c%d", offsets[i]/boundaryInBytes)
+			switch offsets[i] % boundaryInBytes {
+			case 4:
+				offset += ".y"
+			case 8:
+				offset += ".z"
+			case 12:
+				offset += ".w"
+			}
+			lines = append(lines, fmt.Sprintf("\t%s : packoffset(%s);", c.varDecl(p, &t, fmt.Sprintf("U%d", i)), offset))
 		}
-		lines = append(lines, "};")
-		return lines
+		lines = append(lines, "}")
 	}
 
-	var vslines, pslines []string
-	vslines = appendPrelude(vslines, true)
-	pslines = appendPrelude(pslines, false)
-
-	vertexPrelude = strings.Join(vslines, "\n")
-	pixelPrelude = strings.Join(pslines, "\n")
-
-	appendGlobalVariables := func(lines []string) []string {
-		lines = append(lines, "", "{{.Structs}}")
-
-		if len(p.Uniforms) > 0 {
-			lines = append(lines, "")
-			lines = append(lines, "cbuffer Uniforms : register(b0) {")
-			for i, t := range p.Uniforms {
-				// packingoffset is not mandatory, but this is useful to ensure the correct offset is used.
-				offset := fmt.Sprintf("c%d", offsets[i]/UniformVariableBoundaryInDwords)
-				switch offsets[i] % UniformVariableBoundaryInDwords {
-				case 1:
-					offset += ".y"
-				case 2:
-					offset += ".z"
-				case 3:
-					offset += ".w"
-				}
-				lines = append(lines, fmt.Sprintf("\t%s : packoffset(%s);", c.varDecl(p, &t, fmt.Sprintf("U%d", i)), offset))
-			}
-			lines = append(lines, "}")
+	if p.TextureCount > 0 {
+		lines = append(lines, "")
+		for i := 0; i < p.TextureCount; i++ {
+			lines = append(lines, fmt.Sprintf("Texture2D T%[1]d : register(t%[1]d);", i))
 		}
-
-		if p.TextureCount > 0 {
-			lines = append(lines, "")
-			for i := 0; i < p.TextureCount; i++ {
-				lines = append(lines, fmt.Sprintf("Texture2D T%[1]d : register(t%[1]d);", i))
-			}
-			if c.unit == shaderir.Texels {
-				lines = append(lines, "SamplerState samp : register(s0);")
-			}
+		if c.unit == shaderir.Texels {
+			lines = append(lines, "SamplerState samp : register(s0);")
 		}
-		return lines
 	}
-	vslines = appendGlobalVariables(vslines)
-	pslines = appendGlobalVariables(pslines)
+
+	vslines := make([]string, len(lines))
+	copy(vslines, lines)
+	pslines := make([]string, len(lines))
+	copy(pslines, lines)
 
 	var vsfuncs []*shaderir.Func
 	if p.VertexFunc.Block != nil {
@@ -525,16 +514,6 @@ func (c *compileContext) block(p *shaderir.Program, topBlock, block *shaderir.Bl
 						panic(fmt.Sprintf("hlsl: unexpected unit: %d", p.Unit))
 					}
 				}
-			}
-			if callee.Type == shaderir.BuiltinFuncExpr && (callee.BuiltinFunc == shaderir.Min || callee.BuiltinFunc == shaderir.Max) {
-				result := args[0]
-				for i := 1; i < len(args); i++ {
-					result = fmt.Sprintf("%s(%s, %s)", expr(&callee), result, args[i])
-				}
-				return result
-			}
-			if callee.Type == shaderir.BuiltinFuncExpr && callee.BuiltinFunc == shaderir.FrontFacing {
-				return fmt.Sprintf("%s.FrontFacing", vsOut)
 			}
 			return fmt.Sprintf("%s(%s)", expr(&e.Exprs[0]), strings.Join(args, ", "))
 		case shaderir.FieldSelector:

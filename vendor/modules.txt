@@ -4,8 +4,8 @@ github.com/argusdusty/gofft
 # github.com/chewxy/math32 v1.11.1
 ## explicit; go 1.13
 github.com/chewxy/math32
-# github.com/ebitengine/gomobile v0.0.0-20250923094054-ea854a63cce1
-## explicit; go 1.24.0
+# github.com/ebitengine/gomobile v0.0.0-20241016134836-cc2e38a7c0ee
+## explicit; go 1.22.0
 github.com/ebitengine/gomobile/app
 github.com/ebitengine/gomobile/app/internal/callfn
 github.com/ebitengine/gomobile/event/key
@@ -19,22 +19,22 @@ github.com/ebitengine/gomobile/internal/mobileinit
 # github.com/ebitengine/hideconsole v1.0.0
 ## explicit; go 1.18
 github.com/ebitengine/hideconsole
-# github.com/ebitengine/purego v0.9.0
+# github.com/ebitengine/purego v0.8.2
 ## explicit; go 1.18
 github.com/ebitengine/purego
 github.com/ebitengine/purego/internal/cgo
 github.com/ebitengine/purego/internal/fakecgo
 github.com/ebitengine/purego/internal/strings
 github.com/ebitengine/purego/objc
-# github.com/fsnotify/fsnotify v1.9.0
+# github.com/fsnotify/fsnotify v1.8.0
 ## explicit; go 1.17
 github.com/fsnotify/fsnotify
 github.com/fsnotify/fsnotify/internal
-# github.com/gen2brain/malgo v0.11.24
+# github.com/gen2brain/malgo v0.11.23
 ## explicit; go 1.17
 github.com/gen2brain/malgo
-# github.com/go-text/typesetting v0.3.0
-## explicit; go 1.19
+# github.com/go-text/typesetting v0.2.1
+## explicit; go 1.17
 github.com/go-text/typesetting/di
 github.com/go-text/typesetting/font
 github.com/go-text/typesetting/font/cff
@@ -51,7 +51,7 @@ github.com/go-text/typesetting/unicodedata
 ## explicit; go 1.13
 github.com/goccmack/godsp
 github.com/goccmack/godsp/peaks
-# github.com/goccmack/goutil v1.2.3
+# github.com/goccmack/goutil v0.4.0
 ## explicit; go 1.13
 github.com/goccmack/goutil/ioutil
 # github.com/godbus/dbus v4.1.0+incompatible
@@ -60,8 +60,8 @@ github.com/godbus/dbus
 # github.com/godbus/dbus/v5 v5.1.0
 ## explicit; go 1.12
 github.com/godbus/dbus/v5
-# github.com/hajimehoshi/ebiten/v2 v2.9.2
-## explicit; go 1.24.0
+# github.com/hajimehoshi/ebiten/v2 v2.8.6
+## explicit; go 1.22.0
 github.com/hajimehoshi/ebiten/v2
 github.com/hajimehoshi/ebiten/v2/ebitenutil
 github.com/hajimehoshi/ebiten/v2/inpututil
@@ -87,7 +87,6 @@ github.com/hajimehoshi/ebiten/v2/internal/graphicsdriver/opengl
 github.com/hajimehoshi/ebiten/v2/internal/graphicsdriver/opengl/gl
 github.com/hajimehoshi/ebiten/v2/internal/graphicsdriver/playstation5
 github.com/hajimehoshi/ebiten/v2/internal/hook
-github.com/hajimehoshi/ebiten/v2/internal/inputstate
 github.com/hajimehoshi/ebiten/v2/internal/microsoftgdk
 github.com/hajimehoshi/ebiten/v2/internal/mipmap
 github.com/hajimehoshi/ebiten/v2/internal/packing
@@ -103,7 +102,6 @@ github.com/hajimehoshi/ebiten/v2/internal/ui
 github.com/hajimehoshi/ebiten/v2/internal/vibrate
 github.com/hajimehoshi/ebiten/v2/internal/winver
 github.com/hajimehoshi/ebiten/v2/text/v2
-github.com/hajimehoshi/ebiten/v2/text/v2/internal/textutil
 github.com/hajimehoshi/ebiten/v2/vector
 # github.com/jezek/xgb v1.1.1
 ## explicit; go 1.11
@@ -121,29 +119,26 @@ github.com/leberKleber/go-mpris
 ## explicit
 github.com/mjibson/go-dsp/wav
 github.com/mjibson/go-dsp/window
-# github.com/rivo/uniseg v0.4.7
-## explicit; go 1.18
-github.com/rivo/uniseg
 # github.com/ztrue/tracerr v0.4.0
 ## explicit
 github.com/ztrue/tracerr
-# golang.org/x/image v0.32.0
-## explicit; go 1.24.0
+# golang.org/x/image v0.23.0
+## explicit; go 1.18
 golang.org/x/image/ccitt
 golang.org/x/image/font
 golang.org/x/image/math/fixed
 golang.org/x/image/tiff
 golang.org/x/image/tiff/lzw
 golang.org/x/image/vector
-# golang.org/x/sync v0.17.0
-## explicit; go 1.24.0
+# golang.org/x/sync v0.10.0
+## explicit; go 1.18
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.37.0
-## explicit; go 1.24.0
+# golang.org/x/sys v0.29.0
+## explicit; go 1.18
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.30.0
-## explicit; go 1.24.0
+# golang.org/x/text v0.21.0
+## explicit; go 1.18
 golang.org/x/text/internal/language
 golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag

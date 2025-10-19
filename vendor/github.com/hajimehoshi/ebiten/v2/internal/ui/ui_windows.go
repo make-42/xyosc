@@ -34,10 +34,6 @@ func (u *UserInterface) initializePlatform() error {
 	return nil
 }
 
-func (u *UserInterface) setApplePressAndHoldEnabled(enabled bool) {
-	// Do nothings.
-}
-
 type graphicsDriverCreatorImpl struct {
 	transparent bool
 	colorSpace  graphicsdriver.ColorSpace
@@ -114,18 +110,18 @@ func dipToGLFWPixel(x float64, deviceScaleFactor float64) float64 {
 	return x * deviceScaleFactor
 }
 
-func (u *UserInterface) adjustWindowPosition(x, y int, monitor *Monitor) (int, int, error) {
+func (u *UserInterface) adjustWindowPosition(x, y int, monitor *Monitor) (int, int) {
 	if microsoftgdk.IsXbox() {
-		return x, y, nil
+		return x, y
 	}
 
 	// If a window is not decorated, the window should be able to reach the top of the screen (#3118).
 	d, err := u.window.GetAttrib(glfw.Decorated)
 	if err != nil {
-		return 0, 0, err
+		panic(err)
 	}
 	if d == glfw.False {
-		return x, y, nil
+		return x, y
 	}
 
 	mx := monitor.boundsInGLFWPixels.Min.X
@@ -137,12 +133,12 @@ func (u *UserInterface) adjustWindowPosition(x, y int, monitor *Monitor) (int, i
 	}
 	t, err := _GetSystemMetrics(_SM_CYCAPTION)
 	if err != nil {
-		return 0, 0, err
+		panic(err)
 	}
 	if y < my+int(t) {
 		y = my + int(t)
 	}
-	return x, y, nil
+	return x, y
 }
 
 func initialMonitorByOS() (*Monitor, error) {

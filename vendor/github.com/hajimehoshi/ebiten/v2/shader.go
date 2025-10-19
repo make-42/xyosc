@@ -17,7 +17,6 @@ package ebiten
 import (
 	"fmt"
 	"sync"
-	"sync/atomic"
 
 	"github.com/hajimehoshi/ebiten/v2/internal/builtinshader"
 	"github.com/hajimehoshi/ebiten/v2/internal/graphics"
@@ -87,34 +86,24 @@ func (s *Shader) appendUniforms(dst []uint32, uniforms map[string]any) []uint32 
 }
 
 var (
-	builtinShadersForRead atomic.Pointer[[builtinshader.FilterCount][builtinshader.AddressCount][2]*Shader]
-	builtinShadersM       sync.Mutex
+	builtinShaders  [builtinshader.FilterCount][builtinshader.AddressCount][2]*Shader
+	builtinShadersM sync.Mutex
 )
 
 func builtinShader(filter builtinshader.Filter, address builtinshader.Address, useColorM bool) *Shader {
+	builtinShadersM.Lock()
+	defer builtinShadersM.Unlock()
+
 	var c int
 	if useColorM {
 		c = 1
 	}
-	if read := builtinShadersForRead.Load(); read != nil {
-		if s := (*read)[filter][address][c]; s != nil {
-			return s
-		}
-	}
-
-	builtinShadersM.Lock()
-	defer builtinShadersM.Unlock()
-
-	// Double check in case another goroutine already created a shader.
-	if read := builtinShadersForRead.Load(); read != nil {
-		if s := (*read)[filter][address][c]; s != nil {
-			return s
-		}
+	if s := builtinShaders[filter][address][c]; s != nil {
+		return s
 	}
 
 	var shader *Shader
-	if (filter == builtinshader.FilterNearest || filter == builtinshader.FilterLinear) &&
-		address == builtinshader.AddressUnsafe && !useColorM {
+	if address == builtinshader.AddressUnsafe && !useColorM {
 		switch filter {
 		case builtinshader.FilterNearest:
 			shader = &Shader{shader: ui.NearestFilterShader}
@@ -129,8 +118,6 @@ func builtinShader(filter builtinshader.Filter, address builtinshader.Address, u
 			name = "nearest"
 		case builtinshader.FilterLinear:
 			name = "linear"
-		case builtinshader.FilterPixelated:
-			name = "pixelated"
 		}
 		switch address {
 		case builtinshader.AddressClampToZero:
@@ -148,11 +135,6 @@ func builtinShader(filter builtinshader.Filter, address builtinshader.Address, u
 		shader = s
 	}
 
-	var shaders [builtinshader.FilterCount][builtinshader.AddressCount][2]*Shader
-	if ptr := builtinShadersForRead.Load(); ptr != nil {
-		shaders = *ptr
-	}
-	shaders[filter][address][c] = shader
-	builtinShadersForRead.Store(&shaders)
+	builtinShaders[filter][address][c] = shader
 	return shader
 }

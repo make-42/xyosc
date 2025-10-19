@@ -52,9 +52,12 @@ static void swapBuffersNSGL(_GLFWwindow* window)
     } // autoreleasepool
 }
 
-static void swapIntervalNSGL(_GLFWwindow* window, int interval)
+static void swapIntervalNSGL(int interval)
 {
     @autoreleasepool {
+
+    _GLFWwindow* window = _glfwPlatformGetTls(&_glfw.contextSlot);
+    assert(window != NULL);
 
     [window->context.nsgl.object setValues:&interval
                               forParameter:NSOpenGLContextParameterSwapInterval];

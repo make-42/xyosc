@@ -14,7 +14,7 @@
 
 //go:build playstation5
 
-// The actual implementation will be provided by github.com/hajimehoshi/uwagaki.
+// The actual implementation will be provided by -overlay.
 
 #include "graphics_playstation5.h"
 
@@ -22,18 +22,6 @@ extern "C" ebitengine_Error ebitengine_InitializeGraphics(void) { return {}; }
 
 extern "C" ebitengine_Error ebitengine_NewImage(int *image, int width,
                                                 int height) {
-  return {};
-}
-
-extern "C" void ebitengine_ReadPixels(int image, uint8_t *pixels,
-                                      ebitengine_Region region) {}
-
-extern "C" ebitengine_Error ebitengine_FlushReadPixels(int image) { return {}; }
-
-extern "C" void ebitengine_WritePixels(int image, const uint8_t *pixels,
-                                       ebitengine_Region region) {}
-
-extern "C" ebitengine_Error ebitengine_FlushWritePixels(int image) {
   return {};
 }
 
@@ -61,10 +49,8 @@ ebitengine_DrawTriangles(int dst, const int *srcs, int src_count, int shader,
   return {};
 }
 
-extern "C" ebitengine_Error ebitengine_NewShader(
-    int *shader, const char *vertex_header, int vertex_header_size,
-    const char *vertex_text, int vertex_text_size, const char *pixel_header,
-    int pixel_header_size, const char *pixel_text, int pixel_text_size) {
+extern "C" ebitengine_Error ebitengine_NewShader(int *shader,
+                                                 const char *source) {
   return {};
 }
 

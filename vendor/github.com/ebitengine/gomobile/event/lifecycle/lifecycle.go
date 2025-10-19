@@ -17,7 +17,7 @@
 // means it has lost the focus.
 //
 // See the github.com/ebitengine/gomobile/app package for details on the event model.
-package lifecycle
+package lifecycle // import "github.com/ebitengine/gomobile/event/lifecycle"
 
 import (
 	"fmt"

@@ -25,8 +25,6 @@
 extern "C" {
 #endif
 
-int ebitengine_ProjectionMatrixUniformDwordIndex();
-
 typedef struct ebitengine_Error {
   const char *message;
   int code;
@@ -36,13 +34,6 @@ static bool ebitengine_IsErrorNil(ebitengine_Error *err) {
   return err->message == NULL && err->code == 0;
 }
 
-typedef struct ebitengine_Region {
-  int min_x;
-  int min_y;
-  int max_x;
-  int max_y;
-} ebitengine_Region;
-
 typedef struct ebitengine_DstRegion {
   int min_x;
   int min_y;
@@ -50,31 +41,6 @@ typedef struct ebitengine_DstRegion {
   int max_y;
   int index_count;
 } ebitengine_DstRegion;
-
-// kBlendFactor* and kBlendOperation* must be synced with
-// internal/graphicsdriver/blend.go.
-
-enum {
-  kBlendFactorZero = 0,
-  kBlendFactorOne = 1,
-  kBlendFactorSourceColor = 2,
-  kBlendFactorOneMinusSourceColor = 3,
-  kBlendFactorSourceAlpha = 4,
-  kBlendFactorOneMinusSourceAlpha = 5,
-  kBlendFactorDestinationColor = 6,
-  kBlendFactorOneMinusDestinationColor = 7,
-  kBlendFactorDestinationAlpha = 8,
-  kBlendFactorOneMinusDestinationAlpha = 9,
-  kBlendFactorSourceAlphaSaturated = 10,
-};
-
-enum {
-  kBlendOperationAdd = 0,
-  kBlendOperationSubtract = 1,
-  kBlendOperationReverseSubtract = 2,
-  kBlendOperationMin = 3,
-  kBlendOperationMax = 4,
-};
 
 typedef struct ebitengine_Blend {
   uint8_t factor_src_rgb;
@@ -89,12 +55,6 @@ ebitengine_Error ebitengine_InitializeGraphics(void);
 ebitengine_Error ebitengine_NewImage(int *image, int width, int height);
 ebitengine_Error ebitengine_NewScreenFramebufferImage(int *image, int width,
                                                       int height);
-void ebitengine_ReadPixels(int image, uint8_t *pixels,
-                           ebitengine_Region region);
-ebitengine_Error ebitengine_FlushReadPixels(int image);
-void ebitengine_WritePixels(int image, const uint8_t *pixels,
-                            ebitengine_Region region);
-ebitengine_Error ebitengine_FlushWritePixels(int image);
 void ebitengine_DisposeImage(int id);
 
 void ebitengine_Begin();
@@ -109,10 +69,7 @@ ebitengine_DrawTriangles(int dst, const int *srcs, int src_count, int shader,
                          ebitengine_Blend blend, const uint32_t *uniforms,
                          int uniform_count, int fill_rule);
 
-ebitengine_Error ebitengine_NewShader(
-    int *shader, const char *vertex_header, int vertex_header_size,
-    const char *vertex_text, int vertex_text_size, const char *pixel_header,
-    int pixel_header_size, const char *pixel_text, int pixel_text_size);
+ebitengine_Error ebitengine_NewShader(int *shader, const char *source);
 void ebitengine_DisposeShader(int id);
 
 #ifdef __cplusplus

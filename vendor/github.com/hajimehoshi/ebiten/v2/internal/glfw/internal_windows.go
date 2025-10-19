@@ -87,7 +87,7 @@ type context struct {
 	// TODO: Put these functions in an interface type.
 	makeCurrent        func(*Window) error
 	swapBuffers        func(*Window) error
-	swapInterval       func(*Window, int) error
+	swapInterval       func(int) error
 	extensionSupported func(string) bool
 	getProcAddress     func(string) uintptr
 	destroy            func(*Window) error

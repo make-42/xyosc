@@ -147,7 +147,9 @@ func NewGraphics() (graphicsdriver.Graphics, error) {
 }
 
 type graphicsInfra struct {
-	*graphicsInfraResources
+	factory    *_IDXGIFactory
+	swapChain  *_IDXGISwapChain
+	swapChain4 *_IDXGISwapChain4
 
 	allowTearing bool
 
@@ -158,24 +160,14 @@ type graphicsInfra struct {
 	lastTime time.Time
 
 	bufferCount int
-
-	cleanup runtime.Cleanup
-}
-
-type graphicsInfraResources struct {
-	factory    *_IDXGIFactory
-	swapChain  *_IDXGISwapChain
-	swapChain4 *_IDXGISwapChain4
 }
 
 // newGraphicsInfra takes the ownership of the given factory.
 func newGraphicsInfra(factory *_IDXGIFactory) (*graphicsInfra, error) {
 	g := &graphicsInfra{
-		graphicsInfraResources: &graphicsInfraResources{
-			factory: factory,
-		},
+		factory: factory,
 	}
-	g.cleanup = runtime.AddCleanup(g, (*graphicsInfraResources).releaseResources, g.graphicsInfraResources)
+	runtime.SetFinalizer(g, (*graphicsInfra).release)
 
 	if f, err := g.factory.QueryInterface(&_IID_IDXGIFactory5); err == nil && f != nil {
 		factory := (*_IDXGIFactory5)(f)
@@ -191,11 +183,6 @@ func newGraphicsInfra(factory *_IDXGIFactory) (*graphicsInfra, error) {
 }
 
 func (g *graphicsInfra) release() {
-	g.releaseResources()
-	g.cleanup.Stop()
-}
-
-func (g *graphicsInfraResources) releaseResources() {
 	if g.factory != nil {
 		g.factory.Release()
 		g.factory = nil

@@ -252,16 +252,27 @@ func (w *Window) refreshContextAttribs(ctxconfig *ctxconfig) (ferr error) {
 	w.context.source = ctxconfig.source
 	w.context.client = OpenGLAPI
 
-	// In Ebitengine, only one window is created.
-	// Always assume that the current context is not set.
+	p1, err := _glfw.contextSlot.get()
+	if err != nil {
+		return err
+	}
+	previous := (*Window)(unsafe.Pointer(p1))
 	defer func() {
-		err := (*Window)(nil).MakeContextCurrent()
+		err := previous.MakeContextCurrent()
 		if ferr == nil {
 			ferr = err
 		}
 	}()
 	if err := w.MakeContextCurrent(); err != nil {
 		return err
+	}
+
+	p2, err := _glfw.contextSlot.get()
+	if err != nil {
+		return err
+	}
+	if (*Window)(unsafe.Pointer(p2)) != w {
+		return nil
 	}
 
 	getIntegerv := w.context.getProcAddress("glGetIntegerv")
@@ -342,7 +353,7 @@ func (w *Window) refreshContextAttribs(ctxconfig *ctxconfig) (ferr error) {
 			if flags&GL_CONTEXT_FLAG_DEBUG_BIT != 0 {
 				w.context.debug = true
 			} else {
-				ok, err := w.ExtensionSupported("GL_ARB_debug_output")
+				ok, err := ExtensionSupported("GL_ARB_debug_output")
 				if err != nil {
 					return err
 				}
@@ -369,7 +380,7 @@ func (w *Window) refreshContextAttribs(ctxconfig *ctxconfig) (ferr error) {
 			} else if mask&GL_CONTEXT_CORE_PROFILE_BIT != 0 {
 				w.context.profile = OpenGLCoreProfile
 			} else {
-				ok, err := w.ExtensionSupported("GL_ARB_compatibility")
+				ok, err := ExtensionSupported("GL_ARB_compatibility")
 				if err != nil {
 					return err
 				}
@@ -384,7 +395,7 @@ func (w *Window) refreshContextAttribs(ctxconfig *ctxconfig) (ferr error) {
 		}
 
 		// Read back robustness strategy
-		ok, err := w.ExtensionSupported("GL_ARB_robustness")
+		ok, err := ExtensionSupported("GL_ARB_robustness")
 		if err != nil {
 			return err
 		}
@@ -403,7 +414,7 @@ func (w *Window) refreshContextAttribs(ctxconfig *ctxconfig) (ferr error) {
 		}
 	} else {
 		// Read back robustness strategy
-		ok, err := w.ExtensionSupported("GL_EXT_robustness")
+		ok, err := ExtensionSupported("GL_EXT_robustness")
 		if err != nil {
 			return err
 		}
@@ -422,7 +433,7 @@ func (w *Window) refreshContextAttribs(ctxconfig *ctxconfig) (ferr error) {
 		}
 	}
 
-	ok, err := w.ExtensionSupported("GL_KHR_context_flush_control")
+	ok, err := ExtensionSupported("GL_KHR_context_flush_control")
 	if err != nil {
 		return err
 	}
@@ -508,18 +519,27 @@ func (w *Window) SwapBuffers() error {
 	return nil
 }
 
-func (w *Window) SwapInterval(interval int) error {
+func SwapInterval(interval int) error {
 	if !_glfw.initialized {
 		return NotInitialized
 	}
 
-	if err := w.context.swapInterval(w, interval); err != nil {
+	ptr, err := _glfw.contextSlot.get()
+	if err != nil {
+		return err
+	}
+	window := (*Window)(unsafe.Pointer(ptr))
+	if window == nil {
+		return fmt.Errorf("glfw: cannot set swap interval without a current OpenGL or OpenGL ES context %w", NoCurrentContext)
+	}
+
+	if err := window.context.swapInterval(interval); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (w *Window) ExtensionSupported(extension string) (bool, error) {
+func ExtensionSupported(extension string) (bool, error) {
 	const (
 		GL_EXTENSIONS     = 0x1F03
 		GL_NUM_EXTENSIONS = 0x821D
@@ -529,14 +549,23 @@ func (w *Window) ExtensionSupported(extension string) (bool, error) {
 		return false, NotInitialized
 	}
 
-	if w.context.major >= 3 {
+	ptr, err := _glfw.contextSlot.get()
+	if err != nil {
+		return false, err
+	}
+	window := (*Window)(unsafe.Pointer(ptr))
+	if window == nil {
+		return false, fmt.Errorf("glfw: cannot query extension without a current OpenGL or OpenGL ES context %w", NoCurrentContext)
+	}
+
+	if window.context.major >= 3 {
 		// Check if extension is in the modern OpenGL extensions string list
 
-		glGetIntegerv := w.context.getProcAddress("glGetIntegerv")
+		glGetIntegerv := window.context.getProcAddress("glGetIntegerv")
 		var count int32
 		_, _, _ = purego.SyscallN(glGetIntegerv, GL_NUM_EXTENSIONS, uintptr(unsafe.Pointer(&count)))
 
-		glGetStringi := w.context.getProcAddress("glGetStringi")
+		glGetStringi := window.context.getProcAddress("glGetStringi")
 		for i := 0; i < int(count); i++ {
 			r, _, _ := purego.SyscallN(glGetStringi, GL_EXTENSIONS, uintptr(i))
 			if r == 0 {
@@ -551,7 +580,7 @@ func (w *Window) ExtensionSupported(extension string) (bool, error) {
 	} else {
 		// Check if extension is in the old style OpenGL extensions string
 
-		glGetString := w.context.getProcAddress("glGetString")
+		glGetString := window.context.getProcAddress("glGetString")
 		r, _, _ := purego.SyscallN(glGetString, GL_EXTENSIONS)
 		if r == 0 {
 			return false, fmt.Errorf("glfw: extension string retrieval is broken: %w", PlatformError)
@@ -566,7 +595,7 @@ func (w *Window) ExtensionSupported(extension string) (bool, error) {
 	}
 
 	// Check if extension is in the platform-specific string
-	return w.context.extensionSupported(extension), nil
+	return window.context.extensionSupported(extension), nil
 }
 
 // bytePtrToString takes a pointer to a sequence of text and returns the corresponding string.

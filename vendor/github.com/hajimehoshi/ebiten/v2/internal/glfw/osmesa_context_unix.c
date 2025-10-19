@@ -71,7 +71,7 @@ static void swapBuffersOSMesa(_GLFWwindow* window)
     // No double buffering on OSMesa
 }
 
-static void swapIntervalOSMesa(_GLFWwindow* window, int interval)
+static void swapIntervalOSMesa(int interval)
 {
     // No swap interval on OSMesa
 }

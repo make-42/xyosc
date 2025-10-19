@@ -79,15 +79,6 @@ func Compile(p *shaderir.Program) (shader string) {
 	lines = append(lines, strings.Split(Prelude(p.Unit), "\n")...)
 	lines = append(lines, "", "{{.Structs}}")
 
-	if len(p.Uniforms) > 0 {
-		lines = append(lines, "")
-		lines = append(lines, "struct Uniforms {")
-		for i, u := range p.Uniforms {
-			lines = append(lines, fmt.Sprintf("\t%s;", c.varDecl(p, &u, fmt.Sprintf("U%d", i), false)))
-		}
-		lines = append(lines, "};")
-	}
-
 	if len(p.Attributes) > 0 {
 		lines = append(lines, "")
 		lines = append(lines, "struct Attributes {")
@@ -126,9 +117,9 @@ func Compile(p *shaderir.Program) (shader string) {
 			fmt.Sprintf("vertex Varyings %s(", VertexName),
 			"\tuint vid [[vertex_id]],",
 			"\tconst device Attributes* attributes [[buffer(0)]]")
-		if len(p.Uniforms) > 0 {
+		for i, u := range p.Uniforms {
 			lines[len(lines)-1] += ","
-			lines = append(lines, "\tconstant Uniforms& uniforms [[buffer(1)]]")
+			lines = append(lines, fmt.Sprintf("\tconstant %s [[buffer(%d)]]", c.varDecl(p, &u, fmt.Sprintf("U%d", i), true), i+1))
 		}
 		for i := 0; i < p.TextureCount; i++ {
 			lines[len(lines)-1] += ","
@@ -148,16 +139,14 @@ func Compile(p *shaderir.Program) (shader string) {
 		lines = append(lines,
 			fmt.Sprintf("fragment float4 %s(", FragmentName),
 			"\tVaryings varyings [[stage_in]]")
-		if len(p.Uniforms) > 0 {
+		for i, u := range p.Uniforms {
 			lines[len(lines)-1] += ","
-			lines = append(lines, "\tconstant Uniforms& uniforms [[buffer(0)]]")
+			lines = append(lines, fmt.Sprintf("\tconstant %s [[buffer(%d)]]", c.varDecl(p, &u, fmt.Sprintf("U%d", i), true), i+1))
 		}
 		for i := 0; i < p.TextureCount; i++ {
 			lines[len(lines)-1] += ","
 			lines = append(lines, fmt.Sprintf("\ttexture2d<float> T%[1]d [[texture(%[1]d)]]", i))
 		}
-		lines[len(lines)-1] += ","
-		lines = append(lines, "\tbool front_facing [[front_facing]]")
 		lines[len(lines)-1] += ") {"
 		lines = append(lines, c.block(p, p.FragmentFunc.Block, p.FragmentFunc.Block, 0)...)
 		lines = append(lines, "}")
@@ -240,13 +229,12 @@ func (c *compileContext) function(p *shaderir.Program, f *shaderir.Func, prototy
 	var args []string
 
 	// Uniform variables and texture variables. In Metal, non-const global variables are not available.
-	if len(p.Uniforms) > 0 {
-		args = append(args, "constant Uniforms& uniforms")
+	for i, u := range p.Uniforms {
+		args = append(args, "constant "+c.varDecl(p, &u, fmt.Sprintf("U%d", i), true))
 	}
 	for i := 0; i < p.TextureCount; i++ {
 		args = append(args, fmt.Sprintf("texture2d<float> T%d", i))
 	}
-	args = append(args, "bool front_facing")
 
 	var idx int
 	for _, t := range f.InParams {
@@ -362,7 +350,7 @@ func (c *compileContext) block(p *shaderir.Program, topBlock, block *shaderir.Bl
 		case shaderir.NumberExpr:
 			return constantToNumberLiteral(e.Const)
 		case shaderir.UniformVariable:
-			return fmt.Sprintf("uniforms.U%d", e.Index)
+			return fmt.Sprintf("U%d", e.Index)
 		case shaderir.TextureVariable:
 			return fmt.Sprintf("T%d", e.Index)
 		case shaderir.LocalVariable:
@@ -401,13 +389,12 @@ func (c *compileContext) block(p *shaderir.Program, topBlock, block *shaderir.Bl
 			callee := e.Exprs[0]
 			var args []string
 			if callee.Type != shaderir.BuiltinFuncExpr {
-				if len(p.Uniforms) > 0 {
-					args = append(args, "uniforms")
+				for i := range p.Uniforms {
+					args = append(args, fmt.Sprintf("U%d", i))
 				}
 				for i := 0; i < p.TextureCount; i++ {
 					args = append(args, fmt.Sprintf("T%d", i))
 				}
-				args = append(args, "front_facing")
 			}
 			for _, exp := range e.Exprs[1:] {
 				args = append(args, expr(&exp))
@@ -421,16 +408,6 @@ func (c *compileContext) block(p *shaderir.Program, topBlock, block *shaderir.Bl
 				default:
 					panic(fmt.Sprintf("msl: unexpected unit: %d", p.Unit))
 				}
-			}
-			if callee.Type == shaderir.BuiltinFuncExpr && (callee.BuiltinFunc == shaderir.Min || callee.BuiltinFunc == shaderir.Max) {
-				result := args[0]
-				for i := 1; i < len(args); i++ {
-					result = fmt.Sprintf("%s(%s, %s)", expr(&callee), result, args[i])
-				}
-				return result
-			}
-			if callee.Type == shaderir.BuiltinFuncExpr && callee.BuiltinFunc == shaderir.FrontFacing {
-				return "(front_facing)"
 			}
 			return fmt.Sprintf("%s(%s)", expr(&callee), strings.Join(args, ", "))
 		case shaderir.FieldSelector:

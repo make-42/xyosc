@@ -179,33 +179,6 @@ func (b BlendFactor) internalBlendFactor(source bool) graphicsdriver.BlendFactor
 	}
 }
 
-func internalBlendFactorToBlendFactor(blendFactor graphicsdriver.BlendFactor) BlendFactor {
-	switch blendFactor {
-	case graphicsdriver.BlendFactorZero:
-		return BlendFactorZero
-	case graphicsdriver.BlendFactorOne:
-		return BlendFactorOne
-	case graphicsdriver.BlendFactorSourceColor:
-		return BlendFactorSourceColor
-	case graphicsdriver.BlendFactorOneMinusSourceColor:
-		return BlendFactorOneMinusSourceColor
-	case graphicsdriver.BlendFactorSourceAlpha:
-		return BlendFactorSourceAlpha
-	case graphicsdriver.BlendFactorOneMinusSourceAlpha:
-		return BlendFactorOneMinusSourceAlpha
-	case graphicsdriver.BlendFactorDestinationColor:
-		return BlendFactorDestinationColor
-	case graphicsdriver.BlendFactorOneMinusDestinationColor:
-		return BlendFactorOneMinusDestinationColor
-	case graphicsdriver.BlendFactorDestinationAlpha:
-		return BlendFactorDestinationAlpha
-	case graphicsdriver.BlendFactorOneMinusDestinationAlpha:
-		return BlendFactorOneMinusDestinationAlpha
-	default:
-		panic(fmt.Sprintf("ebiten: invalid blend factor: %d", blendFactor))
-	}
-}
-
 // BlendOperation is an operation for source and destination color values.
 type BlendOperation byte
 
@@ -260,34 +233,6 @@ func (b BlendOperation) internalBlendOperation() graphicsdriver.BlendOperation {
 	}
 }
 
-func internalBlendOperationToBlendOperation(blendOperation graphicsdriver.BlendOperation) BlendOperation {
-	switch blendOperation {
-	case graphicsdriver.BlendOperationAdd:
-		return BlendOperationAdd
-	case graphicsdriver.BlendOperationSubtract:
-		return BlendOperationSubtract
-	case graphicsdriver.BlendOperationReverseSubtract:
-		return BlendOperationReverseSubtract
-	case graphicsdriver.BlendOperationMin:
-		return BlendOperationMin
-	case graphicsdriver.BlendOperationMax:
-		return BlendOperationMax
-	default:
-		panic(fmt.Sprintf("ebiten: invalid blend operation: %d", blendOperation))
-	}
-}
-
-func internalBlendToBlend(blend graphicsdriver.Blend) Blend {
-	return Blend{
-		BlendFactorSourceRGB:        internalBlendFactorToBlendFactor(blend.BlendFactorSourceRGB),
-		BlendFactorSourceAlpha:      internalBlendFactorToBlendFactor(blend.BlendFactorSourceAlpha),
-		BlendFactorDestinationRGB:   internalBlendFactorToBlendFactor(blend.BlendFactorDestinationRGB),
-		BlendFactorDestinationAlpha: internalBlendFactorToBlendFactor(blend.BlendFactorDestinationAlpha),
-		BlendOperationRGB:           internalBlendOperationToBlendOperation(blend.BlendOperationRGB),
-		BlendOperationAlpha:         internalBlendOperationToBlendOperation(blend.BlendOperationAlpha),
-	}
-}
-
 // This name convention follows CSS compositing: https://drafts.fxtf.org/compositing-2/.
 //
 // In the comments,
@@ -297,78 +242,169 @@ var (
 	//
 	//     c_out = c_src + c_dst × (1 - α_src)
 	//     α_out = α_src + α_dst × (1 - α_src)
-	BlendSourceOver = internalBlendToBlend(graphicsdriver.BlendSourceOver)
+	BlendSourceOver = Blend{
+		BlendFactorSourceRGB:        BlendFactorOne,
+		BlendFactorSourceAlpha:      BlendFactorOne,
+		BlendFactorDestinationRGB:   BlendFactorOneMinusSourceAlpha,
+		BlendFactorDestinationAlpha: BlendFactorOneMinusSourceAlpha,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendClear is a preset Blend for Porter Duff's 'clear'.
 	//
 	//     c_out = 0
 	//     α_out = 0
-	BlendClear = internalBlendToBlend(graphicsdriver.BlendClear)
+	BlendClear = Blend{
+		BlendFactorSourceRGB:        BlendFactorZero,
+		BlendFactorSourceAlpha:      BlendFactorZero,
+		BlendFactorDestinationRGB:   BlendFactorZero,
+		BlendFactorDestinationAlpha: BlendFactorZero,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendCopy is a preset Blend for Porter Duff's 'copy'.
 	//
 	//     c_out = c_src
 	//     α_out = α_src
-	BlendCopy = internalBlendToBlend(graphicsdriver.BlendCopy)
+	BlendCopy = Blend{
+		BlendFactorSourceRGB:        BlendFactorOne,
+		BlendFactorSourceAlpha:      BlendFactorOne,
+		BlendFactorDestinationRGB:   BlendFactorZero,
+		BlendFactorDestinationAlpha: BlendFactorZero,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendDestination is a preset Blend for Porter Duff's 'destination'.
 	//
 	//     c_out = c_dst
 	//     α_out = α_dst
-	BlendDestination = internalBlendToBlend(graphicsdriver.BlendDestination)
+	BlendDestination = Blend{
+		BlendFactorSourceRGB:        BlendFactorZero,
+		BlendFactorSourceAlpha:      BlendFactorZero,
+		BlendFactorDestinationRGB:   BlendFactorOne,
+		BlendFactorDestinationAlpha: BlendFactorOne,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendDestinationOver is a preset Blend for Porter Duff's 'destination-over'.
 	//
 	//     c_out = c_src × (1 - α_dst) + c_dst
 	//     α_out = α_src × (1 - α_dst) + α_dst
-	BlendDestinationOver = internalBlendToBlend(graphicsdriver.BlendDestinationOver)
+	BlendDestinationOver = Blend{
+		BlendFactorSourceRGB:        BlendFactorOneMinusDestinationAlpha,
+		BlendFactorSourceAlpha:      BlendFactorOneMinusDestinationAlpha,
+		BlendFactorDestinationRGB:   BlendFactorOne,
+		BlendFactorDestinationAlpha: BlendFactorOne,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendSourceIn is a preset Blend for Porter Duff's 'source-in'.
 	//
 	//     c_out = c_src × α_dst
 	//     α_out = α_src × α_dst
-	BlendSourceIn = internalBlendToBlend(graphicsdriver.BlendSourceIn)
+	BlendSourceIn = Blend{
+		BlendFactorSourceRGB:        BlendFactorDestinationAlpha,
+		BlendFactorSourceAlpha:      BlendFactorDestinationAlpha,
+		BlendFactorDestinationRGB:   BlendFactorZero,
+		BlendFactorDestinationAlpha: BlendFactorZero,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendDestinationIn is a preset Blend for Porter Duff's 'destination-in'.
 	//
 	//     c_out = c_dst × α_src
 	//     α_out = α_dst × α_src
-	BlendDestinationIn = internalBlendToBlend(graphicsdriver.BlendDestinationIn)
+	BlendDestinationIn = Blend{
+		BlendFactorSourceRGB:        BlendFactorZero,
+		BlendFactorSourceAlpha:      BlendFactorZero,
+		BlendFactorDestinationRGB:   BlendFactorSourceAlpha,
+		BlendFactorDestinationAlpha: BlendFactorSourceAlpha,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendSourceOut is a preset Blend for Porter Duff's 'source-out'.
 	//
 	//     c_out = c_src × (1 - α_dst)
 	//     α_out = α_src × (1 - α_dst)
-	BlendSourceOut = internalBlendToBlend(graphicsdriver.BlendSourceOut)
+	BlendSourceOut = Blend{
+		BlendFactorSourceRGB:        BlendFactorOneMinusDestinationAlpha,
+		BlendFactorSourceAlpha:      BlendFactorOneMinusDestinationAlpha,
+		BlendFactorDestinationRGB:   BlendFactorZero,
+		BlendFactorDestinationAlpha: BlendFactorZero,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendDestinationOut is a preset Blend for Porter Duff's 'destination-out'.
 	//
 	//     c_out = c_dst × (1 - α_src)
 	//     α_out = α_dst × (1 - α_src)
-	BlendDestinationOut = internalBlendToBlend(graphicsdriver.BlendDestinationOut)
+	BlendDestinationOut = Blend{
+		BlendFactorSourceRGB:        BlendFactorZero,
+		BlendFactorSourceAlpha:      BlendFactorZero,
+		BlendFactorDestinationRGB:   BlendFactorOneMinusSourceAlpha,
+		BlendFactorDestinationAlpha: BlendFactorOneMinusSourceAlpha,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendSourceAtop is a preset Blend for Porter Duff's 'source-atop'.
 	//
 	//     c_out = c_src × α_dst + c_dst × (1 - α_src)
 	//     α_out = α_src × α_dst + α_dst × (1 - α_src)
-	BlendSourceAtop = internalBlendToBlend(graphicsdriver.BlendSourceAtop)
+	BlendSourceAtop = Blend{
+		BlendFactorSourceRGB:        BlendFactorDestinationAlpha,
+		BlendFactorSourceAlpha:      BlendFactorDestinationAlpha,
+		BlendFactorDestinationRGB:   BlendFactorOneMinusSourceAlpha,
+		BlendFactorDestinationAlpha: BlendFactorOneMinusSourceAlpha,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendDestinationAtop is a preset Blend for Porter Duff's 'destination-atop'.
 	//
 	//     c_out = c_src × (1 - α_dst) + c_dst × α_src
 	//     α_out = α_src × (1 - α_dst) + α_dst × α_src
-	BlendDestinationAtop = internalBlendToBlend(graphicsdriver.BlendDestinationAtop)
+	BlendDestinationAtop = Blend{
+		BlendFactorSourceRGB:        BlendFactorOneMinusDestinationAlpha,
+		BlendFactorSourceAlpha:      BlendFactorOneMinusDestinationAlpha,
+		BlendFactorDestinationRGB:   BlendFactorSourceAlpha,
+		BlendFactorDestinationAlpha: BlendFactorSourceAlpha,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendXor is a preset Blend for Porter Duff's 'xor'.
 	//
 	//     c_out = c_src × (1 - α_dst) + c_dst × (1 - α_src)
 	//     α_out = α_src × (1 - α_dst) + α_dst × (1 - α_src)
-	BlendXor = internalBlendToBlend(graphicsdriver.BlendXor)
+	BlendXor = Blend{
+		BlendFactorSourceRGB:        BlendFactorOneMinusDestinationAlpha,
+		BlendFactorSourceAlpha:      BlendFactorOneMinusDestinationAlpha,
+		BlendFactorDestinationRGB:   BlendFactorOneMinusSourceAlpha,
+		BlendFactorDestinationAlpha: BlendFactorOneMinusSourceAlpha,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 
 	// BlendLighter is a preset Blend for Porter Duff's 'lighter'.
 	// This is sum of source and destination (a.k.a. 'plus' or 'additive')
 	//
 	//     c_out = c_src + c_dst
 	//     α_out = α_src + α_dst
-	BlendLighter = internalBlendToBlend(graphicsdriver.BlendLighter)
+	BlendLighter = Blend{
+		BlendFactorSourceRGB:        BlendFactorOne,
+		BlendFactorSourceAlpha:      BlendFactorOne,
+		BlendFactorDestinationRGB:   BlendFactorOne,
+		BlendFactorDestinationAlpha: BlendFactorOne,
+		BlendOperationRGB:           BlendOperationAdd,
+		BlendOperationAlpha:         BlendOperationAdd,
+	}
 )

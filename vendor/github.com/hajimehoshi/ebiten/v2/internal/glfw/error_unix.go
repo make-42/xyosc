@@ -11,7 +11,6 @@ package glfw
 //
 // void goErrorCB(int code, char* desc);
 //
-// #cgo noescape glfwSetErrorCallbackCB
 // static void glfwSetErrorCallbackCB() {
 //   glfwSetErrorCallback((GLFWerrorfun)goErrorCB);
 // }

@@ -85,4 +85,4 @@ response to lifecycle events. Such packages should call:
 
 in an init function inside that package.
 */
-package app
+package app // import "github.com/ebitengine/gomobile/app"

@@ -5,7 +5,7 @@
 // Package touch defines an event for touch input.
 //
 // See the github.com/ebitengine/gomobile/app package for details on the event model.
-package touch
+package touch // import "github.com/ebitengine/gomobile/event/touch"
 
 // The best source on android input events is the NDK: include/android/input.h
 //

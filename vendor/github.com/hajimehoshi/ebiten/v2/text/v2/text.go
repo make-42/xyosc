@@ -18,10 +18,11 @@
 package text
 
 import (
+	"strings"
+
 	"golang.org/x/image/math/fixed"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/text/v2/internal/textutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
@@ -216,9 +217,17 @@ func Measure(text string, face Face, lineSpacingInPixels float64) (width, height
 
 	var primary float64
 	var lineCount int
-	for line := range textutil.Lines(text) {
-		primary = max(primary, face.advance(textutil.TrimTailingLineBreak(line)))
+	for t := text; ; {
 		lineCount++
+		line, rest, found := strings.Cut(t, "\n")
+		a := face.advance(line)
+		if primary < a {
+			primary = a
+		}
+		if !found {
+			break
+		}
+		t = rest
 	}
 
 	m := face.Metrics()
@@ -245,9 +254,6 @@ func Measure(text string, face Face, lineSpacingInPixels float64) (width, height
 //
 // Draw and AppendGlyphs automatically create and cache necessary glyphs, so usually you don't have to call CacheGlyphs explicitly.
 // If you really care about the performance, CacheGlyphs might be useful.
-//
-// CacheGlyphs is pretty heavy since it creates all the possible variations of glyphs.
-// Call CacheGlyphs only when you really need it.
 //
 // CacheGlyphs is concurrent-safe.
 func CacheGlyphs(text string, face Face) {

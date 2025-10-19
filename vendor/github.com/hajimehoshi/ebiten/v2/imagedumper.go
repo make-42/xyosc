@@ -41,9 +41,6 @@ func takeScreenshot(screen *Image, transparent bool) error {
 		}
 		name = filepath.Join(home, name)
 	}
-
-	screen.invokeUsageCallbacks()
-
 	dumpedName, err := screen.image.DumpScreenshot(name, !transparent)
 	if err != nil {
 		return err

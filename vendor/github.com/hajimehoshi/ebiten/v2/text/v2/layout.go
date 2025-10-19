@@ -15,11 +15,9 @@
 package text
 
 import (
-	"slices"
-	"sync"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/text/v2/internal/textutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
@@ -65,21 +63,10 @@ type LayoutOptions struct {
 	SecondaryAlign Align
 }
 
-var theDrawGlyphsPool = sync.Pool{
-	New: func() any {
-		// 64 is an arbitrary number for the initial capacity.
-		s := make([]Glyph, 0, 64)
-		// Return a pointer instead of a slice, or go-vet warns at Put.
-		return &s
-	},
-}
-
 // Draw draws a given text on a given destination image dst.
 // face is the font for text rendering.
 //
-// New line characters like '\n' put the following text on the next line.
-// The next line starts at the position shifted by LayoutOptions.LineSpacing.
-// By default, LayoutOptions.LineSpacing is 0, so you need to specify LineSpacing explicitly if you want to put multiple lines.
+// The '\n' newline character puts the following text on the next line.
 //
 // Glyphs used for rendering are cached in least-recently-used way.
 // Then old glyphs might be evicted from the cache.
@@ -124,15 +111,7 @@ func Draw(dst *ebiten.Image, text string, face Face, options *DrawOptions) {
 
 	geoM := drawOp.GeoM
 
-	glyphs := theDrawGlyphsPool.Get().(*[]Glyph)
-	defer func() {
-		// Clear the content to avoid memory leaks.
-		// The capacity is kept so that the next call to Draw can reuse it.
-		*glyphs = slices.Delete(*glyphs, 0, len(*glyphs))
-		theDrawGlyphsPool.Put(glyphs)
-	}()
-	*glyphs = AppendGlyphs((*glyphs)[:0], text, face, &layoutOp)
-	for _, g := range *glyphs {
+	for _, g := range AppendGlyphs(nil, text, face, &layoutOp) {
 		if g.Image == nil {
 			continue
 		}
@@ -190,11 +169,18 @@ func forEachLine(text string, face Face, options *LayoutOptions, f func(text str
 	var advances []float64
 	var longestAdvance float64
 	var lineCount int
-	for line := range textutil.Lines(text) {
+	for t := text; ; {
 		lineCount++
-		a := face.advance(textutil.TrimTailingLineBreak(line))
+		line, rest, found := strings.Cut(t, "\n")
+		a := face.advance(line)
 		advances = append(advances, a)
-		longestAdvance = max(longestAdvance, a)
+		if longestAdvance < a {
+			longestAdvance = a
+		}
+		if !found {
+			break
+		}
+		t = rest
 	}
 
 	d := face.direction()
@@ -249,7 +235,9 @@ func forEachLine(text string, face Face, options *LayoutOptions, f func(text str
 	var indexOffset int
 	var originX, originY float64
 	var i int
-	for line := range textutil.Lines(text) {
+	for t := text; ; {
+		line, rest, found := strings.Cut(t, "\n")
+
 		// Adjust the origin position based on the primary alignments.
 		switch d {
 		case DirectionLeftToRight, DirectionRightToLeft:
@@ -272,9 +260,12 @@ func forEachLine(text string, face Face, options *LayoutOptions, f func(text str
 			}
 		}
 
-		line = textutil.TrimTailingLineBreak(line)
 		f(line, indexOffset, originX+offsetX, originY+offsetY)
 
+		if !found {
+			break
+		}
+		t = rest
 		indexOffset += len(line) + 1
 		i++
 

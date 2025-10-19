@@ -5,7 +5,7 @@
 // Package paint defines an event for the app being ready to paint.
 //
 // See the github.com/ebitengine/gomobile/app package for details on the event model.
-package paint
+package paint // import "github.com/ebitengine/gomobile/event/paint"
 
 // Event indicates that the app is ready to paint the next frame of the GUI.
 //

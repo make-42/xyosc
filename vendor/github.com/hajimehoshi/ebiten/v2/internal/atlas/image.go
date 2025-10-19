@@ -59,11 +59,6 @@ const baseCountToPutOnSourceBackend = 10
 func putImagesOnSourceBackend() {
 	// The counter usedAsDestinationCount is updated at most once per frame (#2676).
 	imagesUsedAsDestination.forEach(func(i *Image) {
-		// i.backend can be nil after deallocate is called.
-		if i.backend == nil {
-			i.usedAsDestinationCount = 0
-			return
-		}
 		// This counter is not updated when the backend is created in this frame.
 		if !i.backendCreatedInThisFrame && i.usedAsDestinationCount < math.MaxInt {
 			i.usedAsDestinationCount++
@@ -73,11 +68,6 @@ func putImagesOnSourceBackend() {
 	imagesUsedAsDestination.clear()
 
 	imagesToPutOnSourceBackend.forEach(func(i *Image) {
-		// i.backend can be nil after deallocate is called.
-		if i.backend == nil {
-			i.usedAsSourceCount = 0
-			return
-		}
 		if i.usedAsSourceCount < math.MaxInt {
 			i.usedAsSourceCount++
 		}
@@ -138,9 +128,9 @@ var (
 	// theBackends is a set of atlases.
 	theBackends []*backend
 
-	imagesToPutOnSourceBackend imageSmallSet
+	imagesToPutOnSourceBackend smallImageSet
 
-	imagesUsedAsDestination imageSmallSet
+	imagesUsedAsDestination smallImageSet
 
 	deferred []func()
 
@@ -169,12 +159,6 @@ const (
 
 // Image is a rectangle pixel set that might be on an atlas.
 type Image struct {
-	*imageImpl
-
-	cleanup runtime.Cleanup
-}
-
-type imageImpl struct {
 	width     int
 	height    int
 	imageType ImageType
@@ -209,21 +193,15 @@ type imageImpl struct {
 //
 // moveTo is similar to C++'s move semantics.
 func (i *Image) moveTo(dst *Image) {
-	dst.deallocateImpl()
-	dst.cleanup.Stop()
-
-	impl := *i.imageImpl
-	dst.imageImpl = &impl
-	if dst.backend != nil {
-		dst.cleanup = runtime.AddCleanup(dst, (*imageImpl).cleanup, dst.imageImpl)
-	}
+	dst.deallocate()
+	*dst = *i
 
 	// i is no longer available but the finalizer must not be called
 	// since i and dst share the same backend and the same node.
-	i.cleanup.Stop()
+	runtime.SetFinalizer(i, nil)
 }
 
-func (i *imageImpl) isOnAtlas() bool {
+func (i *Image) isOnAtlas() bool {
 	return i.node != nil
 }
 
@@ -239,7 +217,7 @@ func (i *Image) resetUsedAsSourceCount() {
 	imagesToPutOnSourceBackend.remove(i)
 }
 
-func (i *imageImpl) paddingSize() int {
+func (i *Image) paddingSize() int {
 	if i.imageType == ImageTypeRegular {
 		return 1
 	}
@@ -342,7 +320,7 @@ func (i *Image) putOnSourceBackend() {
 	}
 }
 
-func (i *imageImpl) regionWithPadding() image.Rectangle {
+func (i *Image) regionWithPadding() image.Rectangle {
 	if i.backend == nil {
 		panic("atlas: backend must not be nil: not allocated yet?")
 	}
@@ -427,7 +405,7 @@ func (i *Image) drawTriangles(srcs [graphics.ShaderSrcImageCount]*Image, vertice
 			vertices[i+2] += oxf
 			vertices[i+3] += oyf
 		}
-		if shader.unit == shaderir.Texels {
+		if shader.ensureShader().Unit() == shaderir.Texels {
 			sw, sh := srcs[0].backend.restorable.InternalSize()
 			swf, shf := float32(sw), float32(sh)
 			for i := 0; i < n; i += graphics.VertexFloatCount {
@@ -443,7 +421,6 @@ func (i *Image) drawTriangles(srcs [graphics.ShaderSrcImageCount]*Image, vertice
 		}
 	}
 
-	var imgs [graphics.ShaderSrcImageCount]*restorable.Image
 	for i, src := range srcs {
 		if src == nil {
 			continue
@@ -452,18 +429,33 @@ func (i *Image) drawTriangles(srcs [graphics.ShaderSrcImageCount]*Image, vertice
 		// A source region can be deliberately empty when this is not needed in order to avoid unexpected
 		// performance issue (#1293).
 		// TODO: This should no longer be needed but is kept just in case. Remove this later.
-		if !srcRegions[i].Empty() {
-			r := src.regionWithPadding()
-			srcRegions[i] = srcRegions[i].Add(r.Min)
+		if srcRegions[i].Empty() {
+			continue
+		}
+
+		r := src.regionWithPadding()
+		srcRegions[i] = srcRegions[i].Add(r.Min)
+	}
+
+	var imgs [graphics.ShaderSrcImageCount]*restorable.Image
+	for i, src := range srcs {
+		if src == nil {
+			continue
 		}
 		imgs[i] = src.backend.restorable
+	}
+
+	i.backend.restorable.DrawTriangles(imgs, vertices, indices, blend, dstRegion, srcRegions, shader.ensureShader(), uniforms, fillRule, hint)
+
+	for _, src := range srcs {
+		if src == nil {
+			continue
+		}
 		if !src.isOnSourceBackend() && src.canBePutOnAtlas() {
 			// src might already registered, but assigning it again is not harmful.
 			imagesToPutOnSourceBackend.add(src)
 		}
 	}
-
-	i.backend.restorable.DrawTriangles(imgs, vertices, indices, blend, dstRegion, srcRegions, shader.ensureShader(), uniforms, fillRule, hint)
 }
 
 // WritePixels replaces the pixels on the image.
@@ -574,29 +566,30 @@ func (i *Image) ReadPixels(graphicsDriver graphicsdriver.Graphics, pixels []byte
 // Deallocate deallocates the internal state.
 // Even after this call, the image is still available as a new cleared image.
 func (i *Image) Deallocate() {
-	i.cleanup.Stop()
-
 	backendsM.Lock()
 	defer backendsM.Unlock()
 
 	if !inFrame {
 		appendDeferred(func() {
-			i.deallocateImpl()
+			i.deallocate()
+			runtime.SetFinalizer(i, nil)
 		})
 		return
 	}
 
-	i.deallocateImpl()
+	i.deallocate()
+	runtime.SetFinalizer(i, nil)
 }
 
-func (i *imageImpl) deallocateImpl() {
+func (i *Image) deallocate() {
 	defer func() {
 		i.backend = nil
 		i.node = nil
 	}()
 
-	i.usedAsSourceCount = 0
+	i.resetUsedAsSourceCount()
 	i.usedAsDestinationCount = 0
+	imagesUsedAsDestination.remove(i)
 
 	if i.backend == nil {
 		// Not allocated yet.
@@ -630,11 +623,9 @@ func (i *imageImpl) deallocateImpl() {
 func NewImage(width, height int, imageType ImageType) *Image {
 	// Actual allocation is done lazily, and the lock is not needed.
 	return &Image{
-		imageImpl: &imageImpl{
-			width:     width,
-			height:    height,
-			imageType: imageType,
-		},
+		width:     width,
+		height:    height,
+		imageType: imageType,
 	}
 }
 
@@ -648,11 +639,12 @@ func (i *Image) canBePutOnAtlas() bool {
 	return i.width+i.paddingSize() <= maxSize && i.height+i.paddingSize() <= maxSize
 }
 
-func (i *imageImpl) cleanup() {
+func (i *Image) finalize() {
 	// A function from finalizer must not be blocked, but disposing operation can be blocked.
 	// Defer this operation until it becomes safe. (#913)
 	appendDeferred(func() {
-		i.deallocateImpl()
+		i.deallocate()
+		runtime.SetFinalizer(i, nil)
 	})
 }
 
@@ -661,7 +653,7 @@ func (i *Image) allocate(forbiddenBackends []*backend, asSource bool) {
 		panic("atlas: the image is already allocated")
 	}
 
-	i.cleanup = runtime.AddCleanup(i, (*imageImpl).cleanup, i.imageImpl)
+	runtime.SetFinalizer(i, (*Image).finalize)
 
 	if i.imageType == ImageTypeScreen {
 		if asSource {
@@ -859,19 +851,4 @@ func DumpImages(graphicsDriver graphicsdriver.Graphics, dir string) (string, err
 	}
 
 	return restorable.DumpImages(graphicsDriver, dir)
-}
-
-func TotalGPUImageMemoryUsageInBytes() int64 {
-	backendsM.Lock()
-	defer backendsM.Unlock()
-
-	var sum int64
-	for _, b := range theBackends {
-		if b.restorable == nil {
-			continue
-		}
-		w, h := b.restorable.InternalSize()
-		sum += 4 * int64(w) * int64(h)
-	}
-	return sum
 }

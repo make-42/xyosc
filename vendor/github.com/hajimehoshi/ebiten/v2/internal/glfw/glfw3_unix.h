@@ -4824,7 +4824,9 @@ GLFWAPI void glfwSwapBuffers(GLFWwindow* window);
  *  arrives a little bit late.  You can check for these extensions with @ref
  *  glfwExtensionSupported.
  *
- *  @param[in] window The window whose context to make current.
+ *  A context must be current on the calling thread.  Calling this function
+ *  without a current context will cause a @ref GLFW_NO_CURRENT_CONTEXT error.
+ *
  *  @param[in] interval The minimum number of screen updates to wait for
  *  until the buffers are swapped by @ref glfwSwapBuffers.
  *
@@ -4849,7 +4851,7 @@ GLFWAPI void glfwSwapBuffers(GLFWwindow* window);
  *
  *  @ingroup context
  */
-GLFWAPI void glfwSwapInterval(GLFWwindow* window, int interval);
+GLFWAPI void glfwSwapInterval(int interval);
 
 /*! @brief Returns whether the specified extension is available.
  *
@@ -4858,12 +4860,14 @@ GLFWAPI void glfwSwapInterval(GLFWwindow* window, int interval);
  *  OpenGL ES context.  It searches both for client API extension and context
  *  creation API extensions.
  *
+ *  A context must be current on the calling thread.  Calling this function
+ *  without a current context will cause a @ref GLFW_NO_CURRENT_CONTEXT error.
+ *
  *  As this functions retrieves and searches one or more extension strings each
  *  call, it is recommended that you cache its results if it is going to be used
  *  frequently.  The extension strings will not change during the lifetime of
  *  a context, so there is no danger in doing this.
  *
- *  @param[in] window The window whose context to make current.
  *  @param[in] extension The ASCII encoded name of the extension.
  *  @return `GLFW_TRUE` if the extension is available, or `GLFW_FALSE`
  *  otherwise.
@@ -4881,7 +4885,7 @@ GLFWAPI void glfwSwapInterval(GLFWwindow* window, int interval);
  *
  *  @ingroup context
  */
-GLFWAPI int glfwExtensionSupported(GLFWwindow* window, const char* extension);
+GLFWAPI int glfwExtensionSupported(const char* extension);
 
 /*! @brief Returns the address of the specified function for the current
  *  context.

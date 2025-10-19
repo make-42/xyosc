@@ -244,7 +244,7 @@ static void swapBuffersEGL(_GLFWwindow* window)
     eglSwapBuffers(_glfw.egl.display, window->context.egl.surface);
 }
 
-static void swapIntervalEGL(_GLFWwindow* window, int interval)
+static void swapIntervalEGL(int interval)
 {
     eglSwapInterval(_glfw.egl.display, interval);
 }

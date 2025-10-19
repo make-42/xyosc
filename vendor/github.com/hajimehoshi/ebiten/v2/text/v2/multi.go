@@ -16,7 +16,6 @@ package text
 
 import (
 	"errors"
-	"iter"
 	"unicode/utf8"
 
 	"github.com/hajimehoshi/ebiten/v2/vector"
@@ -89,7 +88,7 @@ func (m *MultiFace) Metrics() Metrics {
 // advance implements Face.
 func (m *MultiFace) advance(text string) float64 {
 	var a float64
-	for c := range m.splitText(text) {
+	for _, c := range m.splitText(text) {
 		if c.faceIndex == -1 {
 			continue
 		}
@@ -111,7 +110,7 @@ func (m *MultiFace) hasGlyph(r rune) bool {
 
 // appendGlyphsForLine implements Face.
 func (m *MultiFace) appendGlyphsForLine(glyphs []Glyph, line string, indexOffset int, originX, originY float64) []Glyph {
-	for c := range m.splitText(line) {
+	for _, c := range m.splitText(line) {
 		if c.faceIndex == -1 {
 			continue
 		}
@@ -130,7 +129,7 @@ func (m *MultiFace) appendGlyphsForLine(glyphs []Glyph, line string, indexOffset
 
 // appendVectorPathForLine implements Face.
 func (m *MultiFace) appendVectorPathForLine(path *vector.Path, line string, originX, originY float64) {
-	for c := range m.splitText(line) {
+	for _, c := range m.splitText(line) {
 		if c.faceIndex == -1 {
 			continue
 		}
@@ -163,51 +162,37 @@ type textChunk struct {
 	faceIndex      int
 }
 
-func (m *MultiFace) splitText(text string) iter.Seq[textChunk] {
-	return func(yield func(textChunk) bool) {
-		var chunk textChunk
-		for i, r := range text {
-			fi := -1
-			for i, f := range m.faces {
-				if !f.hasGlyph(r) && i < len(m.faces)-1 {
-					continue
-				}
-				fi = i
-				break
-			}
-			if fi == -1 {
-				panic("text: a face was not selected correctly")
-			}
+func (m *MultiFace) splitText(text string) []textChunk {
+	var chunks []textChunk
 
-			// Do not use utf8.RuneLen here, as r may be U+FFFD (replacement character)
-			// when the line contains invalid UTF-8 sequences (#3284).
-			_, l := utf8.DecodeRuneInString(text[i:])
-			if l < 0 {
-				// A string for-loop iterator advances by 1 byte when it encounters an invalid UTF-8 sequence.
-				l = 1
+	for ri, r := range text {
+		fi := -1
+		_, l := utf8.DecodeRuneInString(text[ri:])
+		for i, f := range m.faces {
+			if !f.hasGlyph(r) && i < len(m.faces)-1 {
+				continue
 			}
+			fi = i
+			break
+		}
+		if fi == -1 {
+			panic("text: a face was not selected correctly")
+		}
 
-			var s int
-			if chunk != (textChunk{}) {
-				if chunk.faceIndex == fi {
-					chunk.textEndIndex += l
-					continue
-				}
-				if !yield(chunk) {
-					return
-				}
-				s = chunk.textEndIndex
+		var s int
+		if len(chunks) > 0 {
+			if chunks[len(chunks)-1].faceIndex == fi {
+				chunks[len(chunks)-1].textEndIndex += l
+				continue
 			}
-			chunk = textChunk{
-				textStartIndex: s,
-				textEndIndex:   s + l,
-				faceIndex:      fi,
-			}
+			s = chunks[len(chunks)-1].textEndIndex
 		}
-		if chunk != (textChunk{}) {
-			if !yield(chunk) {
-				return
-			}
-		}
+		chunks = append(chunks, textChunk{
+			textStartIndex: s,
+			textEndIndex:   s + l,
+			faceIndex:      fi,
+		})
 	}
+
+	return chunks
 }

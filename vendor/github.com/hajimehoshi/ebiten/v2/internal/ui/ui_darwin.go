@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"unsafe"
 
 	"github.com/ebitengine/purego/objc"
 
@@ -78,8 +79,8 @@ func (u *UserInterface) initializePlatform() error {
 			// See cocoa_window.m in GLFW.
 			{
 				Cmd: sel_windowShouldClose,
-				Fn: func(id objc.ID, cmd objc.SEL, sender objc.ID) bool {
-					return id.Send(sel_origDelegate).Send(cmd, sender) != 0
+				Fn: func(id objc.ID, cmd objc.SEL, notification objc.ID) bool {
+					return id.Send(sel_origDelegate).Send(cmd, notification) != 0
 				},
 			},
 			{
@@ -164,19 +165,6 @@ func (u *UserInterface) initializePlatform() error {
 	return nil
 }
 
-func (u *UserInterface) setApplePressAndHoldEnabled(enabled bool) {
-	var val int
-	if enabled {
-		val = 1
-	}
-	defaults := objc.ID(class_NSMutableDictionary).Send(sel_alloc).Send(sel_init)
-	defaults.Send(sel_setObjectForKey,
-		objc.ID(class_NSNumber).Send(sel_alloc).Send(sel_initWithBool, val),
-		cocoa.NSString_alloc().InitWithUTF8String("ApplePressAndHoldEnabled").ID)
-	ud := objc.ID(class_NSUserDefaults).Send(sel_standardUserDefaults)
-	ud.Send(sel_registerDefaults, defaults)
-}
-
 type graphicsDriverCreatorImpl struct {
 	transparent bool
 	colorSpace  graphicsdriver.ColorSpace
@@ -231,16 +219,13 @@ func dipToGLFWPixel(x float64, scale float64) float64 {
 	return x
 }
 
-func (u *UserInterface) adjustWindowPosition(x, y int, monitor *Monitor) (int, int, error) {
-	return x, y, nil
+func (u *UserInterface) adjustWindowPosition(x, y int, monitor *Monitor) (int, int) {
+	return x, y
 }
 
 var (
-	class_NSCursor            = objc.GetClass("NSCursor")
-	class_NSEvent             = objc.GetClass("NSEvent")
-	class_NSMutableDictionary = objc.GetClass("NSMutableDictionary")
-	class_NSNumber            = objc.GetClass("NSNumber")
-	class_NSUserDefaults      = objc.GetClass("NSUserDefaults")
+	class_NSCursor = objc.GetClass("NSCursor")
+	class_NSEvent  = objc.GetClass("NSEvent")
 )
 
 var (
@@ -248,19 +233,15 @@ var (
 	sel_collectionBehavior            = objc.RegisterName("collectionBehavior")
 	sel_delegate                      = objc.RegisterName("delegate")
 	sel_init                          = objc.RegisterName("init")
-	sel_initWithBool                  = objc.RegisterName("initWithBool:")
 	sel_initWithOrigDelegate          = objc.RegisterName("initWithOrigDelegate:")
 	sel_mouseLocation                 = objc.RegisterName("mouseLocation")
 	sel_origDelegate                  = objc.RegisterName("origDelegate")
 	sel_origResizable                 = objc.RegisterName("isOrigResizable")
-	sel_registerDefaults              = objc.RegisterName("registerDefaults:")
 	sel_setCollectionBehavior         = objc.RegisterName("setCollectionBehavior:")
 	sel_setDelegate                   = objc.RegisterName("setDelegate:")
 	sel_setDocumentEdited             = objc.RegisterName("setDocumentEdited:")
-	sel_setObjectForKey               = objc.RegisterName("setObject:forKey:")
 	sel_setOrigDelegate               = objc.RegisterName("setOrigDelegate:")
 	sel_setOrigResizable              = objc.RegisterName("setOrigResizable:")
-	sel_standardUserDefaults          = objc.RegisterName("standardUserDefaults")
 	sel_toggleFullScreen              = objc.RegisterName("toggleFullScreen:")
 	sel_windowDidBecomeKey            = objc.RegisterName("windowDidBecomeKey:")
 	sel_windowDidEnterFullScreen      = objc.RegisterName("windowDidEnterFullScreen:")
@@ -276,7 +257,13 @@ var (
 )
 
 func currentMouseLocation() (x, y int) {
-	point := objc.Send[cocoa.NSPoint](objc.ID(class_NSEvent), sel_mouseLocation)
+	sig := cocoa.NSMethodSignature_signatureWithObjCTypes("{NSPoint=dd}@:")
+	inv := cocoa.NSInvocation_invocationWithMethodSignature(sig)
+	inv.SetTarget(objc.ID(class_NSEvent))
+	inv.SetSelector(sel_mouseLocation)
+	inv.Invoke()
+	var point cocoa.NSPoint
+	inv.GetReturnValue(unsafe.Pointer(&point))
 
 	x, y = int(point.X), int(point.Y)
 

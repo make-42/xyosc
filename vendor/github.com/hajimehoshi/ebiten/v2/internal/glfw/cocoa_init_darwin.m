@@ -481,6 +481,10 @@ int _glfwPlatformInit(void)
     if (_glfw.hints.init.ns.chdir)
         changeToResourcesDirectory();
 
+    // Press and Hold prevents some keys from emitting repeated characters
+    NSDictionary* defaults = @{@"ApplePressAndHoldEnabled":@NO};
+    [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
+
     [[NSNotificationCenter defaultCenter]
         addObserver:_glfw.ns.helper
            selector:@selector(selectedKeyboardInputSourceChanged:)
@@ -557,3 +561,13 @@ void _glfwPlatformTerminate(void)
 
     } // autoreleasepool
 }
+
+const char* _glfwPlatformGetVersionString(void)
+{
+    return _GLFW_VERSION_NUMBER " Cocoa NSGL EGL OSMesa"
+#if defined(_GLFW_BUILD_DLL)
+        " dynamic"
+#endif
+        ;
+}
+

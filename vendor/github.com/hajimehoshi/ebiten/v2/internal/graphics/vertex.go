@@ -29,20 +29,13 @@ const (
 
 	ProjectionMatrixUniformVariableIndex = 6
 
-	PreservedUniformDwordCount = 2 + // the destination texture size
+	PreservedUniformUint32Count = 2 + // the destination texture size
 		2*ShaderSrcImageCount + // the source texture sizes array
 		2 + // the destination image region origin
 		2 + // the destination image region size
 		2*ShaderSrcImageCount + // the source image region origins array
 		2*ShaderSrcImageCount + // the source image region sizes array
 		16 // the projection matrix
-
-	ProjectionMatrixUniformDwordIndex = 2 +
-		2*ShaderSrcImageCount +
-		2 +
-		2 +
-		2*ShaderSrcImageCount +
-		2*ShaderSrcImageCount
 )
 
 const (

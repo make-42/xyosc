@@ -288,7 +288,13 @@ func swapBuffersWGL(window *Window) error {
 	return nil
 }
 
-func swapIntervalWGL(window *Window, interval int) error {
+func swapIntervalWGL(interval int) error {
+	ptr, err := _glfw.contextSlot.get()
+	if err != nil {
+		return err
+	}
+	window := (*Window)(unsafe.Pointer(ptr))
+
 	window.context.platform.interval = interval
 
 	if window.monitor == nil && winver.IsWindowsVistaOrGreater() {
