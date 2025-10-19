@@ -390,7 +390,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		bars.InterpolateBars(barsDeltaTime)
 		for i := range bars.TargetBarsPos {
 			x, y, w, h := bars.ComputeBarLayout(i)
-			vector.FillRect(screen, float32(x), float32(y), float32(w), float32(h), config.ThirdColorAdj, true)
+			vector.DrawFilledRect(screen, float32(x), float32(y), float32(w), float32(h), config.ThirdColorAdj, true)
 		}
 		if config.Config.BarsPeakFreqCursor {
 			op := &text.DrawOptions{}
@@ -398,7 +398,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			op.LayoutOptions.PrimaryAlign = text.AlignStart
 			op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.BarsPeakFreqCursorTextOpacity})
 
-			vector.FillRect(screen, float32(bars.InterpolatedPeakFreqCursorX), float32(bars.InterpolatedPeakFreqCursorY), float32(config.Config.BarsPeakFreqCursorBGWidth), float32(config.Config.BarsPeakFreqCursorTextSize+2*config.Config.BarsPeakFreqCursorBGPadding), config.BGColor, true)
+			vector.DrawFilledRect(screen, float32(bars.InterpolatedPeakFreqCursorX), float32(bars.InterpolatedPeakFreqCursorY), float32(config.Config.BarsPeakFreqCursorBGWidth), float32(config.Config.BarsPeakFreqCursorTextSize+2*config.Config.BarsPeakFreqCursorBGPadding), config.BGColor, true)
 			text.Draw(screen, fmt.Sprintf("%-6.0f Hz", bars.PeakFreqCursorVal), &text.GoTextFace{
 				Source: fonts.Font,
 				Size:   config.Config.BarsPeakFreqCursorTextSize,
@@ -418,13 +418,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				if config.Config.MetronomeThinLineMode {
 					if config.Config.MetronomeThinLineThicknessChangeWithVelocity {
 						easedVelocityProgress := math.Cos(progress * math.Pi)
-						vector.FillRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+						vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
 					} else {
-						vector.FillRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+						vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
 					}
-					vector.FillRect(screen, float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineHintThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineHintThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+					vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineHintThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineHintThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
 				} else {
-					vector.FillRect(screen, float32(config.Config.WindowWidth)/2, float32(layoutY), float32(easedProgress)*float32(config.Config.WindowWidth)/2, float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+					vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2, float32(layoutY), float32(easedProgress)*float32(config.Config.WindowWidth)/2, float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
 				}
 			}
 			layoutY += config.Config.MetronomeHeight + config.Config.MetronomePadding
