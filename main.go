@@ -52,6 +52,7 @@ var readHeadPosition uint32 = 0
 var startTime time.Time
 var prevFrame *ebiten.Image
 var shaderWorkBuffer *ebiten.Image
+var barCursorImageBGRectFrame *ebiten.Image
 var firstFrame = true
 var FFTBuffer []float64
 var complexFFTBuffer []complex128
@@ -397,8 +398,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			op.GeoM.Translate(bars.InterpolatedPeakFreqCursorX+config.Config.BarsPeakFreqCursorBGPadding, bars.InterpolatedPeakFreqCursorY+config.Config.BarsPeakFreqCursorBGPadding+config.Config.BarsPeakFreqCursorTextOffset)
 			op.LayoutOptions.PrimaryAlign = text.AlignStart
 			op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.BarsPeakFreqCursorTextOpacity})
-
-			vector.DrawFilledRect(screen, float32(bars.InterpolatedPeakFreqCursorX), float32(bars.InterpolatedPeakFreqCursorY), float32(config.Config.BarsPeakFreqCursorBGWidth), float32(config.Config.BarsPeakFreqCursorTextSize+2*config.Config.BarsPeakFreqCursorBGPadding), config.BGColor, true)
+			opBG := &ebiten.DrawImageOptions{Blend: ebiten.BlendClear}
+			opBG.GeoM.Translate(bars.InterpolatedPeakFreqCursorX, bars.InterpolatedPeakFreqCursorY)
+			screen.DrawImage(barCursorImageBGRectFrame, opBG)
 			text.Draw(screen, fmt.Sprintf("%-6.0f Hz", bars.PeakFreqCursorVal), &text.GoTextFace{
 				Source: fonts.Font,
 				Size:   config.Config.BarsPeakFreqCursorTextSize,
@@ -626,6 +628,9 @@ func main() {
 	}
 	ebiten.SetWindowPosition(*overrideX, *overrideY)
 	ebiten.SetVsyncEnabled(true)
+	if config.Config.BarsPeakFreqCursor {
+		barCursorImageBGRectFrame = ebiten.NewImage(int(config.Config.BarsPeakFreqCursorBGWidth), int(config.Config.BarsPeakFreqCursorTextSize+2*config.Config.BarsPeakFreqCursorBGPadding))
+	}
 	InitBuffersAtSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	gameOptions := ebiten.RunGameOptions{SingleThread: true, ScreenTransparent: !config.Config.DisableTransparency}
 	if config.Config.DisableTransparency {
