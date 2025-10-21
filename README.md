@@ -55,12 +55,13 @@ The configuration file can be found at `~/.config/ontake/xyosc/config.yml`
 Note: `xyosc` might not chose the right device to get audio from by default. When you run xyosc it displays a list of capture devices with indices, change the `capturedeviceindex` option to the right index if it isn't the right one by default.
 
 # Features
- - XY mode and single channel mode (L/R/Mix modes) - can be toggled with the `F` key
+ - XY mode, single channel mode (L/R/Mix modes), bars - can be toggled with the `F` key
  - particles
  - MPRIS support
  - frequency separation
  - theming support
  - shader support (using ebitengine's [Kage](https://ebitengine.org/en/documents/shader.html) shader language)
+ - (soon: waterfall mode + keyboard vis (with fading anims))
 
 ## NixOS
 
@@ -209,10 +210,12 @@ barsinterpolateaccel: 20
 barsinterpolatedrag: 2
 barsinterpolatedirect: 20
 barspeakfreqcursor: false
+barspeakfreqcursortextdisplaynote: true
+barspeakfreqcursortextdisplaynotereffreq: 440
 barspeakfreqcursortextsize: 24
 barspeakfreqcursortextopacity: 255
 barspeakfreqcursortextoffset: -4
-barspeakfreqcursorbgwidth: 138
+barspeakfreqcursorbgwidth: 210
 barspeakfreqcursorbgpadding: 2
 barspeakfreqcursorinterpolatepos: true
 barspeakfreqcursorinterpolatedirect: 1
