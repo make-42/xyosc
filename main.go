@@ -561,6 +561,8 @@ func Init() {
 	overrideX = flag.Int("x", -1, "override starting x coordinate of the center of the window; x=0 corresponds to the center of the screen")
 	overrideY = flag.Int("y", -1, "override starting y coordinate of the center of the window; y=0 corresponds to the center of the screen")
 
+	overrideMode := flag.Int("mode", -1, "override default mode")
+
 	flag.Parse()
 	if *lowCutOff != 0.0 {
 		config.FiltersApplied = true
@@ -585,6 +587,10 @@ func Init() {
 
 	if *overrideGain != -1.0 {
 		config.Config.Gain = float32(*overrideGain)
+	}
+
+	if *overrideMode != -1 {
+		config.Config.DefaultMode = *overrideMode
 	}
 }
 
