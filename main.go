@@ -563,6 +563,8 @@ func Init() {
 
 	overrideMode := flag.Int("mode", -1, "override default mode")
 
+	overrideResizable := flag.Bool("resizable", false, "override if window is resizable (toggles the value defined in the config)")
+
 	flag.Parse()
 	if *lowCutOff != 0.0 {
 		config.FiltersApplied = true
@@ -591,6 +593,10 @@ func Init() {
 
 	if *overrideMode != -1 {
 		config.Config.DefaultMode = *overrideMode
+	}
+
+	if *overrideResizable {
+		config.Config.WindowResizable = !config.Config.WindowResizable
 	}
 }
 
