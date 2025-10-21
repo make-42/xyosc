@@ -1,6 +1,7 @@
 package bars
 
 import (
+	"fmt"
 	"math"
 	"xyosc/config"
 	"xyosc/kaiser"
@@ -137,4 +138,14 @@ func InterpolateBars(deltaTime float64) {
 	} else {
 		copy(InterpolatedBarsPos, TargetBarsPos)
 	}
+}
+
+func CalcNote(freq float64) int {
+	return int(math.Round(12*math.Log2(freq/config.Config.BarsPeakFreqCursorTextDisplayNoteRefFreq))) - 3
+}
+
+func NoteDisplayName(note int) string {
+	octave := 5 + (note / 12)
+	name := ([]string{"C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B "})[(note-(note/12-1)*12)%12]
+	return fmt.Sprintf("%s%d", name, octave)
 }

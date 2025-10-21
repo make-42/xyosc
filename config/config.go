@@ -136,6 +136,8 @@ type ConfigS struct {
 	BarsInterpolateDrag                          float64
 	BarsInterpolateDirect                        float64
 	BarsPeakFreqCursor                           bool
+	BarsPeakFreqCursorTextDisplayNote            bool
+	BarsPeakFreqCursorTextDisplayNoteRefFreq     float64
 	BarsPeakFreqCursorTextSize                   float64
 	BarsPeakFreqCursorTextOpacity                uint8
 	BarsPeakFreqCursorTextOffset                 float64
@@ -279,10 +281,12 @@ var DefaultConfig = ConfigS{
 	BarsInterpolateDrag:                          2.,
 	BarsInterpolateDirect:                        20.,
 	BarsPeakFreqCursor:                           false,
+	BarsPeakFreqCursorTextDisplayNote:            true,
+	BarsPeakFreqCursorTextDisplayNoteRefFreq:     440.,
 	BarsPeakFreqCursorTextSize:                   24,
 	BarsPeakFreqCursorTextOpacity:                255,
 	BarsPeakFreqCursorTextOffset:                 -4,
-	BarsPeakFreqCursorBGWidth:                    138,
+	BarsPeakFreqCursorBGWidth:                    210,
 	BarsPeakFreqCursorBGPadding:                  2,
 	BarsPeakFreqCursorInterpolatePos:             true,
 	BarsPeakFreqCursorInterpolateDirect:          1,

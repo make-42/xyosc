@@ -75,15 +75,19 @@ var barsLastFrameTime time.Time
 var beatTimeLastFrameTime time.Time
 var lastFrameTime time.Time
 
+func copyPrevFrameOp(deltaTime float64, screen *ebiten.Image) {
+	op := &ebiten.DrawImageOptions{}
+	op.ColorScale.ScaleAlpha(float32(math.Pow(float64(config.Config.CopyPreviousFrameAlphaDecayBase), deltaTime*config.Config.CopyPreviousFrameAlphaDecaySpeed)))
+	screen.DrawImage(prevFrame, op)
+}
+
 func (g *Game) Draw(screen *ebiten.Image) {
 	deltaTime := min(time.Since(lastFrameTime).Seconds(), 1.0)
 	lastFrameTime = time.Now()
 	var numSamples = config.Config.ReadBufferSize / 2
 	if config.Config.CopyPreviousFrame {
-		if !firstFrame {
-			op := &ebiten.DrawImageOptions{}
-			op.ColorScale.ScaleAlpha(float32(math.Pow(float64(config.Config.CopyPreviousFrameAlphaDecayBase), deltaTime*config.Config.CopyPreviousFrameAlphaDecaySpeed)))
-			screen.DrawImage(prevFrame, op)
+		if !firstFrame && !(config.Config.DefaultMode == 2 && config.Config.BarsPeakFreqCursor) { // leave to post background draw
+			copyPrevFrameOp(deltaTime, screen)
 		}
 	} else {
 		if config.Config.DisableTransparency {
@@ -401,10 +405,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			opBG := &ebiten.DrawImageOptions{Blend: ebiten.BlendClear}
 			opBG.GeoM.Translate(bars.InterpolatedPeakFreqCursorX, bars.InterpolatedPeakFreqCursorY)
 			screen.DrawImage(barCursorImageBGRectFrame, opBG)
-			text.Draw(screen, fmt.Sprintf("%-6.0f Hz", bars.PeakFreqCursorVal), &text.GoTextFace{
-				Source: fonts.Font,
-				Size:   config.Config.BarsPeakFreqCursorTextSize,
-			}, op)
+			if config.Config.CopyPreviousFrame && !firstFrame {
+				copyPrevFrameOp(deltaTime, screen)
+			}
+			if config.Config.BarsPeakFreqCursorTextDisplayNote {
+				text.Draw(screen, fmt.Sprintf("%-6.0f Hz %s", bars.PeakFreqCursorVal, bars.NoteDisplayName(bars.CalcNote(bars.PeakFreqCursorVal))), &text.GoTextFace{
+					Source: fonts.Font,
+					Size:   config.Config.BarsPeakFreqCursorTextSize,
+				}, op)
+			} else {
+				text.Draw(screen, fmt.Sprintf("%-6.0f Hz", bars.PeakFreqCursorVal), &text.GoTextFace{
+					Source: fonts.Font,
+					Size:   config.Config.BarsPeakFreqCursorTextSize,
+				}, op)
+			}
 		}
 	}
 
