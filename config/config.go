@@ -103,6 +103,7 @@ type ConfigS struct {
 	ThirdColor                                   string
 	ParticleColor                                string
 	BGColor                                      string
+	BGOpacity                                    uint8
 	DisableTransparency                          bool
 	CopyPreviousFrame                            bool
 	CopyPreviousFrameAlphaDecayBase              float64
@@ -248,6 +249,7 @@ var DefaultConfig = ConfigS{
 	ThirdColor:                                   "#E7BDB9",
 	ParticleColor:                                "#F9DCD9",
 	BGColor:                                      "#2B1C1A",
+	BGOpacity:                                    200,
 	DisableTransparency:                          false,
 	CopyPreviousFrame:                            true,
 	CopyPreviousFrameAlphaDecayBase:              0.0000001,
@@ -418,7 +420,7 @@ func updatePywalColors() {
 	/* This is not synced to pywal */
 	BGColorParsed, err := ParseHexColor(Config.BGColor)
 	utils.CheckError(err)
-	BGColor = color.RGBA{BGColorParsed.R, BGColorParsed.G, BGColorParsed.B, 255}
+	BGColor = color.RGBA{BGColorParsed.R, BGColorParsed.G, BGColorParsed.B, Config.BGOpacity}
 	/* end */
 
 	walPath := configdir.LocalCache("wal")

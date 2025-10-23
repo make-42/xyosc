@@ -658,7 +658,7 @@ func main() {
 		barCursorImageBGRectFrame = ebiten.NewImage(int(config.Config.BarsPeakFreqCursorBGWidth), int(config.Config.BarsPeakFreqCursorTextSize+2*config.Config.BarsPeakFreqCursorBGPadding))
 	}
 	InitBuffersAtSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
-	gameOptions := ebiten.RunGameOptions{SingleThread: true, ScreenTransparent: !config.Config.DisableTransparency}
+	gameOptions := ebiten.RunGameOptions{SingleThread: true, ScreenTransparent: true}
 	if config.Config.DisableTransparency {
 		gameOptions.ScreenTransparent = false
 	}

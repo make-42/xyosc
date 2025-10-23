@@ -177,6 +177,7 @@ firstcolor: "#E7BDB9"
 thirdcolor: "#E7BDB9"
 particlecolor: "#F9DCD9"
 bgcolor: "#2B1C1A"
+bgopacity: 200
 disabletransparency: false
 copypreviousframe: true
 copypreviousframealphadecaybase: 0.0000001
