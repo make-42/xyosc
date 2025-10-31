@@ -13,6 +13,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	XYMode int = iota
+	SingleChannelMode
+	BarsMode
+	VUMode
+)
+
 type ConfigS struct {
 	UseSystemFonts                               bool
 	SystemFont                                   string
@@ -154,6 +161,34 @@ type ConfigS struct {
 	BarsPeakFreqCursorInterpolateValDrag         float64
 	UseKaiserInsteadOfHannWindow                 bool
 	KaiserWindowParam                            float64
+	VUPaddingBetween                             float64
+	VUPaddingEdge                                float64
+	VUPreserveParsevalEnergy                     bool
+	VULogScale                                   bool
+	VULogScaleMaxDB                              float64
+	VULogScaleMinDB                              float64
+	VULinScaleMax                                float64
+	VUInterpolate                                bool
+	VUInterpolateDirect                          float64
+	VUInterpolateAccel                           float64
+	VUInterpolateDrag                            float64
+	VUScale                                      bool
+	VUScaleTextSize                              float64
+	VUScaleTextOffset                            float64
+	VUScaleLogDivisions                          []float64
+	VUScaleLinDivisions                          []float64
+	VUScaleDivTicksOuter                         bool
+	VUScaleDivTicksInner                         bool
+	VUScaleDivTickThickness                      float32
+	VUScaleDivTickLength                         float64
+	VUScaleDivTickPadding                        float64
+	VUPeak                                       bool
+	VUPeakHistorySeconds                         float64
+	VUPeakInterpolate                            bool
+	VUPeakInterpolateDirect                      float64
+	VUPeakInterpolateAccel                       float64
+	VUPeakInterpolateDrag                        float64
+	VUPeakThickness                              float32
 	UseShaders                                   bool
 	Shaders                                      []Shader
 	CustomShaderCode                             map[string]string
@@ -202,7 +237,7 @@ var DefaultConfig = ConfigS{
 	ParticleMaxSize:                              3.0,
 	ParticleAcceleration:                         0.2,
 	ParticleDrag:                                 5.0,
-	DefaultMode:                                  0, // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
+	DefaultMode:                                  XYMode, // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
 	ScaleEnable:                                  true,
 	ScaleTextOpacity:                             255,
 	ScaleMainAxisEnable:                          true,
@@ -296,6 +331,34 @@ var DefaultConfig = ConfigS{
 	BarsPeakFreqCursorInterpolateDrag:            20,
 	UseKaiserInsteadOfHannWindow:                 true,
 	KaiserWindowParam:                            8.,
+	VUPaddingBetween:                             64,
+	VUPaddingEdge:                                8,
+	VUPreserveParsevalEnergy:                     true,
+	VULogScale:                                   true,
+	VULogScaleMaxDB:                              3,
+	VULogScaleMinDB:                              -40,
+	VULinScaleMax:                                1.1,
+	VUScale:                                      true,
+	VUScaleTextSize:                              12,
+	VUScaleTextOffset:                            -1,
+	VUScaleLogDivisions:                          []float64{3., 2.0, 1.0, 0, -1, -2, -3, -4, -5, -6, -8, -10., -15, -20, -30, -40},
+	VUScaleLinDivisions:                          []float64{0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1},
+	VUScaleDivTicksOuter:                         true,
+	VUScaleDivTicksInner:                         true,
+	VUScaleDivTickThickness:                      1,
+	VUScaleDivTickLength:                         2,
+	VUScaleDivTickPadding:                        2,
+	VUInterpolate:                                true,
+	VUInterpolateDirect:                          40,
+	VUInterpolateAccel:                           2,
+	VUInterpolateDrag:                            10,
+	VUPeak:                                       true,
+	VUPeakHistorySeconds:                         5.,
+	VUPeakInterpolate:                            true,
+	VUPeakInterpolateDirect:                      40,
+	VUPeakInterpolateAccel:                       2,
+	VUPeakInterpolateDrag:                        10,
+	VUPeakThickness:                              2,
 	UseShaders:                                   true,
 	Shaders: []Shader{
 		{

@@ -24,6 +24,7 @@ import (
 	"xyosc/particles"
 	"xyosc/shaders"
 	"xyosc/utils"
+	"xyosc/vu"
 
 	"fmt"
 
@@ -86,7 +87,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	lastFrameTime = time.Now()
 	var numSamples = config.Config.ReadBufferSize / 2
 	if config.Config.CopyPreviousFrame {
-		if !firstFrame && !(config.Config.DefaultMode == 2 && config.Config.BarsPeakFreqCursor) { // leave to post background draw
+		if !firstFrame && !(config.Config.DefaultMode == config.BarsMode && config.Config.BarsPeakFreqCursor) { // leave to post background draw
 			copyPrevFrameOp(deltaTime, screen)
 		}
 	} else {
@@ -103,13 +104,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if slices.Contains(pressedKeys, ebiten.KeyF) {
 		if !StillSamePressFromToggleKey {
 			StillSamePressFromToggleKey = true
-			config.Config.DefaultMode = (config.Config.DefaultMode + 1) % 3
+			config.Config.DefaultMode = (config.Config.DefaultMode + 1) % 4
 		}
 	} else {
 		StillSamePressFromToggleKey = false
 	}
 
-	if (config.Config.DefaultMode == 0 || config.Config.DefaultMode == 1) && config.Config.ScaleEnable {
+	if (config.Config.DefaultMode == config.XYMode || config.Config.DefaultMode == config.SingleChannelMode) && config.Config.ScaleEnable {
 		if config.Config.ScaleMainAxisEnable {
 			vector.StrokeLine(screen, 0, float32(config.Config.WindowHeight/2), float32(config.Config.WindowWidth), float32(config.Config.WindowHeight/2), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
 			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2), 0, float32(config.Config.WindowWidth/2), float32(config.Config.WindowHeight), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
@@ -136,7 +137,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	if (config.Config.DefaultMode == 0) && config.Config.ScaleEnable {
+	if (config.Config.DefaultMode == config.XYMode) && config.Config.ScaleEnable {
 		if config.Config.ScaleMainAxisEnable {
 			vector.StrokeLine(screen, 0, float32(config.Config.WindowHeight/2), float32(config.Config.WindowWidth), float32(config.Config.WindowHeight/2), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
 			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2), 0, float32(config.Config.WindowWidth/2), float32(config.Config.WindowHeight), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
@@ -163,7 +164,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	if config.Config.DefaultMode == 0 {
+	if config.Config.DefaultMode == config.XYMode {
 		if config.FiltersApplied {
 			for i := uint32(0); i < numSamples; i++ {
 				AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
@@ -245,7 +246,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			particles.Particles[i].VX += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.X / norm * float32(deltaTime)
 			particles.Particles[i].VY += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.Y / norm * float32(deltaTime)
 		}
-	} else if config.Config.DefaultMode == 1 {
+	} else if config.Config.DefaultMode == config.SingleChannelMode {
 		for i := uint32(0); i < numSamples; i++ {
 			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
 			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
@@ -316,7 +317,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		} else {
 			samplesPerCrop = numSamples
 		}
-		if (config.Config.DefaultMode == 1) && config.Config.ScaleEnable {
+		if (config.Config.DefaultMode == config.SingleChannelMode) && config.Config.ScaleEnable {
 			visibleSampleCount := min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount)
 			timeSpanVisible := float64(visibleSampleCount) / float64(2*config.Config.SampleRate) //s
 			if config.Config.ScaleMainAxisEnable {
@@ -371,7 +372,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 			}
 		}
-	} else {
+	} else if config.Config.DefaultMode == config.BarsMode {
 		for i := uint32(0); i < numSamples; i++ {
 			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
 			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
@@ -420,6 +421,83 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}, op)
 			}
 		}
+	} else {
+		for i := uint32(0); i < numSamples; i++ {
+			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
+			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
+			XYComplexFFTBufferL[i] = complex(float64(AX), 0.0)
+			XYComplexFFTBufferR[i] = complex(float64(AY), 0.0)
+		}
+		barsDeltaTime := min(time.Since(barsLastFrameTime).Seconds(), 1.0)
+		barsLastFrameTime = time.Now()
+		vu.Interpolate(barsDeltaTime)
+
+		if config.FiltersApplied {
+			vu.LoudnessLTarget = vu.CalcLoudness(&XYComplexFFTBufferL, lowCutOffFrac, highCutOffFrac)
+			vu.LoudnessRTarget = vu.CalcLoudness(&XYComplexFFTBufferR, lowCutOffFrac, highCutOffFrac)
+		} else {
+			vu.LoudnessLTarget = vu.CalcLoudness(&XYComplexFFTBufferL, 0, 1)
+			vu.LoudnessRTarget = vu.CalcLoudness(&XYComplexFFTBufferR, 0, 1)
+		}
+		if config.Config.VUPeak {
+			vu.CommitPeakPoint()
+		}
+		xl, yl, wl, hl := vu.ComputeBarLayout(0, vu.LoudnessLPos)
+		xr, yr, wr, hr := vu.ComputeBarLayout(1, vu.LoudnessRPos)
+		vector.DrawFilledRect(screen, float32(xl), float32(yl), float32(wl), float32(hl), config.ThirdColorAdj, true)
+		vector.DrawFilledRect(screen, float32(xr), float32(yr), float32(wr), float32(hr), config.ThirdColorAdj, true)
+		if config.Config.VUScale {
+			if config.Config.VULogScale {
+				xl, _, wl, _ := vu.ComputeBarLayout(0, 0)
+
+				for _, div := range config.Config.VUScaleLogDivisions {
+					op := &text.DrawOptions{}
+					xr, yr, wr, hr := vu.ComputeBarLayout(1, (div-config.Config.VULogScaleMinDB)/(config.Config.VULogScaleMaxDB-config.Config.VULogScaleMinDB))
+					op.GeoM.Translate(float64(config.Config.WindowWidth)/2, yr+hr-config.Config.VUScaleTextSize/2+config.Config.VUScaleTextOffset)
+					op.LayoutOptions.PrimaryAlign = text.AlignCenter
+					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.BarsPeakFreqCursorTextOpacity})
+					text.Draw(screen, fmt.Sprintf("%3.0f dB", div), &text.GoTextFace{
+						Source: fonts.Font,
+						Size:   config.Config.VUScaleTextSize,
+					}, op)
+					if config.Config.VUScaleDivTicksOuter {
+						vector.StrokeLine(screen, float32(xr+wr+config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xr+wr+config.Config.VUScaleDivTickPadding+config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+						vector.StrokeLine(screen, float32(xl-config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xl-config.Config.VUScaleDivTickPadding-config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+					}
+					if config.Config.VUScaleDivTicksInner {
+						vector.StrokeLine(screen, float32(xr-config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xr-config.Config.VUScaleDivTickPadding-config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+						vector.StrokeLine(screen, float32(xl+wl+config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xl+wl+config.Config.VUScaleDivTickPadding+config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+					}
+				}
+			} else {
+				for _, div := range config.Config.VUScaleLinDivisions {
+					op := &text.DrawOptions{}
+					_, yr, _, hr := vu.ComputeBarLayout(1, div/config.Config.VULinScaleMax)
+					op.GeoM.Translate(float64(config.Config.WindowWidth)/2, yr+hr-config.Config.VUScaleTextSize/2+config.Config.VUScaleTextOffset)
+					op.LayoutOptions.PrimaryAlign = text.AlignCenter
+					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.BarsPeakFreqCursorTextOpacity})
+					text.Draw(screen, fmt.Sprintf("%.1f", div), &text.GoTextFace{
+						Source: fonts.Font,
+						Size:   config.Config.VUScaleTextSize,
+					}, op)
+					if config.Config.VUScaleDivTicksOuter {
+						vector.StrokeLine(screen, float32(xr+wr+config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xr+wr+config.Config.VUScaleDivTickPadding+config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+						vector.StrokeLine(screen, float32(xl-config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xl-config.Config.VUScaleDivTickPadding-config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+					}
+					if config.Config.VUScaleDivTicksInner {
+						vector.StrokeLine(screen, float32(xr-config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xr-config.Config.VUScaleDivTickPadding-config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+						vector.StrokeLine(screen, float32(xl+wl+config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xl+wl+config.Config.VUScaleDivTickPadding+config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+					}
+				}
+			}
+			if config.Config.VUPeak {
+				xl, yl, wl, hl = vu.ComputeBarLayout(0, vu.LoudnessLPeakPos)
+				xr, yr, wr, hr = vu.ComputeBarLayout(1, vu.LoudnessRPeakPos)
+				vector.StrokeLine(screen, float32(xl), float32(yl+hl), float32(xl+wl), float32(yl+hl), config.Config.VUPeakThickness, config.ThirdColorAdj, true)
+				vector.StrokeLine(screen, float32(xr), float32(yr+hr), float32(xr+wr), float32(yr+hr), config.Config.VUPeakThickness, config.ThirdColorAdj, true)
+			}
+		}
+
 	}
 
 	if config.Config.BeatDetect || *beatDetectOverride {
@@ -594,10 +672,8 @@ func Init() {
 		complexFFTBufferFlipped = make([]complex128, numSamples)
 		align.Init()
 	}
-	if config.FiltersApplied {
-		XYComplexFFTBufferL = make([]complex128, numSamples)
-		XYComplexFFTBufferR = make([]complex128, numSamples)
-	}
+	XYComplexFFTBufferL = make([]complex128, numSamples)
+	XYComplexFFTBufferR = make([]complex128, numSamples)
 	config.Config.WindowWidth = int32(*overrideWidth)
 	config.Config.WindowHeight = int32(*overrideHeight)
 
@@ -632,6 +708,9 @@ func main() {
 	}
 	bars.Init()
 	kaiser.Init()
+	if config.Config.VUPeak {
+		vu.Init()
+	}
 	ebiten.SetWindowIcon([]image.Image{icons.WindowIcon48, icons.WindowIcon32, icons.WindowIcon16})
 	ebiten.SetWindowSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	ebiten.SetWindowTitle("xyosc")
