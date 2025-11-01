@@ -50,28 +50,33 @@ func CommitPeakPoint() {
 }
 
 func CalcLoudness(inputArray *[]complex128, lowCutFrac, hiCutFrac float64) float64 { // in out units
-	if config.Config.BarsUseWindow {
-		for i := uint32(0); i < config.Config.ReadBufferSize/2; i++ {
-			(*inputArray)[i] = complex(real((*inputArray)[i])*kaiser.WindowBuffer[i], 0)
-		}
-	}
-	err := gofft.FFT(*inputArray)
-	utils.CheckError(err)
 	vol := 0.
-	for x := range len(*inputArray) {
-		frac := float64(x+1) / float64(len(*inputArray))
-		if lowCutFrac <= frac && frac < hiCutFrac {
-			val := real((*inputArray)[x])*real((*inputArray)[x]) + imag((*inputArray)[x])*imag((*inputArray)[x])
-			if config.Config.VUPreserveParsevalEnergy {
-				val *= float64(x + 1)
+	if lowCutFrac != 0 || hiCutFrac != 1.0 {
+		if config.Config.BarsUseWindow {
+			for i := uint32(0); i < config.Config.ReadBufferSize/2; i++ {
+				(*inputArray)[i] = complex(real((*inputArray)[i])*kaiser.WindowBuffer[i], 0)
 			}
-			vol += val
+		}
+		err := gofft.FFT(*inputArray)
+		utils.CheckError(err)
+		for x := range len(*inputArray) {
+			frac := float64(x+1) / float64(len(*inputArray))
+			if lowCutFrac <= frac && frac < hiCutFrac {
+				(*inputArray)[x] = 0
+			}
+		}
+		err = gofft.IFFT(*inputArray)
+		utils.CheckError(err)
+		for x := range len(*inputArray) {
+			val := real((*inputArray)[x])*real((*inputArray)[x]) + imag((*inputArray)[x])*imag((*inputArray)[x])
+			vol = max(val, vol)
+		}
+	} else {
+		for x := range len(*inputArray) {
+			val := real((*inputArray)[x]) * real((*inputArray)[x])
+			vol = max(val, vol)
 		}
 	}
-	vol /= float64(len(*inputArray)) * math.Exp2(21.5)
-
-	//fmt.Println(math.Log10(vol)*10, "dBFS")
-	vol = math.Sqrt(vol)
 	if config.Config.VULogScale {
 		vol = ((max(math.Log10(vol)*10, config.Config.VULogScaleMinDB)) - config.Config.VULogScaleMinDB) / (config.Config.VULogScaleMaxDB - config.Config.VULogScaleMinDB)
 	} else {

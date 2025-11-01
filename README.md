@@ -237,7 +237,7 @@ vuinterpolateaccel: 2
 vuinterpolatedrag: 10
 vuscale: true
 vuscaletextsize: 12
-vuscaletextoffset: -1
+vuscaletextoffset: -2
 vuscalelogdivisions:
 - 3
 - 2

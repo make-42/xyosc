@@ -340,7 +340,7 @@ var DefaultConfig = ConfigS{
 	VULinScaleMax:                                1.1,
 	VUScale:                                      true,
 	VUScaleTextSize:                              12,
-	VUScaleTextOffset:                            -1,
+	VUScaleTextOffset:                            -2,
 	VUScaleLogDivisions:                          []float64{3., 2.0, 1.0, 0, -1, -2, -3, -4, -5, -6, -8, -10., -15, -20, -30, -40},
 	VUScaleLinDivisions:                          []float64{0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1},
 	VUScaleDivTicksOuter:                         true,
