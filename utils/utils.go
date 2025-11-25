@@ -26,6 +26,10 @@ func FormatDuration(d float64) string {
 	}
 }
 
+func Moduint32(a, b uint32) uint32 {
+	return (a%b + b) % b
+}
+
 /*
 func NextPowOf2(n uint32) uint32 {
 	k := uint32(1)

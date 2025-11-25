@@ -307,6 +307,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 
 		var samplesPerCrop uint32
+		var samplesPerPeriod uint32
+
+		if (config.Config.OscilloscopeStartPeakDetection && config.Config.SmoothWaveOverPeriods) && len(indices) > 1 {
+			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.PeriodCropCount)])
+			samplesPerPeriod = lastPeriodOffset - offset
+			if config.Config.UseBetterPeakDetectionAlgorithm {
+				samplesPerPeriod = freq * 2
+			}
+		} else {
+			samplesPerPeriod = numSamples
+		}
 
 		if config.Config.PeriodCrop && len(indices) > 1 {
 			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.PeriodCropCount)])
@@ -353,9 +364,30 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			if config.Config.CenterPeak {
 				offset -= samplesPerCrop / 2
 			}
-			for i := uint32(0); i < min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount)-1; i++ {
+			its := min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount) - 1
+			for i := uint32(0); i < its; i++ {
 				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
+				if config.Config.SmoothWaveOverPeriods {
+					smoothPeriods := min((numSamples/its)-1, config.Config.SmoothWaveOverPeriodsMax)
+					if smoothPeriods > 0 {
+						var q float64
+						if config.Config.SmoothWaveOverPeriodsUseTimeIndependentWeights {
+							q = config.Config.SmoothWaveOverPeriodsTimeIndependentWeightFactor
+						} else {
+							q = math.Exp(-float64(its) / float64(config.Config.SampleRate) * config.Config.SmoothWaveOverPeriodsInvTau)
+						}
+						rescale := float32(1.)
+						for k := range smoothPeriods {
+							fact := float32(math.Pow(q, float64(k+1)))
+							fAX += fact * float32(FFTBuffer[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(scale)
+							fBX += fact * float32(FFTBuffer[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(scale)
+							rescale += fact
+						}
+						fAX /= rescale
+						fBX /= rescale
+					}
+				}
 				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
 					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
 				}
@@ -367,6 +399,29 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			for i := uint32(0); i < config.Config.SingleChannelWindow/2-1; i++ {
 				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
 				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
+				if config.Config.OscilloscopeStartPeakDetection || *peakDetectOverride {
+					its := samplesPerPeriod
+					if config.Config.SmoothWaveOverPeriods {
+						smoothPeriods := min((numSamples/its)-1, config.Config.SmoothWaveOverPeriodsMax)
+						if smoothPeriods > 0 {
+							var q float64
+							if config.Config.SmoothWaveOverPeriodsUseTimeIndependentWeights {
+								q = config.Config.SmoothWaveOverPeriodsTimeIndependentWeightFactor
+							} else {
+								q = math.Exp(-float64(its) / float64(config.Config.SampleRate) * config.Config.SmoothWaveOverPeriodsInvTau)
+							}
+							rescale := float32(1.)
+							for k := range smoothPeriods {
+								fact := float32(math.Pow(q, float64(k+1)))
+								fAX += fact * float32(FFTBuffer[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(scale)
+								fBX += fact * float32(FFTBuffer[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(scale)
+								rescale += fact
+							}
+							fAX /= rescale
+							fBX /= rescale
+						}
+					}
+				}
 				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
 					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2))/float32((config.Config.SingleChannelWindow/2)), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2)+1)/float32(config.Config.SingleChannelWindow/2), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
 				}

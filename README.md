@@ -165,6 +165,11 @@ complextriggeringalgorithmusecorrelation: true
 frequencydetectionusemedian: true
 centerpeak: true
 quadratureoffset: true
+smoothwaveoverperiods:                            true
+smoothwaveoverperiodsinvtau:                      100
+smoothwaveoverperiodsusetimeindependentweights:   true
+smoothwaveoverperiodstimeindependentweightfactor: 0.4
+smoothwaveoverperiodsmax:                         10
 peakdetectedgeguardbuffersize: 30
 singlechannelwindow: 8192
 periodcrop: false
