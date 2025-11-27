@@ -285,6 +285,9 @@ vupeakinterpolatedirect: 40
 vupeakinterpolateaccel: 2
 vupeakinterpolatedrag: 10
 vupeakthickness: 2
+showsplash: true
+splashstaticseconds: 1
+splashtransitionseconds: 1
 useshaders: true
 shaders:
 - name: glow

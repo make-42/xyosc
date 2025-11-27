@@ -23,6 +23,7 @@ import (
 	"xyosc/media"
 	"xyosc/particles"
 	"xyosc/shaders"
+	"xyosc/splash"
 	"xyosc/utils"
 	"xyosc/vu"
 
@@ -664,6 +665,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}, op)
 	}
 
+	if splash.SplashShowing {
+		splash.DrawSplash(screen)
+	}
+
 	if firstFrame {
 		firstFrame = false
 		// f, _ := os.Create("image.png")
@@ -766,6 +771,7 @@ func main() {
 	if config.Config.VUPeak {
 		vu.Init()
 	}
+	splash.Init()
 	ebiten.SetWindowIcon([]image.Image{icons.WindowIcon48, icons.WindowIcon32, icons.WindowIcon16})
 	ebiten.SetWindowSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
 	ebiten.SetWindowTitle("xyosc")

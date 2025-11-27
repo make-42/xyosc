@@ -194,6 +194,9 @@ type ConfigS struct {
 	VUPeakInterpolateAccel                           float64
 	VUPeakInterpolateDrag                            float64
 	VUPeakThickness                                  float32
+	ShowSplash                                       bool
+	SplashStaticSeconds                              float64
+	SplashTransitionSeconds                          float64
 	UseShaders                                       bool
 	Shaders                                          []Shader
 	CustomShaderCode                                 map[string]string
@@ -369,6 +372,9 @@ var DefaultConfig = ConfigS{
 	VUPeakInterpolateAccel:                           2,
 	VUPeakInterpolateDrag:                            10,
 	VUPeakThickness:                                  2,
+	ShowSplash:                                       true,
+	SplashStaticSeconds:                              1,
+	SplashTransitionSeconds:                          1,
 	UseShaders:                                       true,
 	Shaders: []Shader{
 		{
