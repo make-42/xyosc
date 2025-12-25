@@ -118,7 +118,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 		if config.Config.ScaleVertTickEnable {
 			for i := range config.Config.ScaleVertDiv + 1 {
-				y := float32(config.Config.WindowHeight) / float32(config.Config.ScaleVertDiv) * float32(i)
+				y := float32(config.Config.WindowHeight)-float32(config.Config.WindowHeight) / float32(config.Config.ScaleVertDiv) * float32(i)
 				if config.Config.ScaleVertTickExpandToGrid {
 					vector.StrokeLine(screen, 0, y, float32(config.Config.WindowWidth), y, config.Config.ScaleVertTickExpandToGridThickness, config.ThirdColorAdj, true)
 				}
@@ -329,7 +329,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		} else {
 			samplesPerCrop = numSamples
 		}
-		if (config.Config.DefaultMode == config.SingleChannelMode) && config.Config.ScaleEnable {
+		if config.Config.ScaleEnable {
 			visibleSampleCount := min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount)
 			timeSpanVisible := float64(visibleSampleCount) / float64(2*config.Config.SampleRate) //s
 			if config.Config.ScaleMainAxisEnable {
@@ -390,7 +390,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					}
 				}
 				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
-					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)-fAX, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)-fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
 				}
 			}
 		} else {
@@ -424,7 +424,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					}
 				}
 				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
-					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2))/float32((config.Config.SingleChannelWindow/2)), float32(config.Config.WindowHeight/2)+fAX, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2)+1)/float32(config.Config.SingleChannelWindow/2), float32(config.Config.WindowHeight/2)+fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2))/float32((config.Config.SingleChannelWindow/2)), float32(config.Config.WindowHeight/2)-fAX, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2)+1)/float32(config.Config.SingleChannelWindow/2), float32(config.Config.WindowHeight/2)-fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
 				}
 			}
 		}

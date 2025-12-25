@@ -133,7 +133,7 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 		}
 	}
 	if config.Config.QuadratureOffset {
-		offset += uint32(0.75 * avgPeriod)
+		offset += uint32(0.25 * avgPeriod)
 	}
 
 	if config.Config.AlignToLastPossiblePeak {
