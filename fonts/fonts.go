@@ -15,7 +15,11 @@ import (
 //go:embed assets/SourceHanSansJP-Heavy.otf
 var embedFS embed.FS
 
-var Font *text.GoTextFaceSource
+var FontA *text.GoTextFaceSource
+var FontB *text.GoTextFaceSource
+var MPRISBigTextFace *text.MultiFace
+var MPRISSmallTextFace *text.MultiFace
+
 
 func Init() {
 	foundFont := false
@@ -25,14 +29,44 @@ func Init() {
 		loc, found := fontMap.FindSystemFont(config.Config.SystemFont)
 		foundFont = found
 		f, err := os.Open(loc.File)
-		Font, err = text.NewGoTextFaceSource(f)
+		FontA, err = text.NewGoTextFaceSource(f)
 		utils.CheckError(err)
 	}
-	if !foundFont {
-		// NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
-		f, err := embedFS.Open("assets/SourceHanSansJP-Heavy.otf")
+	// NOTE: Textures/Fonts MUST be loaded after Window initialization (OpenGL context is required)
+	f, err := embedFS.Open("assets/SourceHanSansJP-Heavy.otf")
+	utils.CheckError(err)
+	FontB, err = text.NewGoTextFaceSource(f)
+	utils.CheckError(err)
+
+	if foundFont {
+		MPRISBigTextFace, err = text.NewMultiFace(&text.GoTextFace{
+			Source: FontA,
+			Size:   32,
+		}, &text.GoTextFace{
+			Source: FontB,
+			Size:   32,
+		})
 		utils.CheckError(err)
-		Font, err = text.NewGoTextFaceSource(f)
+		MPRISSmallTextFace, err = text.NewMultiFace(&text.GoTextFace{
+			Source: FontA,
+			Size:   16,
+		}, &text.GoTextFace{
+			Source: FontB,
+			Size:   16,
+		})
 		utils.CheckError(err)
+	} else {
+		MPRISBigTextFace, err = text.NewMultiFace(&text.GoTextFace{
+			Source: FontB,
+			Size:   32,
+		})
+		utils.CheckError(err)
+		MPRISSmallTextFace, err = text.NewMultiFace(&text.GoTextFace{
+			Source: FontB,
+			Size:   16,
+		})
+		utils.CheckError(err)
+		FontA = FontB
 	}
+
 }

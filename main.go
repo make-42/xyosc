@@ -130,7 +130,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					op.LayoutOptions.SecondaryAlign = text.AlignCenter
 					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.ScaleTextOpacity})
 					text.Draw(screen, fmt.Sprintf("%.*f", int(math.Ceil(math.Log10(float64(config.Config.ScaleVertDiv)/2))), 2/float32(config.Config.ScaleVertDiv)*float32(i)-1), &text.GoTextFace{
-						Source: fonts.Font,
+						Source: fonts.FontA,
 						Size:   config.Config.ScaleVertTextSize,
 					}, op)
 				}
@@ -157,7 +157,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					op.LayoutOptions.SecondaryAlign = text.AlignStart
 					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.ScaleTextOpacity})
 					text.Draw(screen, fmt.Sprintf("%.*f", int(math.Ceil(math.Log10(float64(config.Config.ScaleHorzDiv)/2))), 2/float32(config.Config.ScaleHorzDiv)*float32(i)-1), &text.GoTextFace{
-						Source: fonts.Font,
+						Source: fonts.FontA,
 						Size:   config.Config.ScaleHorzTextSize,
 					}, op)
 				}
@@ -354,7 +354,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 						op.LayoutOptions.SecondaryAlign = text.AlignStart
 						op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.ScaleTextOpacity})
 						text.Draw(screen, fmt.Sprintf("%s", utils.FormatDuration(scaleScale*float64(timeSpanVisible/2)*(2/float64(config.Config.ScaleHorzDiv)*float64(i)-1))), &text.GoTextFace{
-							Source: fonts.Font,
+							Source: fonts.FontA,
 							Size:   config.Config.ScaleHorzTextSize,
 						}, op)
 					}
@@ -467,12 +467,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 			if config.Config.BarsPeakFreqCursorTextDisplayNote {
 				text.Draw(screen, fmt.Sprintf("%-6.0f Hz %s", bars.PeakFreqCursorVal, bars.NoteDisplayName(bars.CalcNote(bars.PeakFreqCursorVal))), &text.GoTextFace{
-					Source: fonts.Font,
+					Source: fonts.FontA,
 					Size:   config.Config.BarsPeakFreqCursorTextSize,
 				}, op)
 			} else {
 				text.Draw(screen, fmt.Sprintf("%-6.0f Hz", bars.PeakFreqCursorVal), &text.GoTextFace{
-					Source: fonts.Font,
+					Source: fonts.FontA,
 					Size:   config.Config.BarsPeakFreqCursorTextSize,
 				}, op)
 			}
@@ -513,7 +513,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					op.LayoutOptions.PrimaryAlign = text.AlignCenter
 					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.BarsPeakFreqCursorTextOpacity})
 					text.Draw(screen, fmt.Sprintf("%3.0f dB", div), &text.GoTextFace{
-						Source: fonts.Font,
+						Source: fonts.FontA,
 						Size:   config.Config.VUScaleTextSize,
 					}, op)
 					if config.Config.VUScaleDivTicksOuter {
@@ -533,7 +533,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					op.LayoutOptions.PrimaryAlign = text.AlignCenter
 					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.BarsPeakFreqCursorTextOpacity})
 					text.Draw(screen, fmt.Sprintf("%.1f", div), &text.GoTextFace{
-						Source: fonts.Font,
+						Source: fonts.FontA,
 						Size:   config.Config.VUScaleTextSize,
 					}, op)
 					if config.Config.VUScaleDivTicksOuter {
@@ -589,7 +589,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				displayedBPM /= 2
 			}
 			text.Draw(screen, fmt.Sprintf("%0.2f BPM", displayedBPM), &text.GoTextFace{
-				Source: fonts.Font,
+				Source: fonts.FontA,
 				Size:   config.Config.BPMTextSize,
 			}, op)
 		}
@@ -626,28 +626,19 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		op := &text.DrawOptions{}
 		op.GeoM.Translate(16, 16+config.Config.MPRISTextTitleYOffset)
 		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
-		text.Draw(screen, media.PlayingMediaInfo.Artist+" - "+media.PlayingMediaInfo.Title, &text.GoTextFace{
-			Source: fonts.Font,
-			Size:   32,
-		}, op)
+		text.Draw(screen, media.PlayingMediaInfo.Artist+" - "+media.PlayingMediaInfo.Title, fonts.MPRISBigTextFace, op)
 
 		op = &text.DrawOptions{}
 		op.GeoM.Translate(16, 64+config.Config.MPRISTextAlbumYOffset)
 		op.ColorScale.ScaleWithColor(color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, config.Config.MPRISTextOpacity})
 
-		text.Draw(screen, media.PlayingMediaInfo.Album, &text.GoTextFace{
-			Source: fonts.Font,
-			Size:   16,
-		}, op)
+		text.Draw(screen, media.PlayingMediaInfo.Album, fonts.MPRISSmallTextFace, op)
 
 		op = &text.DrawOptions{}
 		op.GeoM.Translate(16, 80+config.Config.MPRISTextDurationYOffset)
 		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
 
-		text.Draw(screen, media.FmtDuration(media.PlayingMediaInfo.Position)+" / "+media.FmtDuration(media.PlayingMediaInfo.Duration), &text.GoTextFace{
-			Source: fonts.Font,
-			Size:   32,
-		}, op)
+		text.Draw(screen, media.FmtDuration(media.PlayingMediaInfo.Position)+" / "+media.FmtDuration(media.PlayingMediaInfo.Duration), fonts.MPRISBigTextFace, op)
 	}
 
 	if config.FiltersApplied && config.Config.ShowFilterInfo {
@@ -660,7 +651,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
 
 		text.Draw(screen, fmt.Sprintf("Lo: %0.2f Hz; Hi: %0.2f Hz", loFreq, hiFreq), &text.GoTextFace{
-			Source: fonts.Font,
+			Source: fonts.FontA,
 			Size:   config.Config.FilterInfoTextSize,
 		}, op)
 	}
