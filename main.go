@@ -624,7 +624,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	if config.Config.ShowMPRIS {
 		op := &text.DrawOptions{}
-		op.GeoM.Translate(16, 16)
+		op.GeoM.Translate(16, 16+config.Config.MPRISTextTitleYOffset)
 		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
 		text.Draw(screen, media.PlayingMediaInfo.Artist+" - "+media.PlayingMediaInfo.Title, &text.GoTextFace{
 			Source: fonts.Font,
@@ -632,7 +632,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}, op)
 
 		op = &text.DrawOptions{}
-		op.GeoM.Translate(16, 64)
+		op.GeoM.Translate(16, 64+config.Config.MPRISTextAlbumYOffset)
 		op.ColorScale.ScaleWithColor(color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, config.Config.MPRISTextOpacity})
 
 		text.Draw(screen, media.PlayingMediaInfo.Album, &text.GoTextFace{
@@ -641,7 +641,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}, op)
 
 		op = &text.DrawOptions{}
-		op.GeoM.Translate(16, 80)
+		op.GeoM.Translate(16, 80+config.Config.MPRISTextDurationYOffset)
 		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
 
 		text.Draw(screen, media.FmtDuration(media.PlayingMediaInfo.Position)+" / "+media.FmtDuration(media.PlayingMediaInfo.Duration), &text.GoTextFace{

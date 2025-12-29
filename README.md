@@ -97,6 +97,9 @@ filterinfotextsize: 16
 filterinfotextpaddingleft: 16
 filterinfotextpaddingbottom: 4
 showmpris: false
+mpristexttitleyoffset: 0
+mpristextalbumyoffset: -7
+mpristextdurationyoffset: 0
 mpristextopacity: 255
 targetfps: 240
 windowwidth: 1000

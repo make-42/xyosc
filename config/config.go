@@ -30,6 +30,9 @@ type ConfigS struct {
 	FilterInfoTextPaddingBottom                      float64
 	ShowMPRIS                                        bool
 	MPRISTextOpacity                                 uint8
+	MPRISTextTitleYOffset							 float64
+	MPRISTextAlbumYOffset 							 float64
+	MPRISTextDurationYOffset 						 float64
 	TargetFPS                                        int32
 	WindowWidth                                      int32
 	WindowHeight                                     int32
@@ -211,6 +214,9 @@ var DefaultConfig = ConfigS{
 	FilterInfoTextPaddingLeft:                16,
 	FilterInfoTextPaddingBottom:              4,
 	ShowMPRIS:                                false,
+	MPRISTextTitleYOffset: 					  0,
+	MPRISTextAlbumYOffset:  			      -7,
+	MPRISTextDurationYOffset:                 0,
 	MPRISTextOpacity:                         255,
 	TargetFPS:                                240,
 	WindowWidth:                              1000,
