@@ -145,7 +145,7 @@ func CalcNote(freq float64) int {
 }
 
 func NoteDisplayName(note int) string {
-	octave := 5 + (note / 12)
+	octave := 4 + (note / 12)
 	name := ([]string{"C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B "})[(note-(note/12-1)*12)%12]
 	return fmt.Sprintf("%s%d", name, octave)
 }
