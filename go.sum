@@ -1,4 +1,6 @@
 github.com/ajstarks/svgo v0.0.0-20180226025133-644b8db467af/go.mod h1:K08gAheRH3/J6wwsYMMT4xOr94bZjxIelGM0+d/wbFw=
+github.com/alltom/oklab v1.0.0 h1:TxsmxioepyOiIAdmXr78IMDSwX3DT/NyS/8W4lsI+T0=
+github.com/alltom/oklab v1.0.0/go.mod h1:QLQU/O6ibHXsj7WKCt8VRs5+lpPWlZzh/5mURqoB5Vw=
 github.com/argusdusty/gofft v1.2.1 h1:Ir33IyKzMPvgK70PPWtmHpzjbTsUkL51EunWn4mrksA=
 github.com/argusdusty/gofft v1.2.1/go.mod h1:OABUQ4XoJ49ucI4ZPv0i6a0x3KKM4yDSK5rsMwFL43Q=
 github.com/chewxy/math32 v1.11.1 h1:b7PGHlp8KjylDoU8RrcEsRuGZhJuz8haxnKfuMMRqy8=

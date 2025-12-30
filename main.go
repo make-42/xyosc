@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"image"
 	"image/color"
 	"log"
@@ -10,6 +11,16 @@ import (
 	"slices"
 	"sort"
 	"time"
+
+	"github.com/alltom/oklab"
+	"github.com/chewxy/math32"
+	"github.com/goccmack/godsp/peaks"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
+
 	"xyosc/align"
 	"xyosc/audio"
 	"xyosc/bars"
@@ -26,17 +37,6 @@ import (
 	"xyosc/splash"
 	"xyosc/utils"
 	"xyosc/vu"
-
-	"fmt"
-
-	"github.com/chewxy/math32"
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
-	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
-
-	"github.com/goccmack/godsp/peaks"
 )
 
 type Game struct {
@@ -118,7 +118,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 		if config.Config.ScaleVertTickEnable {
 			for i := range config.Config.ScaleVertDiv + 1 {
-				y := float32(config.Config.WindowHeight)-float32(config.Config.WindowHeight) / float32(config.Config.ScaleVertDiv) * float32(i)
+				y := float32(config.Config.WindowHeight) - float32(config.Config.WindowHeight)/float32(config.Config.ScaleVertDiv)*float32(i)
 				if config.Config.ScaleVertTickExpandToGrid {
 					vector.StrokeLine(screen, 0, y, float32(config.Config.WindowWidth), y, config.Config.ScaleVertTickExpandToGridThickness, config.ThirdColorAdj, true)
 				}
@@ -452,7 +452,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		bars.InterpolateBars(barsDeltaTime)
 		for i := range bars.TargetBarsPos {
 			x, y, w, h := bars.ComputeBarLayout(i)
-			vector.DrawFilledRect(screen, float32(x), float32(y), float32(w), float32(h), config.ThirdColorAdj, true)
+			barColor := config.ThirdColorAdj
+			if config.Config.BarsShowPhase {
+				barColoroklch := oklab.OklabModel.Convert(barColor).(oklab.Oklab).Oklch()
+				barColoroklch.H = math.Mod(barColoroklch.H+bars.InterpolatedBarsPhasePos[i]/(2*math.Pi)*config.Config.BarsPhaseColorHMult+1, 1)
+				barColoroklch.L *= config.Config.BarsPhaseColorLMult
+				barColoroklch.C *= config.Config.BarsPhaseColorCMult
+				barr, barg, barb, _ := barColoroklch.RGBA()
+				barColor = color.RGBA{uint8(barr >> 8), uint8(barg >> 8), uint8(barb >> 8), config.ThirdColorAdj.A}
+			}
+			vector.DrawFilledRect(screen, float32(x), float32(y), float32(w), float32(h), barColor, true)
 		}
 		if config.Config.BarsPeakFreqCursor {
 			op := &text.DrawOptions{}

@@ -3,16 +3,23 @@ package bars
 import (
 	"fmt"
 	"math"
+	"math/cmplx"
+
+	"github.com/argusdusty/gofft"
+
 	"xyosc/config"
 	"xyosc/kaiser"
 	"xyosc/utils"
-
-	"github.com/argusdusty/gofft"
 )
 
 var InterpolatedBarsPos []float64
 var InterpolatedBarsVel []float64
 var TargetBarsPos []float64
+
+var InterpolatedBarsPhasePos []float64
+var InterpolatedBarsPhaseVel []float64
+var TargetBarsPhasePos []float64
+
 var InterpolatedMaxVolume float64 = 2000. // sane starting point
 
 var InterpolatedPeakFreqCursorX float64
@@ -28,6 +35,11 @@ func Init() {
 	TargetBarsPos = make([]float64, int(barCount))
 	InterpolatedBarsPos = make([]float64, int(barCount))
 	InterpolatedBarsVel = make([]float64, int(barCount))
+	if config.Config.BarsShowPhase {
+		TargetBarsPhasePos = make([]float64, int(barCount))
+		InterpolatedBarsPhasePos = make([]float64, int(barCount))
+		InterpolatedBarsPhaseVel = make([]float64, int(barCount))
+	}
 }
 
 func CalcBars(inputArray *[]complex128, lowCutOffFrac float64, highCutOffFrac float64) {
@@ -39,6 +51,8 @@ func CalcBars(inputArray *[]complex128, lowCutOffFrac float64, highCutOffFrac fl
 	err := gofft.FFT(*inputArray)
 	utils.CheckError(err)
 	numBars := float64(len(TargetBarsPos))
+	complexTot := complex128(0.0)
+	complexSum := complex128(0.0)
 	sum := 0.0
 	nSamples := 0.0
 	nthBar := 0.0
@@ -49,12 +63,17 @@ func CalcBars(inputArray *[]complex128, lowCutOffFrac float64, highCutOffFrac fl
 		if X <= int(float64(len(*inputArray))*highCutOffFrac) || X >= int(float64(len(*inputArray))*lowCutOffFracAdj) {
 			frac := (math.Log2(float64(X)/float64(len(*inputArray))) - math.Log2(lowCutOffFracAdj)) / (math.Log2(highCutOffFrac) - math.Log2(lowCutOffFracAdj))
 			val := math.Sqrt(real((*inputArray)[X])*real((*inputArray)[X]) + imag((*inputArray)[X])*imag((*inputArray)[X]))
+			complexVal := (*inputArray)[X]
 			if config.Config.BarsPreserveParsevalEnergy {
 				val = val * math.Sqrt(float64(X))
+				complexVal = complexVal * complex(math.Sqrt(float64(X)), 0)
 			}
 			if X >= int((config.Config.BarsPreventSpectralLeakageAboveFreq/float64(config.Config.SampleRate))*float64(len(*inputArray))) {
 				val = 0
+				complexVal = 0
 			}
+			complexTot += complexVal
+			complexSum += complexVal
 			sum += val
 			nSamples++
 			if frac >= 1 {
@@ -71,10 +90,14 @@ func CalcBars(inputArray *[]complex128, lowCutOffFrac float64, highCutOffFrac fl
 				for (nthBar+1)/numBars <= frac {
 					if nSamples != 0 {
 						TargetBarsPos[int(nthBar)] = sum / nSamples
+						if config.Config.BarsShowPhase {
+							TargetBarsPhasePos[int(nthBar)] = cmplx.Phase(complexSum)
+						}
 					}
 					nthBar++
 				}
 				sum = 0.0
+				complexSum = 0.0
 				nSamples = 0.0
 			}
 		}
@@ -87,6 +110,12 @@ func CalcBars(inputArray *[]complex128, lowCutOffFrac float64, highCutOffFrac fl
 		TargetPeakFreqCursorX = min(max(x+w/2, 0), float64(config.Config.WindowWidth)-config.Config.BarsPeakFreqCursorBGWidth)
 		TargetPeakFreqCursorY = min(max(y+h-config.Config.BarsPeakFreqCursorTextSize-2*config.Config.BarsPeakFreqCursorBGPadding, 0), float64(config.Config.WindowHeight)-config.Config.BarsPeakFreqCursorTextSize-2*config.Config.BarsPeakFreqCursorBGPadding)
 		PeakFreqCursorVal = peakFreq
+	}
+	if config.Config.BarsShowPhase {
+		midPhase := cmplx.Phase(complexTot)
+		for x := range len(TargetBarsPos) {
+			TargetBarsPhasePos[x] = math.Mod(TargetBarsPhasePos[x]-midPhase+3*math.Pi, 2*math.Pi) - math.Pi
+		}
 	}
 }
 
@@ -138,7 +167,35 @@ func InterpolateBars(deltaTime float64) {
 	} else {
 		copy(InterpolatedBarsPos, TargetBarsPos)
 	}
+
+	if config.Config.BarsShowPhase {
+		if config.Config.BarsInterpolatePhase {
+			for i := range TargetBarsPhasePos {
+				InterpolatedBarsPhasePos[i] += AngleDiff(TargetBarsPhasePos[i], InterpolatedBarsPhasePos[i]) * min(1.0, deltaTime*config.Config.BarsInterpolatePhaseDirect)
+				InterpolatedBarsPhaseVel[i] += AngleDiff(TargetBarsPhasePos[i], InterpolatedBarsPhasePos[i]) * deltaTime * config.Config.BarsInterpolatePhaseAccel
+				InterpolatedBarsPhaseVel[i] -= InterpolatedBarsPhaseVel[i] * min(1.0, deltaTime*config.Config.BarsInterpolatePhaseDrag)
+				InterpolatedBarsPhasePos[i] += InterpolatedBarsPhaseVel[i] * deltaTime
+				InterpolatedBarsPhasePos[i] = InterpolatedBarsPhasePos[i] - 2*math.Pi*math.Floor((InterpolatedBarsPhasePos[i]+math.Pi)/(2*math.Pi))
+			}
+		} else {
+			copy(InterpolatedBarsPhasePos, TargetBarsPhasePos)
+		}
+	}
 }
+
+func AngleDiff(a, b float64) float64 {
+	direct := a - b
+	indirecta := a - b - 2*math.Pi
+	indirectb := a - b + 2*math.Pi
+	ret := direct
+	if math.Abs(direct) > math.Abs(indirecta) {
+		ret = indirecta
+	}
+	if math.Abs(indirecta) > math.Abs(indirectb) {
+		ret = indirectb
+	}
+	return ret
+} // return a-b with the smallest possible magnitude and sign in the correct direction a and b between -pi and pi
 
 func CalcNote(freq float64) int {
 	return int(math.Round(12*math.Log2(freq/config.Config.BarsPeakFreqCursorTextDisplayNoteRefFreq))) - 3

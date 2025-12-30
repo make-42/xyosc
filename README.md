@@ -218,6 +218,14 @@ barsinterpolatepos: true
 barsinterpolateaccel: 20
 barsinterpolatedrag: 2
 barsinterpolatedirect: 20
+barsshowphase: false
+barsphasecolorlmult: 0.8
+barsphasecolorcmult: 3
+barsphasecolorhmult: 1.0
+barsinterpolatephase: true
+barsinterpolatephaseaccel: 2.0
+barsinterpolatephasedrag: 0.2
+barsinterpolatephasedirect: 2.0
 barspeakfreqcursor: false
 barspeakfreqcursortextdisplaynote: true
 barspeakfreqcursortextdisplaynotereffreq: 440

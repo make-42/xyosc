@@ -3,6 +3,7 @@ module xyosc
 go 1.24.0
 
 require (
+	github.com/alltom/oklab v1.0.0
 	github.com/argusdusty/gofft v1.2.1
 	github.com/chewxy/math32 v1.11.1
 	github.com/fogleman/ease v0.0.0-20170301025033-8da417bf1776

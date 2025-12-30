@@ -6,11 +6,12 @@ import (
 	"image/color"
 	"os"
 	"path/filepath"
-	"xyosc/utils"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/kirsle/configdir"
 	"gopkg.in/yaml.v2"
+
+	"xyosc/utils"
 )
 
 const (
@@ -30,9 +31,9 @@ type ConfigS struct {
 	FilterInfoTextPaddingBottom                      float64
 	ShowMPRIS                                        bool
 	MPRISTextOpacity                                 uint8
-	MPRISTextTitleYOffset							 float64
-	MPRISTextAlbumYOffset 							 float64
-	MPRISTextDurationYOffset 						 float64
+	MPRISTextTitleYOffset                            float64
+	MPRISTextAlbumYOffset                            float64
+	MPRISTextDurationYOffset                         float64
 	TargetFPS                                        int32
 	WindowWidth                                      int32
 	WindowHeight                                     int32
@@ -151,6 +152,14 @@ type ConfigS struct {
 	BarsInterpolateAccel                             float64
 	BarsInterpolateDrag                              float64
 	BarsInterpolateDirect                            float64
+	BarsShowPhase                                    bool
+	BarsPhaseColorLMult                              float64
+	BarsPhaseColorCMult                              float64
+	BarsPhaseColorHMult                              float64
+	BarsInterpolatePhase                             bool
+	BarsInterpolatePhaseAccel                        float64
+	BarsInterpolatePhaseDrag                         float64
+	BarsInterpolatePhaseDirect                       float64
 	BarsPeakFreqCursor                               bool
 	BarsPeakFreqCursorTextDisplayNote                bool
 	BarsPeakFreqCursorTextDisplayNoteRefFreq         float64
@@ -214,8 +223,8 @@ var DefaultConfig = ConfigS{
 	FilterInfoTextPaddingLeft:                16,
 	FilterInfoTextPaddingBottom:              4,
 	ShowMPRIS:                                false,
-	MPRISTextTitleYOffset: 					  0,
-	MPRISTextAlbumYOffset:  			      -7,
+	MPRISTextTitleYOffset:                    0,
+	MPRISTextAlbumYOffset:                    -7,
 	MPRISTextDurationYOffset:                 0,
 	MPRISTextOpacity:                         255,
 	TargetFPS:                                240,
@@ -336,6 +345,14 @@ var DefaultConfig = ConfigS{
 	BarsInterpolateAccel:                             20.,
 	BarsInterpolateDrag:                              2.,
 	BarsInterpolateDirect:                            20.,
+	BarsShowPhase:                                    false,
+	BarsPhaseColorLMult:                              0.8,
+	BarsPhaseColorCMult:                              3,
+	BarsPhaseColorHMult:                              1.0,
+	BarsInterpolatePhase:                             true,
+	BarsInterpolatePhaseAccel:                        2.,
+	BarsInterpolatePhaseDrag:                         .2,
+	BarsInterpolatePhaseDirect:                       2.,
 	BarsPeakFreqCursor:                               false,
 	BarsPeakFreqCursorTextDisplayNote:                true,
 	BarsPeakFreqCursorTextDisplayNoteRefFreq:         440.,
