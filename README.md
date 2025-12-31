@@ -331,12 +331,12 @@ shaders:
   - name: gammacorrectionalphafriendly
     arguments:
       MidPoint: 0.1
-      Strength: 2
+      Strength: 2.
     timescale: 0
   - name: gammacorrectionalphafriendly
     arguments:
       MidPoint: 0.45
-      Strength: 8
+      Strength: 8.
     timescale: 0
   - name: chromaticabberation
     arguments:
@@ -349,12 +349,12 @@ shaders:
   - name: gammacorrection
     arguments:
       MidPoint: 0.1
-      Strength: 2
+      Strength: 2.
     timescale: 0
   - name: gammacorrection
     arguments:
       MidPoint: 0.45
-      Strength: 10
+      Strength: 10.
     timescale: 0
   - name: chromaticabberation
     arguments:
@@ -367,12 +367,12 @@ shaders:
   - name: gammacorrection
     arguments:
       MidPoint: 0.1
-      Strength: 4
+      Strength: 4.
     timescale: 0
   - name: gammacorrection
     arguments:
       MidPoint: 0.45
-      Strength: 8
+      Strength: 8.
     timescale: 0
   - name: chromaticabberation
     arguments:
@@ -389,12 +389,12 @@ shaders:
   - name: gammacorrection
     arguments:
       MidPoint: 0.1
-      Strength: 2
+      Strength: 2.
     timescale: 0
   - name: gammacorrection
     arguments:
       MidPoint: 0.45
-      Strength: 10
+      Strength: 10.
     timescale: 0
   - name: chromaticabberation
     arguments:
@@ -410,12 +410,12 @@ shaders:
   - name: gammacorrection
     arguments:
       MidPoint: 0.1
-      Strength: 4
+      Strength: 4.
     timescale: 0
   - name: gammacorrection
     arguments:
       MidPoint: 0.45
-      Strength: 8
+      Strength: 8.
     timescale: 0
   - name: chromaticabberation
     arguments:
@@ -432,12 +432,12 @@ shaders:
   - name: gammacorrection
     arguments:
       MidPoint: 0.1
-      Strength: 4
+      Strength: 4.
     timescale: 0
   - name: gammacorrection
     arguments:
       MidPoint: 0.45
-      Strength: 8
+      Strength: 8.
     timescale: 0
   - name: chromaticabberation
     arguments:
