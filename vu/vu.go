@@ -4,12 +4,13 @@ import (
 	"math"
 	"slices"
 	"time"
-	"xyosc/config"
-	"xyosc/kaiser"
-	"xyosc/utils"
 
 	"github.com/argusdusty/gofft"
 	"github.com/ztrue/tracerr"
+
+	"xyosc/config"
+	"xyosc/kaiser"
+	"xyosc/utils"
 )
 
 var LoudnessLTarget = 0.0
