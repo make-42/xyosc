@@ -9,6 +9,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/kirsle/configdir"
+	"github.com/ztrue/tracerr"
 	"gopkg.in/yaml.v2"
 
 	"xyosc/utils"
@@ -52,7 +53,8 @@ type ConfigS struct {
 	Gain                                             float32
 	LineOpacity                                      uint8
 	LineBrightness                                   float64
-	LineThickness                                    float32
+	LineThicknessXY                                  float32
+	LineThicknessSingleChannel                       float32
 	LineInvSqrtOpacityControl                        bool
 	LineInvSqrtOpacityControlUseLogDecrement         bool
 	LineInvSqrtOpacityControlLogDecrementBase        float64
@@ -210,7 +212,8 @@ type ConfigS struct {
 	SplashStaticSeconds                              float64
 	SplashTransitionSeconds                          float64
 	UseShaders                                       bool
-	Shaders                                          []Shader
+	ModeShaders                                      [][]int
+	Shaders                                          [][]Shader
 	CustomShaderCode                                 map[string]string
 }
 
@@ -245,7 +248,8 @@ var DefaultConfig = ConfigS{
 	Gain:                                     1,
 	LineOpacity:                              200,
 	LineBrightness:                           1,
-	LineThickness:                            3,
+	LineThicknessXY:                          3,
+	LineThicknessSingleChannel:               3,
 	LineInvSqrtOpacityControl:                true,
 	LineInvSqrtOpacityControlUseLogDecrement: true,
 	LineInvSqrtOpacityControlLogDecrementBase:        200.0,
@@ -399,16 +403,179 @@ var DefaultConfig = ConfigS{
 	SplashStaticSeconds:                              1,
 	SplashTransitionSeconds:                          1,
 	UseShaders:                                       true,
-	Shaders: []Shader{
+	ModeShaders: [][]int{
+		{2, 4, 5, 0}, {3, 6, 0}, {3, 6, 0}, {3, 6, 0},
+	},
+	Shaders: [][]Shader{
 		{
-			Name: "glow",
-			Arguments: map[string]any{
-				"Strength": 0.1,
+			{
+				Name: "glow",
+				Arguments: map[string]any{
+					"Strength": 0.05,
+				},
+			}, {
+				Name: "chromaticabberation",
+				Arguments: map[string]any{
+					"Strength": 0.001,
+				},
 			},
 		}, {
-			Name: "chromaticabberation",
-			Arguments: map[string]any{
-				"Strength": 0.01,
+			{
+				Name: "glow",
+				Arguments: map[string]any{
+					"Strength": 0.05,
+				},
+			}, {
+				Name: "gammacorrectionalphafriendly",
+				Arguments: map[string]any{
+					"Strength": 2.,
+					"MidPoint": 0.1,
+				},
+			}, {
+				Name: "gammacorrectionalphafriendly",
+				Arguments: map[string]any{
+					"Strength": 8.,
+					"MidPoint": 0.45,
+				},
+			}, {
+				Name: "chromaticabberation",
+				Arguments: map[string]any{
+					"Strength": 0.001,
+				},
+			},
+		}, {
+			{
+				Name: "glow",
+				Arguments: map[string]any{
+					"Strength": 0.10,
+				},
+			}, {
+				Name: "gammacorrection",
+				Arguments: map[string]any{
+					"Strength": 2.,
+					"MidPoint": 0.1,
+				},
+			}, {
+				Name: "gammacorrection",
+				Arguments: map[string]any{
+					"Strength": 10.,
+					"MidPoint": 0.45,
+				},
+			}, {
+				Name: "chromaticabberation",
+				Arguments: map[string]any{
+					"Strength": 0.001,
+				},
+			},
+		}, {
+			{
+				Name: "glow",
+				Arguments: map[string]any{
+					"Strength": 0.04,
+				},
+			}, {
+				Name: "gammacorrection",
+				Arguments: map[string]any{
+					"Strength": 4.,
+					"MidPoint": 0.1,
+				},
+			}, {
+				Name: "gammacorrection",
+				Arguments: map[string]any{
+					"Strength": 8.,
+					"MidPoint": 0.45,
+				},
+			}, {
+				Name: "chromaticabberation",
+				Arguments: map[string]any{
+					"Strength": 0.001,
+				},
+			},
+		}, {
+			{
+				Name: "crtcurve",
+				Arguments: map[string]any{
+					"Strength": 0.5,
+				},
+			},
+			{
+				Name: "glow",
+				Arguments: map[string]any{
+					"Strength": 0.10,
+				},
+			}, {
+				Name: "gammacorrection",
+				Arguments: map[string]any{
+					"Strength": 2.,
+					"MidPoint": 0.1,
+				},
+			}, {
+				Name: "gammacorrection",
+				Arguments: map[string]any{
+					"Strength": 10.,
+					"MidPoint": 0.45,
+				},
+			}, {
+				Name: "chromaticabberation",
+				Arguments: map[string]any{
+					"Strength": 0.001,
+				},
+			},
+		}, {
+			{
+				Name:      "crt",
+				Arguments: map[string]any{},
+			}, {
+				Name: "glow",
+				Arguments: map[string]any{
+					"Strength": 0.05,
+				},
+			}, {
+				Name: "gammacorrection",
+				Arguments: map[string]any{
+					"Strength": 4.,
+					"MidPoint": 0.1,
+				},
+			}, {
+				Name: "gammacorrection",
+				Arguments: map[string]any{
+					"Strength": 8.,
+					"MidPoint": 0.45,
+				},
+			}, {
+				Name: "chromaticabberation",
+				Arguments: map[string]any{
+					"Strength": 0.001,
+				},
+			},
+		}, {
+			{
+				Name: "crtcurve",
+				Arguments: map[string]any{
+					"Strength": 0.5,
+				},
+			}, {
+				Name: "glow",
+				Arguments: map[string]any{
+					"Strength": 0.04,
+				},
+			}, {
+				Name: "gammacorrection",
+				Arguments: map[string]any{
+					"Strength": 4.,
+					"MidPoint": 0.1,
+				},
+			}, {
+				Name: "gammacorrection",
+				Arguments: map[string]any{
+					"Strength": 8.,
+					"MidPoint": 0.45,
+				},
+			}, {
+				Name: "chromaticabberation",
+				Arguments: map[string]any{
+					"Strength": 0.001,
+				},
 			},
 		},
 	},
@@ -461,7 +628,7 @@ var HannWindow []float64
 func Init() {
 	configPath := configdir.LocalConfig("ontake", "xyosc")
 	err := configdir.MakePath(configPath) // Ensure it exists.
-	utils.CheckError(err)
+	utils.CheckError(tracerr.Wrap(err))
 
 	configFile := filepath.Join(configPath, "config.yml")
 
@@ -469,7 +636,7 @@ func Init() {
 	if _, err = os.Stat(configFile); os.IsNotExist(err) {
 		// Create the new config file.
 		fh, err := os.Create(configFile)
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 		defer fh.Close()
 
 		encoder := yaml.NewEncoder(fh)
@@ -479,7 +646,7 @@ func Init() {
 		Config = DefaultConfig
 		// Load the existing file.
 		fh, err := os.Open(configFile)
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 		defer fh.Close()
 
 		decoder := yaml.NewDecoder(fh)
@@ -488,7 +655,7 @@ func Init() {
 
 	// Get pywal accent color
 	watcher, err = fsnotify.NewWatcher()
-	utils.CheckError(err)
+	utils.CheckError(tracerr.Wrap(err))
 	updatePywalColors()
 	walPath := configdir.LocalCache("wal")
 	walFile := filepath.Join(walPath, "colors")
@@ -507,21 +674,21 @@ func Init() {
 				if !ok {
 					return
 				}
-				utils.CheckError(err)
+				utils.CheckError(tracerr.Wrap(err))
 			}
 		}
 	}()
 	if _, err := os.Stat(walFile); os.IsNotExist(err) {
 	} else {
 		err = watcher.Add(walFile)
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 	}
 }
 
 func updatePywalColors() {
 	/* This is not synced to pywal */
 	BGColorParsed, err := ParseHexColor(Config.BGColor)
-	utils.CheckError(err)
+	utils.CheckError(tracerr.Wrap(err))
 	BGColor = color.RGBA{BGColorParsed.R, BGColorParsed.G, BGColorParsed.B, Config.BGOpacity}
 	/* end */
 
@@ -529,13 +696,13 @@ func updatePywalColors() {
 	walFile := filepath.Join(walPath, "colors")
 	if _, err := os.Stat(walFile); os.IsNotExist(err) || Config.ForceColors {
 		AccentColorParsed, err := ParseHexColor(Config.AccentColor)
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 		FirstColorParsed, err := ParseHexColor(Config.FirstColor)
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 		ThirdColorParsed, err := ParseHexColor(Config.ThirdColor)
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 		ParticleColorParsed, err := ParseHexColor(Config.ParticleColor)
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 
 		AccentColor = color.RGBA{AccentColorParsed.R, AccentColorParsed.G, AccentColorParsed.B, Config.LineOpacity}
 		FirstColor = color.RGBA{FirstColorParsed.R, FirstColorParsed.G, FirstColorParsed.B, Config.LineOpacity}
@@ -544,7 +711,7 @@ func updatePywalColors() {
 		ThirdColorAdj = color.RGBA{uint8(float64(ThirdColorParsed.R) * Config.LineBrightness), uint8(float64(ThirdColorParsed.G) * Config.LineBrightness), uint8(float64(ThirdColorParsed.B) * Config.LineBrightness), Config.LineOpacity}
 	} else {
 		fh, err := os.Open(walFile)
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 		defer fh.Close()
 		scanner := bufio.NewScanner(fh)
 		var line int
@@ -552,17 +719,17 @@ func updatePywalColors() {
 		for scanner.Scan() {
 			if line == 0 {
 				rgbaColor, err = ParseHexColor(scanner.Text())
-				utils.CheckError(err)
+				utils.CheckError(tracerr.Wrap(err))
 				FirstColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
 			}
 			if line == 1 {
 				rgbaColor, err = ParseHexColor(scanner.Text())
-				utils.CheckError(err)
+				utils.CheckError(tracerr.Wrap(err))
 				AccentColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
 			}
 			if line == 2 {
 				rgbaColor, err = ParseHexColor(scanner.Text())
-				utils.CheckError(err)
+				utils.CheckError(tracerr.Wrap(err))
 				ThirdColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
 				ThirdColorAdj = color.RGBA{uint8(float64(rgbaColor.R) * Config.LineBrightness), uint8(float64(rgbaColor.G) * Config.LineBrightness), uint8(float64(rgbaColor.B) * Config.LineBrightness), Config.LineOpacity}
 				ParticleColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}

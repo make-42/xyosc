@@ -71,7 +71,8 @@ var overrideY *int
 var XYComplexFFTBufferL []complex128
 var XYComplexFFTBufferR []complex128
 
-var StillSamePressFromToggleKey bool
+var StillSamePressFromModeToggleKey bool
+var StillSamePressFromPresetToggleKey bool
 
 var barsLastFrameTime time.Time
 var beatTimeLastFrameTime time.Time
@@ -96,6 +97,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screen.Fill(config.BGColor)
 		}
 	}
+	if config.Config.ShowMPRIS {
+		media.Interpolate()
+	}
 	scale := min(config.Config.WindowWidth, config.Config.WindowHeight) / 2
 	var AX float32
 	var AY float32
@@ -103,12 +107,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	var BY float32
 	posStartRead := (config.Config.RingBufferSize + audio.WriteHeadPosition - numSamples*2 - config.Config.ReadBufferDelay) % config.Config.RingBufferSize
 	if slices.Contains(pressedKeys, ebiten.KeyF) {
-		if !StillSamePressFromToggleKey {
-			StillSamePressFromToggleKey = true
+		if !StillSamePressFromModeToggleKey {
+			StillSamePressFromModeToggleKey = true
 			config.Config.DefaultMode = (config.Config.DefaultMode + 1) % 4
 		}
 	} else {
-		StillSamePressFromToggleKey = false
+		StillSamePressFromModeToggleKey = false
+	}
+	if slices.Contains(pressedKeys, ebiten.KeyP) {
+		if !StillSamePressFromPresetToggleKey {
+			StillSamePressFromPresetToggleKey = true
+			shaders.SelectedPreset[config.Config.DefaultMode] += 1
+		}
+	} else {
+		StillSamePressFromPresetToggleKey = false
 	}
 
 	if (config.Config.DefaultMode == config.XYMode || config.Config.DefaultMode == config.SingleChannelMode) && config.Config.ScaleEnable {
@@ -210,12 +222,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					}
 					colorAdjusted := color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, uint8(float64(config.Config.LineOpacity) * mult)}
 					if config.Config.LineOpacityControlAlsoAppliesToThickness {
-						vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness*float32(mult), colorAdjusted, true)
+						vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThicknessXY*float32(mult), colorAdjusted, true)
 					} else {
-						vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness, colorAdjusted, true)
+						vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThicknessXY, colorAdjusted, true)
 					}
 				} else {
-					vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThickness, config.ThirdColorAdj, true)
+					vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThicknessXY, config.ThirdColorAdj, true)
 				}
 			}
 			S += float32(AX)*float32(AX) + float32(AY)*float32(AY)
@@ -390,7 +402,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					}
 				}
 				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
-					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)-fAX, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)-fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)-fAX, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)-fBX, config.Config.LineThicknessSingleChannel, config.ThirdColorAdj, true)
 				}
 			}
 		} else {
@@ -424,7 +436,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					}
 				}
 				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
-					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2))/float32((config.Config.SingleChannelWindow/2)), float32(config.Config.WindowHeight/2)-fAX, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2)+1)/float32(config.Config.SingleChannelWindow/2), float32(config.Config.WindowHeight/2)-fBX, config.Config.LineThickness, config.ThirdColorAdj, true)
+					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2))/float32((config.Config.SingleChannelWindow/2)), float32(config.Config.WindowHeight/2)-fAX, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2)+1)/float32(config.Config.SingleChannelWindow/2), float32(config.Config.WindowHeight/2)-fBX, config.Config.LineThicknessSingleChannel, config.ThirdColorAdj, true)
 				}
 			}
 		}
@@ -618,11 +630,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		timeUniform := float32(time.Since(startTime).Milliseconds()) / 1000
 		op := &ebiten.DrawRectShaderOptions{}
 		op.Images[2] = shaderWorkBuffer
+		shaders.GenShaderRenderList()
 		for _, shader := range shaders.ShaderRenderList {
 			shaderWorkBuffer.Clear()
 			shaderWorkBuffer.DrawImage(screen, nil)
 			op.Uniforms = shader.Arguments
 			op.Uniforms["Time"] = timeUniform * shader.TimeScale
+			screen.Clear()
 			screen.DrawRectShader(int(config.Config.WindowWidth), int(config.Config.WindowHeight), shader.Shader, op)
 		}
 	}

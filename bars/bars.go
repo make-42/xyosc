@@ -6,6 +6,7 @@ import (
 	"math/cmplx"
 
 	"github.com/argusdusty/gofft"
+	"github.com/ztrue/tracerr"
 
 	"xyosc/config"
 	"xyosc/kaiser"
@@ -49,7 +50,7 @@ func CalcBars(inputArray *[]complex128, lowCutOffFrac float64, highCutOffFrac fl
 		}
 	}
 	err := gofft.FFT(*inputArray)
-	utils.CheckError(err)
+	utils.CheckError(tracerr.Wrap(err))
 	numBars := float64(len(TargetBarsPos))
 	complexTot := complex128(0.0)
 	complexSum := complex128(0.0)

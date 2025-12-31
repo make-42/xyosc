@@ -6,12 +6,12 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"xyosc/utils"
 
 	"github.com/godbus/dbus"
 	"github.com/leberKleber/go-mpris"
-
 	"github.com/ztrue/tracerr"
+
+	"xyosc/utils"
 )
 
 func FmtDuration(s float64) string {
@@ -26,13 +26,24 @@ type CurrentPlayingMediaInfo struct {
 	Artist   string
 	Position float64
 	Duration float64
+	Playing  bool
 }
 
 var PlayingMediaInfo CurrentPlayingMediaInfo
 
+var lastInterpolationCallTime time.Time
+
+func Interpolate() {
+	if PlayingMediaInfo.Playing {
+		PlayingMediaInfo.Position += float64(time.Since(lastInterpolationCallTime).Microseconds()) / 1000000
+	}
+	lastInterpolationCallTime = time.Now()
+}
+
 func Start() {
 	for {
 		PlayingMediaInfo = GetCurrentPlayingMediaInfo()
+		lastInterpolationCallTime = time.Now()
 		time.Sleep(time.Second * 1)
 	}
 }
@@ -58,7 +69,7 @@ func GetCurrentPlayingMediaInfo() CurrentPlayingMediaInfo {
 	case "linux":
 		players := ListPlayers()
 		if len(players) == 0 {
-			return CurrentPlayingMediaInfo{"No media", "", "", 0, 0}
+			return CurrentPlayingMediaInfo{"No media", "", "", 0, 0, false}
 		}
 		p, err := mpris.NewPlayer(players[0])
 		utils.CheckError(tracerr.Wrap(err))
@@ -83,8 +94,14 @@ func GetCurrentPlayingMediaInfo() CurrentPlayingMediaInfo {
 			mediaArtist = mediaArtists[0]
 		}
 		utils.CheckError(tracerr.Wrap(err))
-		return CurrentPlayingMediaInfo{mediaTitle, mediaAlbum, mediaArtist, mediaPosition, mediaDuration}
+		status, err := p.PlaybackStatus()
+		utils.CheckError(tracerr.Wrap(err))
+		playing := false
+		if status == mpris.PlaybackStatusPlaying {
+			playing = true
+		}
+		return CurrentPlayingMediaInfo{mediaTitle, mediaAlbum, mediaArtist, mediaPosition, mediaDuration, playing}
 	default:
-		return CurrentPlayingMediaInfo{"Platform not supported", "Sorry", "", 0, 0}
+		return CurrentPlayingMediaInfo{"Platform not supported", "Sorry", "", 0, 0, false}
 	}
 }

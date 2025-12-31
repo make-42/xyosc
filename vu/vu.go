@@ -9,6 +9,7 @@ import (
 	"xyosc/utils"
 
 	"github.com/argusdusty/gofft"
+	"github.com/ztrue/tracerr"
 )
 
 var LoudnessLTarget = 0.0
@@ -58,7 +59,7 @@ func CalcLoudness(inputArray *[]complex128, lowCutFrac, hiCutFrac float64) float
 			}
 		}
 		err := gofft.FFT(*inputArray)
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 		for x := range len(*inputArray) {
 			frac := float64(x+1) / float64(len(*inputArray))
 			if lowCutFrac <= frac && frac < hiCutFrac {
@@ -66,7 +67,7 @@ func CalcLoudness(inputArray *[]complex128, lowCutFrac, hiCutFrac float64) float
 			}
 		}
 		err = gofft.IFFT(*inputArray)
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 		for x := range len(*inputArray) {
 			val := real((*inputArray)[x])*real((*inputArray)[x]) + imag((*inputArray)[x])*imag((*inputArray)[x])
 			vol = max(val, vol)

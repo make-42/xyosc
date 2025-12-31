@@ -23,7 +23,7 @@ func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
 			}
 		}
 	}
-	sum *= Strength
+	sum = (1-Strength)*clr + Strength*sum
 
-	return mix(clr, sum, 1.0)
+	return sum
 }

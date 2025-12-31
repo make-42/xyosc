@@ -3,12 +3,14 @@ package align
 import (
 	"math"
 	"sort"
-	"xyosc/config"
-	"xyosc/kaiser"
-	"xyosc/utils"
 
 	"github.com/argusdusty/gofft"
 	"github.com/goccmack/godsp/peaks"
+	"github.com/ztrue/tracerr"
+
+	"xyosc/config"
+	"xyosc/kaiser"
+	"xyosc/utils"
 )
 
 var realBuffer []float64
@@ -37,7 +39,7 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 		}
 	}
 	err := gofft.FastConvolve(*inputArray, *inputArrayFlipped)
-	utils.CheckError(err)
+	utils.CheckError(tracerr.Wrap(err))
 
 	for i := uint32(0); i < numSamples; i++ {
 		realBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = real((*inputArray)[i])
@@ -79,7 +81,7 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 				sineWaveBuffer[numSamples-i-1] = complex(math.Sin(float64(i)*2*math.Pi/float64(avgPeriod)), 0)
 			}
 			err := gofft.FastConvolve(inputBufferCopied, sineWaveBuffer)
-			utils.CheckError(err)
+			utils.CheckError(tracerr.Wrap(err))
 			maxVal := real(inputBufferCopied[0])
 			offset = uint32(0)
 			for i := uint32(1); i < numSamples; i++ {

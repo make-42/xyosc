@@ -4,11 +4,13 @@ import (
 	"embed"
 	"image"
 	"time"
-	"xyosc/config"
-	"xyosc/utils"
 
 	"github.com/fogleman/ease"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/ztrue/tracerr"
+
+	"xyosc/config"
+	"xyosc/utils"
 )
 
 //go:embed assets/icon-48-trans.png
@@ -22,9 +24,9 @@ var splashTransDuration time.Duration
 func Init() {
 	if config.Config.ShowSplash {
 		data, err := f.Open("assets/icon-48-trans.png")
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 		splashLogoUncasted, _, err := image.Decode(data)
-		utils.CheckError(err)
+		utils.CheckError(tracerr.Wrap(err))
 		splashLogo = ebiten.NewImageFromImage(splashLogoUncasted)
 		data.Close()
 		startTime = time.Now()

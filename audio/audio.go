@@ -5,10 +5,12 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
-	"xyosc/config"
-	"xyosc/utils"
 
 	"github.com/gen2brain/malgo"
+	"github.com/ztrue/tracerr"
+
+	"xyosc/config"
+	"xyosc/utils"
 )
 
 var SampleRingBufferUnsafe []float32
@@ -27,7 +29,7 @@ func Start() {
 	ctx, err := malgo.InitContext(nil, malgo.ContextConfig{}, func(message string) {
 		fmt.Printf("LOG <%v>\n", message)
 	})
-	utils.CheckError(err)
+	utils.CheckError(tracerr.Wrap(err))
 	defer func() {
 		_ = ctx.Uninit()
 		ctx.Free()
@@ -88,11 +90,11 @@ func Start() {
 	}
 	device, err := malgo.InitDevice(ctx.Context, deviceConfig, captureCallbacks)
 
-	utils.CheckError(err)
+	utils.CheckError(tracerr.Wrap(err))
 
 	err = device.Start()
 
-	utils.CheckError(err)
+	utils.CheckError(tracerr.Wrap(err))
 	select {}
 	//device.Uninit()
 }

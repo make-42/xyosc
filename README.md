@@ -60,7 +60,7 @@ Note: `xyosc` might not chose the right device to get audio from by default. Whe
  - MPRIS support
  - frequency separation
  - theming support
- - shader support (using ebitengine's [Kage](https://ebitengine.org/en/documents/shader.html) shader language)
+ - shader support (using ebitengine's [Kage](https://ebitengine.org/en/documents/shader.html) shader language) - you can cycle through presets with the `P` key
  - (soon: waterfall mode + keyboard vis (with fading anims))
 
 ## NixOS
@@ -119,7 +119,8 @@ beatdetectdownsamplefactor: 4
 gain: 1
 lineopacity: 200
 linebrightness: 1
-linethickness: 3
+linethicknessxy: 3
+linethicknesssinglechannel: 3
 lineinvsqrtopacitycontrol: true
 lineinvsqrtopacitycontroluselogdecrement: true
 lineinvsqrtopacitycontrollogdecrementbase: 200.0
@@ -300,16 +301,148 @@ showsplash: true
 splashstaticseconds: 1
 splashtransitionseconds: 1
 useshaders: true
+modeshaders:
+- - 2
+  - 4
+  - 5
+  - 0
+- - 3
+  - 6
+  - 0
+- - 3
+  - 6
+  - 0
+- - 3
+  - 6
+  - 0
 shaders:
-- name: glow
-  arguments:
-    Strength: 0.02
-- name: glow
-  arguments:
-    Strength: 0.02
-- name: chromaticabberation2
-  arguments:
-    Strength: 0.005
+- - name: glow
+    arguments:
+      Strength: 0.05
+    timescale: 0
+  - name: chromaticabberation
+    arguments:
+      Strength: 0.001
+    timescale: 0
+- - name: glow
+    arguments:
+      Strength: 0.05
+    timescale: 0
+  - name: gammacorrectionalphafriendly
+    arguments:
+      MidPoint: 0.1
+      Strength: 2
+    timescale: 0
+  - name: gammacorrectionalphafriendly
+    arguments:
+      MidPoint: 0.45
+      Strength: 8
+    timescale: 0
+  - name: chromaticabberation
+    arguments:
+      Strength: 0.001
+    timescale: 0
+- - name: glow
+    arguments:
+      Strength: 0.1
+    timescale: 0
+  - name: gammacorrection
+    arguments:
+      MidPoint: 0.1
+      Strength: 2
+    timescale: 0
+  - name: gammacorrection
+    arguments:
+      MidPoint: 0.45
+      Strength: 10
+    timescale: 0
+  - name: chromaticabberation
+    arguments:
+      Strength: 0.001
+    timescale: 0
+- - name: glow
+    arguments:
+      Strength: 0.04
+    timescale: 0
+  - name: gammacorrection
+    arguments:
+      MidPoint: 0.1
+      Strength: 4
+    timescale: 0
+  - name: gammacorrection
+    arguments:
+      MidPoint: 0.45
+      Strength: 8
+    timescale: 0
+  - name: chromaticabberation
+    arguments:
+      Strength: 0.001
+    timescale: 0
+- - name: crtcurve
+    arguments:
+      Strength: 0.5
+    timescale: 0
+  - name: glow
+    arguments:
+      Strength: 0.1
+    timescale: 0
+  - name: gammacorrection
+    arguments:
+      MidPoint: 0.1
+      Strength: 2
+    timescale: 0
+  - name: gammacorrection
+    arguments:
+      MidPoint: 0.45
+      Strength: 10
+    timescale: 0
+  - name: chromaticabberation
+    arguments:
+      Strength: 0.001
+    timescale: 0
+- - name: crt
+    arguments: {}
+    timescale: 0
+  - name: glow
+    arguments:
+      Strength: 0.05
+    timescale: 0
+  - name: gammacorrection
+    arguments:
+      MidPoint: 0.1
+      Strength: 4
+    timescale: 0
+  - name: gammacorrection
+    arguments:
+      MidPoint: 0.45
+      Strength: 8
+    timescale: 0
+  - name: chromaticabberation
+    arguments:
+      Strength: 0.001
+    timescale: 0
+- - name: crtcurve
+    arguments:
+      Strength: 0.5
+    timescale: 0
+  - name: glow
+    arguments:
+      Strength: 0.04
+    timescale: 0
+  - name: gammacorrection
+    arguments:
+      MidPoint: 0.1
+      Strength: 4
+    timescale: 0
+  - name: gammacorrection
+    arguments:
+      MidPoint: 0.45
+      Strength: 8
+    timescale: 0
+  - name: chromaticabberation
+    arguments:
+      Strength: 0.001
+    timescale: 0
 customshadercode:
   noise: "//go:build ignore\n\n//kage:unit pixels\n\npackage main\n\nvar Strength
       float\nvar Time float\nvar Scale float\n\nfunc Fragment(dstPos vec4, srcPos vec2,
