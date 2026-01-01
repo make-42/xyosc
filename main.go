@@ -379,8 +379,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 			its := min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount) - 1
 			for i := uint32(0); i < its; i++ {
-				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
-				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
+				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
+				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
 				if config.Config.SmoothWaveOverPeriods {
 					smoothPeriods := min((numSamples/its)-1, config.Config.SmoothWaveOverPeriodsMax)
 					if smoothPeriods > 0 {
@@ -393,8 +393,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 						rescale := float32(1.)
 						for k := range smoothPeriods {
 							fact := float32(math.Pow(q, float64(k+1)))
-							fAX += fact * float32(FFTBuffer[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(scale)
-							fBX += fact * float32(FFTBuffer[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(scale)
+							fAX += fact * float32(FFTBuffer[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
+							fBX += fact * float32(FFTBuffer[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
 							rescale += fact
 						}
 						fAX /= rescale
@@ -410,8 +410,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				offset -= config.Config.SingleChannelWindow / 4
 			}
 			for i := uint32(0); i < config.Config.SingleChannelWindow/2-1; i++ {
-				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(scale)
-				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(scale)
+				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
+				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
 				if config.Config.OscilloscopeStartPeakDetection || *peakDetectOverride {
 					its := samplesPerPeriod
 					if config.Config.SmoothWaveOverPeriods {
