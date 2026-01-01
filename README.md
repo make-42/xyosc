@@ -1,5 +1,14 @@
 # xyosc
 A simple XY-oscilloscope written in Go.
+<p align="middle">
+  <img width="507" height="508" alt="image" src="https://github.com/user-attachments/assets/bfe95372-d7a3-46ef-ba8c-bc3eeb7fcbf2" />
+  <img width="507" height="508" alt="image" src="https://github.com/user-attachments/assets/c4948f6a-0600-4c2d-a734-06aa2bcfe695" />
+</p>
+<p align="middle">
+  <img width="507" height="508" alt="image" src="https://github.com/user-attachments/assets/8f126293-5f57-4192-a26d-530fec8c6074" />
+  <img width="507" height="508" alt="image" src="https://github.com/user-attachments/assets/85c30348-bd23-47ac-84ca-fc007837a0ac" />
+</p>
+
 
 # Instalation
 
