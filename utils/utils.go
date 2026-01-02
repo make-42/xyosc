@@ -2,13 +2,14 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"math"
+
+	"github.com/ztrue/tracerr"
 )
 
 func CheckError(err error) {
 	if err != nil {
-		log.Fatal(err)
+		tracerr.PrintSourceColor(err)
 	}
 }
 
