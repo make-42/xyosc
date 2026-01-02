@@ -37,6 +37,8 @@ import (
 	"xyosc/splash"
 	"xyosc/utils"
 	"xyosc/vu"
+
+	_ "github.com/silbinarywolf/preferdiscretegpu"
 )
 
 type Game struct {
