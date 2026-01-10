@@ -160,11 +160,9 @@ imageretention:
 singlechannelosc:
   displaybuffersize: 8192
   periodcrop:
-    enable: true
+    enable: false
     displaycount: 2
     loopovercount: 1
-  aligntolastpossiblepeak: false
-  triggerthroughoutwindow: false
   peakdetect:
     enable: true
     peakdetectseparator: 100

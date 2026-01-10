@@ -78,12 +78,10 @@ type PeriodCropConfig struct {
 }
 
 type SingleChannelOscilloscopeConfig struct {
-	DisplayBufferSize       uint32
-	PeriodCrop              PeriodCropConfig
-	AlignToLastPossiblePeak bool
-	TriggerThroughoutWindow bool
-	PeakDetect              PeakDetectionConfig
-	SmoothWave              SmoothWaveConfig
+	DisplayBufferSize uint32
+	PeriodCrop        PeriodCropConfig
+	PeakDetect        PeakDetectionConfig
+	SmoothWave        SmoothWaveConfig
 }
 
 type PeakDetectionConfig struct {
@@ -417,7 +415,7 @@ var DefaultConfig = ConfigS{
 	SingleChannelOsc: SingleChannelOscilloscopeConfig{
 		DisplayBufferSize: 8192,
 		PeriodCrop: PeriodCropConfig{
-			Enable:        true,
+			Enable:        false,
 			DisplayCount:  2,
 			LoopOverCount: 1,
 		},
