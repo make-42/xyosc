@@ -114,8 +114,8 @@ fonts:
   usesystemfont: true
   systemfont: Maple Mono NF
 audio:
-  capturedevicematchindex: 0
-  capturedevicematchname: ""
+  capturedevicematchindex: 2
+  capturedevicematchname: "Monitor of Easy Effects Sink"
   capturedevicematchsamplerate: 0
   samplerate: 192000
   gain: 1
@@ -124,39 +124,39 @@ buffers:
   ringbuffersize: 2097152
   readbuffersize: 16384
   readbufferdelay: 32
-  xyoscilloscopereadbuffersize: 2048
+  xyoscilloscopereadbuffersize: 8192
   beatdetectreadbuffersize: 2097152
 windowfn:
   usekaiserinsteadofhann: true
   kaiserparam: 8
 line:
-  opacity: 200
+  opacity: 255
   brightness: 1
   thicknessxy: 3
   thicknesssinglechannel: 3
   invsqrtopacitycontrol:
     enable: true
     uselogdecrement: true
-    logbase: 200
-    logoffset: 0.99
+    logbase: 10
+    logoffset: 1
   timedependentopacitycontrol:
     enable: true
-    base: 0.999
+    base: 0.9997
   opacityalsoaffectsthickness: true
 colors:
   useconfigcolorsinsteadofpywal: true
   palette:
-    accent: '#E7BDB9'
-    first: '#E7BDB9'
-    third: '#E7BDB9'
-    particle: '#F9DCD9'
-    bg: '#2B1C1A'
-  bgopacity: 200
-  disablebgtransparency: false
+    accent: "#C1C7D2"
+    first: "#C1C7D2"
+    third: "#C1C7D2"
+    particle: "#DDE3EE"
+    bg: "#080F16"
+  bgopacity: 255
+  disablebgtransparency: true
 imageretention:
-  enable: true
-  alphadecaybase: 1e-07
-  alphadecayspeed: 2
+  enable: false
+  alphadecaybase: 0.1
+  alphadecayspeed: 10.0
 singlechannelosc:
   displaybuffersize: 8192
   periodcrop:
@@ -184,7 +184,7 @@ singlechannelosc:
     timeindependentfactor: 0.4
     maxperiods: 10
 scale:
-  enable: true
+  enable: false
   mainaxisenable: true
   textopacity: 255
   mainaxisthickness: 2
@@ -220,10 +220,10 @@ particles:
 bars:
   usewindowfn: true
   preserveparsevalenergy: true
-  preventleakageabovefreq: 170000
-  width: 4
+  preventleakageabovefreq: 160000
+  width: 0.5
   paddingedge: 4
-  paddingbetween: 4
+  paddingbetween: 0
   autogain:
     enable: true
     speed: 0.5
@@ -244,9 +244,9 @@ bars:
     bgpadding: 2
     interpolatepos:
       enable: true
-      accel: 5
-      drag: 20
-      direct: 1
+      accel: 0.1
+      drag: 1
+      direct: 0.01
   phasecolors:
     enable: false
     lmult: 0.8
@@ -373,12 +373,12 @@ shaders:
     - name: gammacorrectionalphafriendly
       arguments:
         MidPoint: 0.1
-        Strength: 2
+        Strength: 2.
       timescale: 0
     - name: gammacorrectionalphafriendly
       arguments:
         MidPoint: 0.45
-        Strength: 8
+        Strength: 8.
       timescale: 0
     - name: chromaticabberation
       arguments:
@@ -391,12 +391,12 @@ shaders:
     - name: gammacorrection
       arguments:
         MidPoint: 0.1
-        Strength: 2
+        Strength: 2.
       timescale: 0
     - name: gammacorrection
       arguments:
         MidPoint: 0.45
-        Strength: 10
+        Strength: 10.
       timescale: 0
     - name: chromaticabberation
       arguments:
@@ -409,12 +409,12 @@ shaders:
     - name: gammacorrection
       arguments:
         MidPoint: 0.1
-        Strength: 4
+        Strength: 4.
       timescale: 0
     - name: gammacorrection
       arguments:
         MidPoint: 0.45
-        Strength: 8
+        Strength: 8.
       timescale: 0
     - name: chromaticabberation
       arguments:
@@ -431,12 +431,12 @@ shaders:
     - name: gammacorrection
       arguments:
         MidPoint: 0.1
-        Strength: 2
+        Strength: 2.
       timescale: 0
     - name: gammacorrection
       arguments:
         MidPoint: 0.45
-        Strength: 10
+        Strength: 10.
       timescale: 0
     - name: chromaticabberation
       arguments:
@@ -452,12 +452,12 @@ shaders:
     - name: gammacorrection
       arguments:
         MidPoint: 0.1
-        Strength: 4
+        Strength: 4.
       timescale: 0
     - name: gammacorrection
       arguments:
         MidPoint: 0.45
-        Strength: 8
+        Strength: 8.
       timescale: 0
     - name: chromaticabberation
       arguments:
@@ -474,12 +474,12 @@ shaders:
     - name: gammacorrection
       arguments:
         MidPoint: 0.1
-        Strength: 4
+        Strength: 4.
       timescale: 0
     - name: gammacorrection
       arguments:
         MidPoint: 0.45
-        Strength: 8
+        Strength: 8.
       timescale: 0
     - name: chromaticabberation
       arguments:
