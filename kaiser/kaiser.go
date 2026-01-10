@@ -2,9 +2,10 @@ package kaiser
 
 import (
 	"math"
-	"xyosc/config"
 
 	"github.com/mjibson/go-dsp/window"
+
+	"xyosc/config"
 )
 
 var Prec int = 20
@@ -37,11 +38,11 @@ func Kaiser(n int, alpha float64) []float64 {
 }
 
 func Init() {
-	if config.Config.BarsUseWindow || config.Config.BetterPeakDetectionAlgorithmUseWindow || config.Config.ComplexTriggeringAlgorithmUseCorrelation {
-		if config.Config.UseKaiserInsteadOfHannWindow {
-			WindowBuffer = Kaiser(int(config.Config.ReadBufferSize/2), config.Config.KaiserWindowParam)
+	if config.Config.Bars.UseWindowFn || config.Config.SingleChannelOsc.PeakDetect.ACFUseWindowFn || config.Config.SingleChannelOsc.PeakDetect.ComplexTriggerUseCorrelationToSineWave {
+		if config.Config.WindowFn.UseKaiserInsteadOfHann {
+			WindowBuffer = Kaiser(int(config.Config.Buffers.ReadBufferSize/2), config.Config.WindowFn.KaiserParam)
 		} else {
-			WindowBuffer = window.Hann(int(config.Config.ReadBufferSize / 2))
+			WindowBuffer = window.Hann(int(config.Config.Buffers.ReadBufferSize / 2))
 		}
 	}
 }

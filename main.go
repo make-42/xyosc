@@ -82,36 +82,36 @@ var lastFrameTime time.Time
 
 func copyPrevFrameOp(deltaTime float64, screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
-	op.ColorScale.ScaleAlpha(float32(math.Pow(float64(config.Config.CopyPreviousFrameAlphaDecayBase), deltaTime*config.Config.CopyPreviousFrameAlphaDecaySpeed)))
+	op.ColorScale.ScaleAlpha(float32(math.Pow(float64(config.Config.ImageRetention.AlphaDecayBase), deltaTime*config.Config.ImageRetention.AlphaDecaySpeed)))
 	screen.DrawImage(prevFrame, op)
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	deltaTime := min(time.Since(lastFrameTime).Seconds(), 1.0)
 	lastFrameTime = time.Now()
-	var numSamples = config.Config.ReadBufferSize / 2
-	if config.Config.CopyPreviousFrame {
-		if !firstFrame && !(config.Config.DefaultMode == config.BarsMode && config.Config.BarsPeakFreqCursor) { // leave to post background draw
+	var numSamples = config.Config.Buffers.ReadBufferSize / 2
+	if config.Config.ImageRetention.Enable {
+		if !firstFrame && !(config.Config.App.DefaultMode == config.BarsMode && config.Config.Bars.PeakCursor.Enable) { // leave to post background draw
 			copyPrevFrameOp(deltaTime, screen)
 		}
 	} else {
-		if config.Config.DisableTransparency {
+		if config.Config.Colors.DisableBGTransparency {
 			screen.Fill(config.BGColor)
 		}
 	}
-	if config.Config.ShowMPRIS {
+	if config.Config.MPRIS.Enable {
 		media.Interpolate()
 	}
-	scale := min(config.Config.WindowWidth, config.Config.WindowHeight) / 2
+	scale := min(config.Config.Window.Width, config.Config.Window.Height) / 2
 	var AX float32
 	var AY float32
 	var BX float32
 	var BY float32
-	posStartRead := (config.Config.RingBufferSize + audio.WriteHeadPosition - numSamples*2 - config.Config.ReadBufferDelay) % config.Config.RingBufferSize
+	posStartRead := (config.Config.Buffers.RingBufferSize + audio.WriteHeadPosition - numSamples*2 - config.Config.Buffers.ReadBufferDelay) % config.Config.Buffers.RingBufferSize
 	if slices.Contains(pressedKeys, ebiten.KeyF) {
 		if !StillSamePressFromModeToggleKey {
 			StillSamePressFromModeToggleKey = true
-			config.Config.DefaultMode = (config.Config.DefaultMode + 1) % 4
+			config.Config.App.DefaultMode = (config.Config.App.DefaultMode + 1) % 4
 		}
 	} else {
 		StillSamePressFromModeToggleKey = false
@@ -119,71 +119,71 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if slices.Contains(pressedKeys, ebiten.KeyP) {
 		if !StillSamePressFromPresetToggleKey {
 			StillSamePressFromPresetToggleKey = true
-			shaders.SelectedPreset[config.Config.DefaultMode] += 1
+			shaders.SelectedPreset[config.Config.App.DefaultMode] += 1
 		}
 	} else {
 		StillSamePressFromPresetToggleKey = false
 	}
 
-	if (config.Config.DefaultMode == config.XYMode || config.Config.DefaultMode == config.SingleChannelMode) && config.Config.ScaleEnable {
-		if config.Config.ScaleMainAxisEnable {
-			vector.StrokeLine(screen, 0, float32(config.Config.WindowHeight/2), float32(config.Config.WindowWidth), float32(config.Config.WindowHeight/2), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
-			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2), 0, float32(config.Config.WindowWidth/2), float32(config.Config.WindowHeight), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
+	if (config.Config.App.DefaultMode == config.XYMode || config.Config.App.DefaultMode == config.SingleChannelMode) && config.Config.Scale.Enable {
+		if config.Config.Scale.MainAxisEnable {
+			vector.StrokeLine(screen, 0, float32(config.Config.Window.Height/2), float32(config.Config.Window.Width), float32(config.Config.Window.Height/2), config.Config.Scale.MainAxisThickness, config.ThirdColorAdj, true)
+			vector.StrokeLine(screen, float32(config.Config.Window.Width/2), 0, float32(config.Config.Window.Width/2), float32(config.Config.Window.Height), config.Config.Scale.MainAxisThickness, config.ThirdColorAdj, true)
 		}
-		if config.Config.ScaleVertTickEnable {
-			for i := range config.Config.ScaleVertDiv + 1 {
-				y := float32(config.Config.WindowHeight) - float32(config.Config.WindowHeight)/float32(config.Config.ScaleVertDiv)*float32(i)
-				if config.Config.ScaleVertTickExpandToGrid {
-					vector.StrokeLine(screen, 0, y, float32(config.Config.WindowWidth), y, config.Config.ScaleVertTickExpandToGridThickness, config.ThirdColorAdj, true)
+		if config.Config.Scale.Vert.TickEnable {
+			for i := range config.Config.Scale.Vert.Divs + 1 {
+				y := float32(config.Config.Window.Height) - float32(config.Config.Window.Height)/float32(config.Config.Scale.Vert.Divs)*float32(i)
+				if config.Config.Scale.Vert.TickToGrid {
+					vector.StrokeLine(screen, 0, y, float32(config.Config.Window.Width), y, config.Config.Scale.Vert.GridThickness, config.ThirdColorAdj, true)
 				}
-				vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)-config.Config.ScaleVertTickLength/2, y, float32(config.Config.WindowWidth/2)+config.Config.ScaleVertTickLength/2, y, config.Config.ScaleVertTickStrokeThickness, config.ThirdColorAdj, true)
-				if config.Config.ScaleVertTextEnable {
+				vector.StrokeLine(screen, float32(config.Config.Window.Width/2)-config.Config.Scale.Vert.TickLength/2, y, float32(config.Config.Window.Width/2)+config.Config.Scale.Vert.TickLength/2, y, config.Config.Scale.Vert.TickThickness, config.ThirdColorAdj, true)
+				if config.Config.Scale.Vert.TextEnable {
 					op := &text.DrawOptions{}
-					op.GeoM.Translate(float64(config.Config.WindowWidth)/2+float64(config.Config.ScaleVertTickLength/2)+config.Config.ScaleVertTextPadding, float64(y))
+					op.GeoM.Translate(float64(config.Config.Window.Width)/2+float64(config.Config.Scale.Vert.TickLength/2)+config.Config.Scale.Vert.TextPadding, float64(y))
 					op.LayoutOptions.PrimaryAlign = text.AlignStart
 					op.LayoutOptions.SecondaryAlign = text.AlignCenter
-					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.ScaleTextOpacity})
-					text.Draw(screen, fmt.Sprintf("%.*f", int(math.Ceil(math.Log10(float64(config.Config.ScaleVertDiv)/2))), 2/float32(config.Config.ScaleVertDiv)*float32(i)-1), &text.GoTextFace{
+					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.Scale.TextOpacity})
+					text.Draw(screen, fmt.Sprintf("%.*f", int(math.Ceil(math.Log10(float64(config.Config.Scale.Vert.Divs)/2))), 2/float32(config.Config.Scale.Vert.Divs)*float32(i)-1), &text.GoTextFace{
 						Source: fonts.FontA,
-						Size:   config.Config.ScaleVertTextSize,
+						Size:   config.Config.Scale.Vert.TextSize,
 					}, op)
 				}
 			}
 		}
 	}
 
-	if (config.Config.DefaultMode == config.XYMode) && config.Config.ScaleEnable {
-		if config.Config.ScaleMainAxisEnable {
-			vector.StrokeLine(screen, 0, float32(config.Config.WindowHeight/2), float32(config.Config.WindowWidth), float32(config.Config.WindowHeight/2), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
-			vector.StrokeLine(screen, float32(config.Config.WindowWidth/2), 0, float32(config.Config.WindowWidth/2), float32(config.Config.WindowHeight), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
+	if (config.Config.App.DefaultMode == config.XYMode) && config.Config.Scale.Enable {
+		if config.Config.Scale.MainAxisEnable {
+			vector.StrokeLine(screen, 0, float32(config.Config.Window.Height/2), float32(config.Config.Window.Width), float32(config.Config.Window.Height/2), config.Config.Scale.MainAxisThickness, config.ThirdColorAdj, true)
+			vector.StrokeLine(screen, float32(config.Config.Window.Width/2), 0, float32(config.Config.Window.Width/2), float32(config.Config.Window.Height), config.Config.Scale.MainAxisThickness, config.ThirdColorAdj, true)
 		}
-		if config.Config.ScaleHorzTickEnable {
-			for i := range config.Config.ScaleHorzDiv + 1 {
-				x := float32(config.Config.WindowWidth) / float32(config.Config.ScaleHorzDiv) * float32(i)
-				if config.Config.ScaleHorzTickExpandToGrid {
-					vector.StrokeLine(screen, x, 0, x, float32(config.Config.WindowHeight), config.Config.ScaleHorzTickExpandToGridThickness, config.ThirdColorAdj, true)
+		if config.Config.Scale.Horz.TickEnable {
+			for i := range config.Config.Scale.Horz.Divs + 1 {
+				x := float32(config.Config.Window.Width) / float32(config.Config.Scale.Horz.Divs) * float32(i)
+				if config.Config.Scale.Horz.TickToGrid {
+					vector.StrokeLine(screen, x, 0, x, float32(config.Config.Window.Height), config.Config.Scale.Horz.GridThickness, config.ThirdColorAdj, true)
 				}
-				vector.StrokeLine(screen, x, float32(config.Config.WindowHeight/2)-config.Config.ScaleHorzTickLength/2, x, float32(config.Config.WindowHeight/2)+config.Config.ScaleHorzTickLength/2, config.Config.ScaleHorzTickStrokeThickness, config.ThirdColorAdj, true)
-				if config.Config.ScaleHorzTextEnable {
+				vector.StrokeLine(screen, x, float32(config.Config.Window.Height/2)-config.Config.Scale.Horz.TickLength/2, x, float32(config.Config.Window.Height/2)+config.Config.Scale.Horz.TickLength/2, config.Config.Scale.Horz.TickThickness, config.ThirdColorAdj, true)
+				if config.Config.Scale.Horz.TextEnable {
 					op := &text.DrawOptions{}
-					op.GeoM.Translate(float64(x), float64(config.Config.WindowHeight)/2+float64(config.Config.ScaleHorzTickLength/2)+config.Config.ScaleHorzTextPadding)
+					op.GeoM.Translate(float64(x), float64(config.Config.Window.Height)/2+float64(config.Config.Scale.Horz.TickLength/2)+config.Config.Scale.Horz.TextPadding)
 					op.LayoutOptions.PrimaryAlign = text.AlignCenter
 					op.LayoutOptions.SecondaryAlign = text.AlignStart
-					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.ScaleTextOpacity})
-					text.Draw(screen, fmt.Sprintf("%.*f", int(math.Ceil(math.Log10(float64(config.Config.ScaleHorzDiv)/2))), 2/float32(config.Config.ScaleHorzDiv)*float32(i)-1), &text.GoTextFace{
+					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.Scale.TextOpacity})
+					text.Draw(screen, fmt.Sprintf("%.*f", int(math.Ceil(math.Log10(float64(config.Config.Scale.Horz.Divs)/2))), 2/float32(config.Config.Scale.Horz.Divs)*float32(i)-1), &text.GoTextFace{
 						Source: fonts.FontA,
-						Size:   config.Config.ScaleHorzTextSize,
+						Size:   config.Config.Scale.Horz.TextSize,
 					}, op)
 				}
 			}
 		}
 	}
 
-	if config.Config.DefaultMode == config.XYMode {
+	if config.Config.App.DefaultMode == config.XYMode {
 		if config.FiltersApplied {
 			for i := uint32(0); i < numSamples; i++ {
-				AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
-				AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
+				AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.Buffers.RingBufferSize]
+				AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.Buffers.RingBufferSize]
 				XYComplexFFTBufferL[i] = complex(float64(AX), 0.0)
 				XYComplexFFTBufferR[i] = complex(float64(AY), 0.0)
 			}
@@ -192,8 +192,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			AX = float32(real(XYComplexFFTBufferL[len(XYComplexFFTBufferL)-1]))
 			AY = float32(real(XYComplexFFTBufferR[len(XYComplexFFTBufferR)-1]))
 		} else {
-			AX = audio.SampleRingBufferUnsafe[(posStartRead)%config.Config.RingBufferSize]
-			AY = audio.SampleRingBufferUnsafe[(posStartRead+1)%config.Config.RingBufferSize]
+			AX = audio.SampleRingBufferUnsafe[(posStartRead)%config.Config.Buffers.RingBufferSize]
+			AY = audio.SampleRingBufferUnsafe[(posStartRead+1)%config.Config.Buffers.RingBufferSize]
 		}
 		S := float32(0)
 		for i := uint32(0); i < numSamples; i++ {
@@ -201,49 +201,49 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				BX = float32(real(XYComplexFFTBufferL[i]))
 				BY = float32(real(XYComplexFFTBufferR[i]))
 			} else {
-				BX = audio.SampleRingBufferUnsafe[(posStartRead+i*2+2)%config.Config.RingBufferSize]
-				BY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+3)%config.Config.RingBufferSize]
+				BX = audio.SampleRingBufferUnsafe[(posStartRead+i*2+2)%config.Config.Buffers.RingBufferSize]
+				BY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+3)%config.Config.Buffers.RingBufferSize]
 			}
-			fAX := float32(AX) * config.Config.Gain * float32(scale)
-			fAY := -float32(AY) * config.Config.Gain * float32(scale)
-			fBX := float32(BX) * config.Config.Gain * float32(scale)
-			fBY := -float32(BY) * config.Config.Gain * float32(scale)
-			if i >= numSamples-config.Config.XYOscilloscopeReadBufferSize {
-				if config.Config.LineInvSqrtOpacityControl || config.Config.LineTimeDependentOpacityControl {
+			fAX := float32(AX) * config.Config.Audio.Gain * float32(scale)
+			fAY := -float32(AY) * config.Config.Audio.Gain * float32(scale)
+			fBX := float32(BX) * config.Config.Audio.Gain * float32(scale)
+			fBY := -float32(BY) * config.Config.Audio.Gain * float32(scale)
+			if i >= numSamples-config.Config.Buffers.XYOscilloscopeReadBufferSize {
+				if config.Config.Line.InvSqrtOpacityControl.Enable || config.Config.Line.TimeDependentOpacityControl.Enable {
 					mult := 1.0
-					if config.Config.LineInvSqrtOpacityControl {
+					if config.Config.Line.InvSqrtOpacityControl.Enable {
 						invStrength := min(float64(fastsqrt.FastInvSqrt32((fBX-fAX)*(fBX-fAX)+(fBY-fBY)*(fBY-fBY))), 1.0)
-						if config.Config.LineInvSqrtOpacityControlUseLogDecrement {
-							mult *= config.Config.LineInvSqrtOpacityControlLogDecrementOffset + math.Log(invStrength)/math.Log(config.Config.LineInvSqrtOpacityControlLogDecrementBase)
+						if config.Config.Line.InvSqrtOpacityControl.UseLogDecrement {
+							mult *= config.Config.Line.InvSqrtOpacityControl.LogOffset + math.Log(invStrength)/math.Log(config.Config.Line.InvSqrtOpacityControl.LogBase)
 						} else {
 							mult *= invStrength
 						}
 					}
-					if config.Config.LineTimeDependentOpacityControl {
-						mult *= math.Pow(config.Config.LineTimeDependentOpacityControlBase, float64(numSamples-i-1))
+					if config.Config.Line.TimeDependentOpacityControl.Enable {
+						mult *= math.Pow(config.Config.Line.TimeDependentOpacityControl.Base, float64(numSamples-i-1))
 					}
-					colorAdjusted := color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, uint8(float64(config.Config.LineOpacity) * mult)}
-					if config.Config.LineOpacityControlAlsoAppliesToThickness {
-						vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThicknessXY*float32(mult), colorAdjusted, true)
+					colorAdjusted := color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, uint8(float64(config.Config.Line.Opacity) * mult)}
+					if config.Config.Line.OpacityAlsoAffectsThickness {
+						vector.StrokeLine(screen, float32(config.Config.Window.Width/2)+fAX, float32(config.Config.Window.Height/2)+fAY, float32(config.Config.Window.Width/2)+fBX, float32(config.Config.Window.Height/2)+fBY, config.Config.Line.ThicknessXY*float32(mult), colorAdjusted, true)
 					} else {
-						vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThicknessXY, colorAdjusted, true)
+						vector.StrokeLine(screen, float32(config.Config.Window.Width/2)+fAX, float32(config.Config.Window.Height/2)+fAY, float32(config.Config.Window.Width/2)+fBX, float32(config.Config.Window.Height/2)+fBY, config.Config.Line.ThicknessXY, colorAdjusted, true)
 					}
 				} else {
-					vector.StrokeLine(screen, float32(config.Config.WindowWidth/2)+fAX, float32(config.Config.WindowHeight/2)+fAY, float32(config.Config.WindowWidth/2)+fBX, float32(config.Config.WindowHeight/2)+fBY, config.Config.LineThicknessXY, config.ThirdColorAdj, true)
+					vector.StrokeLine(screen, float32(config.Config.Window.Width/2)+fAX, float32(config.Config.Window.Height/2)+fAY, float32(config.Config.Window.Width/2)+fBX, float32(config.Config.Window.Height/2)+fBY, config.Config.Line.ThicknessXY, config.ThirdColorAdj, true)
 				}
 			}
 			S += float32(AX)*float32(AX) + float32(AY)*float32(AY)
-			if config.Config.Particles {
-				if rand.IntN(int(float64(config.Config.ParticleGenPerFrameEveryXSamples)/deltaTime)) == 0 {
-					if len(particles.Particles) >= config.Config.ParticleMaxCount {
+			if config.Config.Particles.Enable {
+				if rand.IntN(int(float64(config.Config.Particles.GenEveryXSamples)/deltaTime)) == 0 {
+					if len(particles.Particles) >= config.Config.Particles.MaxCount {
 						particles.Particles = particles.Particles[1:]
 					}
 					particles.Particles = append(particles.Particles, particles.Particle{
-						X:    float32(AX) * config.Config.Gain,
-						Y:    -float32(AY) * config.Config.Gain,
+						X:    float32(AX) * config.Config.Audio.Gain,
+						Y:    -float32(AY) * config.Config.Audio.Gain,
 						VX:   0,
 						VY:   0,
-						Size: rand.Float32()*(config.Config.ParticleMaxSize-config.Config.ParticleMinSize) + config.Config.ParticleMinSize,
+						Size: rand.Float32()*(config.Config.Particles.MaxSize-config.Config.Particles.MinSize) + config.Config.Particles.MinSize,
 					})
 				}
 			}
@@ -253,19 +253,19 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 
 		for i, particle := range particles.Particles {
-			vector.DrawFilledCircle(screen, float32(config.Config.WindowWidth/2)+particle.X*float32(scale), float32(config.Config.WindowHeight/2)+particle.Y*float32(scale), particle.Size, config.ParticleColor, true)
+			vector.DrawFilledCircle(screen, float32(config.Config.Window.Width/2)+particle.X*float32(scale), float32(config.Config.Window.Height/2)+particle.Y*float32(scale), particle.Size, config.ParticleColor, true)
 			norm := math32.Sqrt(particles.Particles[i].X*particles.Particles[i].X + particles.Particles[i].Y*particles.Particles[i].Y)
 			particles.Particles[i].X += particle.VX * float32(deltaTime)
 			particles.Particles[i].Y += particle.VY * float32(deltaTime)
 			speed := math32.Sqrt(particle.VX*particle.VX + particle.VY*particle.VY)
-			particles.Particles[i].VX += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.X / norm * float32(deltaTime)
-			particles.Particles[i].VY += (config.Config.ParticleAcceleration*S - speed*config.Config.ParticleDrag) * particle.Y / norm * float32(deltaTime)
+			particles.Particles[i].VX += (config.Config.Particles.Acceleration*S - speed*config.Config.Particles.Drag) * particle.X / norm * float32(deltaTime)
+			particles.Particles[i].VY += (config.Config.Particles.Acceleration*S - speed*config.Config.Particles.Drag) * particle.Y / norm * float32(deltaTime)
 		}
-	} else if config.Config.DefaultMode == config.SingleChannelMode {
+	} else if config.Config.App.DefaultMode == config.SingleChannelMode {
 		for i := uint32(0); i < numSamples; i++ {
-			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
-			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
-			if config.FiltersApplied || config.Config.UseBetterPeakDetectionAlgorithm {
+			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.Buffers.RingBufferSize]
+			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.Buffers.RingBufferSize]
+			if config.FiltersApplied || config.Config.SingleChannelOsc.PeakDetect.UseACF {
 				if *mixChannels {
 					complexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
 				} else {
@@ -276,14 +276,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					}
 				}
 			}
-			if !config.FiltersApplied || config.Config.UseBetterPeakDetectionAlgorithm {
+			if !config.FiltersApplied || config.Config.SingleChannelOsc.PeakDetect.UseACF {
 				if *mixChannels {
-					FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = (float64(AY) + float64(AX)) / 2
+					FFTBuffer[(i+config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples] = (float64(AY) + float64(AX)) / 2
 				} else {
 					if *useRightChannel {
-						FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = float64(AY)
+						FFTBuffer[(i+config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples] = float64(AY)
 					} else {
-						FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = float64(AX)
+						FFTBuffer[(i+config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples] = float64(AX)
 					}
 				}
 			}
@@ -291,7 +291,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if config.FiltersApplied {
 			filter.FilterBufferInPlace(&complexFFTBuffer, lowCutOffFrac, highCutOffFrac)
 			for i := uint32(0); i < numSamples; i++ {
-				FFTBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = real(complexFFTBuffer[i])
+				FFTBuffer[(i+config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples] = real(complexFFTBuffer[i])
 			}
 		}
 
@@ -299,21 +299,21 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		offset := uint32(0)
 		freq := uint32(0)
 
-		if config.Config.PeriodCrop || config.Config.OscilloscopeStartPeakDetection || *peakDetectOverride {
-			if config.Config.UseBetterPeakDetectionAlgorithm {
+		if config.Config.SingleChannelOsc.PeriodCrop.Enable || config.Config.SingleChannelOsc.PeakDetect.Enable || *peakDetectOverride {
+			if config.Config.SingleChannelOsc.PeakDetect.UseACF {
 				for i := range len(complexFFTBuffer) {
 					complexFFTBufferFlipped[len(complexFFTBufferFlipped)-i-1] = complexFFTBuffer[i]
 				}
 				offset, indices, freq = align.AutoCorrelate(&complexFFTBuffer, &complexFFTBufferFlipped)
 
 			} else {
-				indices = peaks.Get(FFTBuffer, config.Config.PeakDetectSeparator)
+				indices = peaks.Get(FFTBuffer, config.Config.SingleChannelOsc.PeakDetect.PeakDetectSeparator)
 				sort.Ints(indices)
 				offset = uint32(0)
 				if len(indices) != 0 {
 					offset = uint32(indices[0])
 				}
-				if (offset+config.Config.FFTBufferOffset)%numSamples < config.Config.PeakDetectEdgeGuardBufferSize || (numSamples-((offset+config.Config.FFTBufferOffset)%numSamples)) < config.Config.PeakDetectEdgeGuardBufferSize {
+				if (offset+config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples < config.Config.SingleChannelOsc.PeakDetect.EdgeGuardBufferSize || (numSamples-((offset+config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples)) < config.Config.SingleChannelOsc.PeakDetect.EdgeGuardBufferSize {
 					if len(indices) >= 2 {
 						offset = uint32(indices[1])
 					}
@@ -324,112 +324,112 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		var samplesPerCrop uint32
 		var samplesPerPeriod uint32
 
-		if (config.Config.OscilloscopeStartPeakDetection && config.Config.SmoothWaveOverPeriods) && len(indices) > 1 {
-			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.PeriodCropCount)])
+		if (config.Config.SingleChannelOsc.PeakDetect.Enable && config.Config.SingleChannelOsc.SmoothWave.Enable) && len(indices) > 1 {
+			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.SingleChannelOsc.PeriodCrop.DisplayCount)])
 			samplesPerPeriod = lastPeriodOffset - offset
-			if config.Config.UseBetterPeakDetectionAlgorithm {
+			if config.Config.SingleChannelOsc.PeakDetect.UseACF {
 				samplesPerPeriod = freq * 2
 			}
 		} else {
 			samplesPerPeriod = numSamples
 		}
 
-		if config.Config.PeriodCrop && len(indices) > 1 {
-			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.PeriodCropCount)])
+		if config.Config.SingleChannelOsc.PeriodCrop.Enable && len(indices) > 1 {
+			lastPeriodOffset := uint32(indices[min(len(indices)-1, config.Config.SingleChannelOsc.PeriodCrop.DisplayCount)])
 			samplesPerCrop = lastPeriodOffset - offset
-			if config.Config.UseBetterPeakDetectionAlgorithm {
+			if config.Config.SingleChannelOsc.PeakDetect.UseACF {
 				samplesPerCrop = freq * 2
 			}
 		} else {
 			samplesPerCrop = numSamples
 		}
-		if config.Config.ScaleEnable {
-			visibleSampleCount := min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount)
-			timeSpanVisible := float64(visibleSampleCount) / float64(2*config.Config.SampleRate) //s
-			if config.Config.ScaleMainAxisEnable {
-				vector.StrokeLine(screen, 0, float32(config.Config.WindowHeight/2), float32(config.Config.WindowWidth), float32(config.Config.WindowHeight/2), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
-				vector.StrokeLine(screen, float32(config.Config.WindowWidth/2), 0, float32(config.Config.WindowWidth/2), float32(config.Config.WindowHeight), config.Config.ScaleMainAxisStrokeThickness, config.ThirdColorAdj, true)
+		if config.Config.Scale.Enable {
+			visibleSampleCount := min(numSamples, samplesPerCrop*config.Config.SingleChannelOsc.PeriodCrop.LoopOverCount)
+			timeSpanVisible := float64(visibleSampleCount) / float64(2*config.Config.Audio.SampleRate) //s
+			if config.Config.Scale.MainAxisEnable {
+				vector.StrokeLine(screen, 0, float32(config.Config.Window.Height/2), float32(config.Config.Window.Width), float32(config.Config.Window.Height/2), config.Config.Scale.MainAxisThickness, config.ThirdColorAdj, true)
+				vector.StrokeLine(screen, float32(config.Config.Window.Width/2), 0, float32(config.Config.Window.Width/2), float32(config.Config.Window.Height), config.Config.Scale.MainAxisThickness, config.ThirdColorAdj, true)
 			}
 			scaleScale := 1.
-			if config.Config.ScaleHorzDivDynamicPos {
+			if config.Config.Scale.HorzDivDynamicPos {
 				scaleScale = math.Pow10(int(math.Ceil(math.Log10(timeSpanVisible)))) / timeSpanVisible
 			}
-			if config.Config.ScaleHorzTickEnable {
-				for i := range config.Config.ScaleHorzDiv + 1 {
-					x := float32(config.Config.WindowWidth)/2 + float32(scaleScale)*float32(config.Config.WindowWidth)/float32(config.Config.ScaleHorzDiv)*(float32(i)-float32(config.Config.ScaleHorzDiv)/2)
-					if config.Config.ScaleHorzTickExpandToGrid {
-						vector.StrokeLine(screen, x, 0, x, float32(config.Config.WindowHeight), config.Config.ScaleHorzTickExpandToGridThickness, config.ThirdColorAdj, true)
+			if config.Config.Scale.Horz.TickEnable {
+				for i := range config.Config.Scale.Horz.Divs + 1 {
+					x := float32(config.Config.Window.Width)/2 + float32(scaleScale)*float32(config.Config.Window.Width)/float32(config.Config.Scale.Horz.Divs)*(float32(i)-float32(config.Config.Scale.Horz.Divs)/2)
+					if config.Config.Scale.Horz.TickToGrid {
+						vector.StrokeLine(screen, x, 0, x, float32(config.Config.Window.Height), config.Config.Scale.Horz.GridThickness, config.ThirdColorAdj, true)
 					}
-					vector.StrokeLine(screen, x, float32(config.Config.WindowHeight/2)-config.Config.ScaleHorzTickLength/2, x, float32(config.Config.WindowHeight/2)+config.Config.ScaleHorzTickLength/2, config.Config.ScaleHorzTickStrokeThickness, config.ThirdColorAdj, true)
-					if config.Config.ScaleHorzTextEnable {
+					vector.StrokeLine(screen, x, float32(config.Config.Window.Height/2)-config.Config.Scale.Horz.TickLength/2, x, float32(config.Config.Window.Height/2)+config.Config.Scale.Horz.TickLength/2, config.Config.Scale.Horz.TickThickness, config.ThirdColorAdj, true)
+					if config.Config.Scale.Horz.TextEnable {
 						op := &text.DrawOptions{}
-						op.GeoM.Translate(float64(x), float64(config.Config.WindowHeight)/2+float64(config.Config.ScaleHorzTickLength/2)+config.Config.ScaleHorzTextPadding)
+						op.GeoM.Translate(float64(x), float64(config.Config.Window.Height)/2+float64(config.Config.Scale.Horz.TickLength/2)+config.Config.Scale.Horz.TextPadding)
 						op.LayoutOptions.PrimaryAlign = text.AlignCenter
 						op.LayoutOptions.SecondaryAlign = text.AlignStart
-						op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.ScaleTextOpacity})
-						text.Draw(screen, fmt.Sprintf("%s", utils.FormatDuration(scaleScale*float64(timeSpanVisible/2)*(2/float64(config.Config.ScaleHorzDiv)*float64(i)-1))), &text.GoTextFace{
+						op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.Scale.TextOpacity})
+						text.Draw(screen, fmt.Sprintf("%s", utils.FormatDuration(scaleScale*float64(timeSpanVisible/2)*(2/float64(config.Config.Scale.Horz.Divs)*float64(i)-1))), &text.GoTextFace{
 							Source: fonts.FontA,
-							Size:   config.Config.ScaleHorzTextSize,
+							Size:   config.Config.Scale.Horz.TextSize,
 						}, op)
 					}
 				}
 			}
 		}
-		if config.Config.PeriodCrop && len(indices) > 1 {
-			if config.Config.CenterPeak {
+		if config.Config.SingleChannelOsc.PeriodCrop.Enable && len(indices) > 1 {
+			if config.Config.SingleChannelOsc.PeakDetect.CenterPeak {
 				offset -= samplesPerCrop / 2
 			}
-			its := min(numSamples, samplesPerCrop*config.Config.PeriodCropLoopOverCount) - 1
+			its := min(numSamples, samplesPerCrop*config.Config.SingleChannelOsc.PeriodCrop.LoopOverCount) - 1
 			for i := uint32(0); i < its; i++ {
-				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
-				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
-				if config.Config.SmoothWaveOverPeriods {
-					smoothPeriods := min((numSamples/its)-1, config.Config.SmoothWaveOverPeriodsMax)
+				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+				if config.Config.SingleChannelOsc.SmoothWave.Enable {
+					smoothPeriods := min((numSamples/its)-1, config.Config.SingleChannelOsc.SmoothWave.MaxPeriods)
 					if smoothPeriods > 0 {
 						var q float64
-						if config.Config.SmoothWaveOverPeriodsUseTimeIndependentWeights {
-							q = config.Config.SmoothWaveOverPeriodsTimeIndependentWeightFactor
+						if config.Config.SingleChannelOsc.SmoothWave.TimeIndependent {
+							q = config.Config.SingleChannelOsc.SmoothWave.TimeIndependentFactor
 						} else {
-							q = math.Exp(-float64(its) / float64(config.Config.SampleRate) * config.Config.SmoothWaveOverPeriodsInvTau)
+							q = math.Exp(-float64(its) / float64(config.Config.Audio.SampleRate) * config.Config.SingleChannelOsc.SmoothWave.InvTau)
 						}
 						rescale := float32(1.)
 						for k := range smoothPeriods {
 							fact := float32(math.Pow(q, float64(k+1)))
-							fAX += fact * float32(FFTBuffer[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
-							fBX += fact * float32(FFTBuffer[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
+							fAX += fact * float32(FFTBuffer[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+							fBX += fact * float32(FFTBuffer[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
 							rescale += fact
 						}
 						fAX /= rescale
 						fBX /= rescale
 					}
 				}
-				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
-					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)-fAX, float32(config.Config.WindowWidth)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.WindowHeight/2)-fBX, config.Config.LineThicknessSingleChannel, config.ThirdColorAdj, true)
+				if (i+1+offset-config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples != 0 {
+					vector.StrokeLine(screen, float32(config.Config.Window.Width)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.Window.Height/2)-fAX, float32(config.Config.Window.Width)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.Window.Height/2)-fBX, config.Config.Line.ThicknessSingleChannel, config.ThirdColorAdj, true)
 				}
 			}
 		} else {
-			if config.Config.CenterPeak {
-				offset -= config.Config.SingleChannelWindow / 4
+			if config.Config.SingleChannelOsc.PeakDetect.CenterPeak {
+				offset -= config.Config.SingleChannelOsc.DisplayBufferSize / 4
 			}
-			for i := uint32(0); i < config.Config.SingleChannelWindow/2-1; i++ {
-				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
-				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Gain * float32(config.Config.WindowHeight) / 2
-				if config.Config.OscilloscopeStartPeakDetection || *peakDetectOverride {
+			for i := uint32(0); i < config.Config.SingleChannelOsc.DisplayBufferSize/2-1; i++ {
+				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+				if config.Config.SingleChannelOsc.PeakDetect.Enable || *peakDetectOverride {
 					its := samplesPerPeriod
-					if config.Config.SmoothWaveOverPeriods {
-						smoothPeriods := min((numSamples/its)-1, config.Config.SmoothWaveOverPeriodsMax)
+					if config.Config.SingleChannelOsc.SmoothWave.Enable {
+						smoothPeriods := min((numSamples/its)-1, config.Config.SingleChannelOsc.SmoothWave.MaxPeriods)
 						if smoothPeriods > 0 {
 							var q float64
-							if config.Config.SmoothWaveOverPeriodsUseTimeIndependentWeights {
-								q = config.Config.SmoothWaveOverPeriodsTimeIndependentWeightFactor
+							if config.Config.SingleChannelOsc.SmoothWave.TimeIndependent {
+								q = config.Config.SingleChannelOsc.SmoothWave.TimeIndependentFactor
 							} else {
-								q = math.Exp(-float64(its) / float64(config.Config.SampleRate) * config.Config.SmoothWaveOverPeriodsInvTau)
+								q = math.Exp(-float64(its) / float64(config.Config.Audio.SampleRate) * config.Config.SingleChannelOsc.SmoothWave.InvTau)
 							}
 							rescale := float32(1.)
 							for k := range smoothPeriods {
 								fact := float32(math.Pow(q, float64(k+1)))
-								fAX += fact * float32(FFTBuffer[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(scale)
-								fBX += fact * float32(FFTBuffer[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Gain * float32(scale)
+								fAX += fact * float32(FFTBuffer[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(scale)
+								fBX += fact * float32(FFTBuffer[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(scale)
 								rescale += fact
 							}
 							fAX /= rescale
@@ -437,15 +437,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 						}
 					}
 				}
-				if (i+1+offset-config.Config.FFTBufferOffset)%numSamples != 0 {
-					vector.StrokeLine(screen, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2))/float32((config.Config.SingleChannelWindow/2)), float32(config.Config.WindowHeight/2)-fAX, float32(config.Config.WindowWidth)*float32(i%(config.Config.SingleChannelWindow/2)+1)/float32(config.Config.SingleChannelWindow/2), float32(config.Config.WindowHeight/2)-fBX, config.Config.LineThicknessSingleChannel, config.ThirdColorAdj, true)
+				if (i+1+offset-config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples != 0 {
+					vector.StrokeLine(screen, float32(config.Config.Window.Width)*float32(i%(config.Config.SingleChannelOsc.DisplayBufferSize/2))/float32((config.Config.SingleChannelOsc.DisplayBufferSize/2)), float32(config.Config.Window.Height/2)-fAX, float32(config.Config.Window.Width)*float32(i%(config.Config.SingleChannelOsc.DisplayBufferSize/2)+1)/float32(config.Config.SingleChannelOsc.DisplayBufferSize/2), float32(config.Config.Window.Height/2)-fBX, config.Config.Line.ThicknessSingleChannel, config.ThirdColorAdj, true)
 				}
 			}
 		}
-	} else if config.Config.DefaultMode == config.BarsMode {
+	} else if config.Config.App.DefaultMode == config.BarsMode {
 		for i := uint32(0); i < numSamples; i++ {
-			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
-			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
+			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.Buffers.RingBufferSize]
+			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.Buffers.RingBufferSize]
 			if *mixChannels {
 				complexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
 			} else {
@@ -467,43 +467,43 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		for i := range bars.TargetBarsPos {
 			x, y, w, h := bars.ComputeBarLayout(i)
 			barColor := config.ThirdColorAdj
-			if config.Config.BarsShowPhase {
+			if config.Config.Bars.PhaseColors.Enable {
 				barColoroklch := oklab.OklabModel.Convert(barColor).(oklab.Oklab).Oklch()
-				barColoroklch.H = math.Mod(barColoroklch.H+bars.InterpolatedBarsPhasePos[i]/(2*math.Pi)*config.Config.BarsPhaseColorHMult+1, 1)
-				barColoroklch.L *= config.Config.BarsPhaseColorLMult
-				barColoroklch.C *= config.Config.BarsPhaseColorCMult
+				barColoroklch.H = math.Mod(barColoroklch.H+bars.InterpolatedBarsPhasePos[i]/(2*math.Pi)*config.Config.Bars.PhaseColors.HMult+1, 1)
+				barColoroklch.L *= config.Config.Bars.PhaseColors.LMult
+				barColoroklch.C *= config.Config.Bars.PhaseColors.CMult
 				barr, barg, barb, _ := barColoroklch.RGBA()
 				barColor = color.RGBA{uint8(barr >> 8), uint8(barg >> 8), uint8(barb >> 8), config.ThirdColorAdj.A}
 			}
 			vector.DrawFilledRect(screen, float32(x), float32(y), float32(w), float32(h), barColor, true)
 		}
-		if config.Config.BarsPeakFreqCursor {
+		if config.Config.Bars.PeakCursor.Enable {
 			op := &text.DrawOptions{}
-			op.GeoM.Translate(bars.InterpolatedPeakFreqCursorX+config.Config.BarsPeakFreqCursorBGPadding, bars.InterpolatedPeakFreqCursorY+config.Config.BarsPeakFreqCursorBGPadding+config.Config.BarsPeakFreqCursorTextOffset)
+			op.GeoM.Translate(bars.InterpolatedPeakFreqCursorX+config.Config.Bars.PeakCursor.BGPadding, bars.InterpolatedPeakFreqCursorY+config.Config.Bars.PeakCursor.BGPadding+config.Config.Bars.PeakCursor.TextOffset)
 			op.LayoutOptions.PrimaryAlign = text.AlignStart
-			op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.BarsPeakFreqCursorTextOpacity})
+			op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.Bars.PeakCursor.TextOpacity})
 			opBG := &ebiten.DrawImageOptions{Blend: ebiten.BlendClear}
 			opBG.GeoM.Translate(bars.InterpolatedPeakFreqCursorX, bars.InterpolatedPeakFreqCursorY)
 			screen.DrawImage(barCursorImageBGRectFrame, opBG)
-			if config.Config.CopyPreviousFrame && !firstFrame {
+			if config.Config.ImageRetention.Enable && !firstFrame {
 				copyPrevFrameOp(deltaTime, screen)
 			}
-			if config.Config.BarsPeakFreqCursorTextDisplayNote {
+			if config.Config.Bars.PeakCursor.ShowNote {
 				text.Draw(screen, fmt.Sprintf("%-6.0f Hz %s", bars.PeakFreqCursorVal, bars.NoteDisplayName(bars.CalcNote(bars.PeakFreqCursorVal))), &text.GoTextFace{
 					Source: fonts.FontA,
-					Size:   config.Config.BarsPeakFreqCursorTextSize,
+					Size:   config.Config.Bars.PeakCursor.TextSize,
 				}, op)
 			} else {
 				text.Draw(screen, fmt.Sprintf("%-6.0f Hz", bars.PeakFreqCursorVal), &text.GoTextFace{
 					Source: fonts.FontA,
-					Size:   config.Config.BarsPeakFreqCursorTextSize,
+					Size:   config.Config.Bars.PeakCursor.TextSize,
 				}, op)
 			}
 		}
 	} else {
 		for i := uint32(0); i < numSamples; i++ {
-			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.RingBufferSize]
-			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.RingBufferSize]
+			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.Buffers.RingBufferSize]
+			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.Buffers.RingBufferSize]
 			XYComplexFFTBufferL[i] = complex(float64(AX), 0.0)
 			XYComplexFFTBufferR[i] = complex(float64(AY), 0.0)
 		}
@@ -518,117 +518,117 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			vu.LoudnessLTarget = vu.CalcLoudness(&XYComplexFFTBufferL, 0, 1)
 			vu.LoudnessRTarget = vu.CalcLoudness(&XYComplexFFTBufferR, 0, 1)
 		}
-		if config.Config.VUPeak {
+		if config.Config.VU.Peak.Enable {
 			vu.CommitPeakPoint()
 		}
 		xl, yl, wl, hl := vu.ComputeBarLayout(0, vu.LoudnessLPos)
 		xr, yr, wr, hr := vu.ComputeBarLayout(1, vu.LoudnessRPos)
 		vector.DrawFilledRect(screen, float32(xl), float32(yl), float32(wl), float32(hl), config.ThirdColorAdj, true)
 		vector.DrawFilledRect(screen, float32(xr), float32(yr), float32(wr), float32(hr), config.ThirdColorAdj, true)
-		if config.Config.VUScale {
-			if config.Config.VULogScale {
+		if config.Config.VU.Scale.Enable {
+			if config.Config.VU.LogScale {
 				xl, _, wl, _ := vu.ComputeBarLayout(0, 0)
 
-				for _, div := range config.Config.VUScaleLogDivisions {
+				for _, div := range config.Config.VU.Scale.LogDivisions {
 					op := &text.DrawOptions{}
-					xr, yr, wr, hr := vu.ComputeBarLayout(1, (div-config.Config.VULogScaleMinDB)/(config.Config.VULogScaleMaxDB-config.Config.VULogScaleMinDB))
-					op.GeoM.Translate(float64(config.Config.WindowWidth)/2, yr+hr-config.Config.VUScaleTextSize/2+config.Config.VUScaleTextOffset)
+					xr, yr, wr, hr := vu.ComputeBarLayout(1, (div-config.Config.VU.LogMinDB)/(config.Config.VU.LogMaxDB-config.Config.VU.LogMinDB))
+					op.GeoM.Translate(float64(config.Config.Window.Width)/2, yr+hr-config.Config.VU.Scale.TextSize/2+config.Config.VU.Scale.TextOffset)
 					op.LayoutOptions.PrimaryAlign = text.AlignCenter
-					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.BarsPeakFreqCursorTextOpacity})
+					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.Bars.PeakCursor.TextOpacity})
 					text.Draw(screen, fmt.Sprintf("%3.0f dB", div), &text.GoTextFace{
 						Source: fonts.FontA,
-						Size:   config.Config.VUScaleTextSize,
+						Size:   config.Config.VU.Scale.TextSize,
 					}, op)
-					if config.Config.VUScaleDivTicksOuter {
-						vector.StrokeLine(screen, float32(xr+wr+config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xr+wr+config.Config.VUScaleDivTickPadding+config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
-						vector.StrokeLine(screen, float32(xl-config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xl-config.Config.VUScaleDivTickPadding-config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+					if config.Config.VU.Scale.TicksOuter {
+						vector.StrokeLine(screen, float32(xr+wr+config.Config.VU.Scale.TickPadding), float32(yr+hr), float32(xr+wr+config.Config.VU.Scale.TickPadding+config.Config.VU.Scale.TickLength), float32(yr+hr), config.Config.VU.Scale.TickThickness, config.ThirdColorAdj, true)
+						vector.StrokeLine(screen, float32(xl-config.Config.VU.Scale.TickPadding), float32(yr+hr), float32(xl-config.Config.VU.Scale.TickPadding-config.Config.VU.Scale.TickLength), float32(yr+hr), config.Config.VU.Scale.TickThickness, config.ThirdColorAdj, true)
 					}
-					if config.Config.VUScaleDivTicksInner {
-						vector.StrokeLine(screen, float32(xr-config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xr-config.Config.VUScaleDivTickPadding-config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
-						vector.StrokeLine(screen, float32(xl+wl+config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xl+wl+config.Config.VUScaleDivTickPadding+config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+					if config.Config.VU.Scale.TicksInner {
+						vector.StrokeLine(screen, float32(xr-config.Config.VU.Scale.TickPadding), float32(yr+hr), float32(xr-config.Config.VU.Scale.TickPadding-config.Config.VU.Scale.TickLength), float32(yr+hr), config.Config.VU.Scale.TickThickness, config.ThirdColorAdj, true)
+						vector.StrokeLine(screen, float32(xl+wl+config.Config.VU.Scale.TickPadding), float32(yr+hr), float32(xl+wl+config.Config.VU.Scale.TickPadding+config.Config.VU.Scale.TickLength), float32(yr+hr), config.Config.VU.Scale.TickThickness, config.ThirdColorAdj, true)
 					}
 				}
 			} else {
-				for _, div := range config.Config.VUScaleLinDivisions {
+				for _, div := range config.Config.VU.Scale.LinDivisions {
 					op := &text.DrawOptions{}
-					_, yr, _, hr := vu.ComputeBarLayout(1, div/config.Config.VULinScaleMax)
-					op.GeoM.Translate(float64(config.Config.WindowWidth)/2, yr+hr-config.Config.VUScaleTextSize/2+config.Config.VUScaleTextOffset)
+					_, yr, _, hr := vu.ComputeBarLayout(1, div/config.Config.VU.LinMax)
+					op.GeoM.Translate(float64(config.Config.Window.Width)/2, yr+hr-config.Config.VU.Scale.TextSize/2+config.Config.VU.Scale.TextOffset)
 					op.LayoutOptions.PrimaryAlign = text.AlignCenter
-					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.BarsPeakFreqCursorTextOpacity})
+					op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.Bars.PeakCursor.TextOpacity})
 					text.Draw(screen, fmt.Sprintf("%.1f", div), &text.GoTextFace{
 						Source: fonts.FontA,
-						Size:   config.Config.VUScaleTextSize,
+						Size:   config.Config.VU.Scale.TextSize,
 					}, op)
-					if config.Config.VUScaleDivTicksOuter {
-						vector.StrokeLine(screen, float32(xr+wr+config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xr+wr+config.Config.VUScaleDivTickPadding+config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
-						vector.StrokeLine(screen, float32(xl-config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xl-config.Config.VUScaleDivTickPadding-config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+					if config.Config.VU.Scale.TicksOuter {
+						vector.StrokeLine(screen, float32(xr+wr+config.Config.VU.Scale.TickPadding), float32(yr+hr), float32(xr+wr+config.Config.VU.Scale.TickPadding+config.Config.VU.Scale.TickLength), float32(yr+hr), config.Config.VU.Scale.TickThickness, config.ThirdColorAdj, true)
+						vector.StrokeLine(screen, float32(xl-config.Config.VU.Scale.TickPadding), float32(yr+hr), float32(xl-config.Config.VU.Scale.TickPadding-config.Config.VU.Scale.TickLength), float32(yr+hr), config.Config.VU.Scale.TickThickness, config.ThirdColorAdj, true)
 					}
-					if config.Config.VUScaleDivTicksInner {
-						vector.StrokeLine(screen, float32(xr-config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xr-config.Config.VUScaleDivTickPadding-config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
-						vector.StrokeLine(screen, float32(xl+wl+config.Config.VUScaleDivTickPadding), float32(yr+hr), float32(xl+wl+config.Config.VUScaleDivTickPadding+config.Config.VUScaleDivTickLength), float32(yr+hr), config.Config.VUScaleDivTickThickness, config.ThirdColorAdj, true)
+					if config.Config.VU.Scale.TicksInner {
+						vector.StrokeLine(screen, float32(xr-config.Config.VU.Scale.TickPadding), float32(yr+hr), float32(xr-config.Config.VU.Scale.TickPadding-config.Config.VU.Scale.TickLength), float32(yr+hr), config.Config.VU.Scale.TickThickness, config.ThirdColorAdj, true)
+						vector.StrokeLine(screen, float32(xl+wl+config.Config.VU.Scale.TickPadding), float32(yr+hr), float32(xl+wl+config.Config.VU.Scale.TickPadding+config.Config.VU.Scale.TickLength), float32(yr+hr), config.Config.VU.Scale.TickThickness, config.ThirdColorAdj, true)
 					}
 				}
 			}
-			if config.Config.VUPeak {
+			if config.Config.VU.Peak.Enable {
 				xl, yl, wl, hl = vu.ComputeBarLayout(0, vu.LoudnessLPeakPos)
 				xr, yr, wr, hr = vu.ComputeBarLayout(1, vu.LoudnessRPeakPos)
-				vector.StrokeLine(screen, float32(xl), float32(yl+hl), float32(xl+wl), float32(yl+hl), config.Config.VUPeakThickness, config.ThirdColorAdj, true)
-				vector.StrokeLine(screen, float32(xr), float32(yr+hr), float32(xr+wr), float32(yr+hr), config.Config.VUPeakThickness, config.ThirdColorAdj, true)
+				vector.StrokeLine(screen, float32(xl), float32(yl+hl), float32(xl+wl), float32(yl+hl), config.Config.VU.Peak.Thickness, config.ThirdColorAdj, true)
+				vector.StrokeLine(screen, float32(xr), float32(yr+hr), float32(xr+wr), float32(yr+hr), config.Config.VU.Peak.Thickness, config.ThirdColorAdj, true)
 			}
 		}
 
 	}
 
-	if config.Config.BeatDetect || *beatDetectOverride {
+	if config.Config.BeatDetection.Enable || *beatDetectOverride {
 		beatTimeDeltaTime := min(time.Since(beatTimeLastFrameTime).Seconds(), 1.0)
 		beatTimeLastFrameTime = time.Now()
 		beatdetect.InterpolateBeatTime(beatTimeDeltaTime)
-		layoutY := config.Config.MetronomePadding
-		if config.Config.ShowMetronome {
+		layoutY := config.Config.BeatDetection.Metronome.Padding
+		if config.Config.BeatDetection.Metronome.Enable {
 			if beatdetect.InterpolatedBPM != 0 {
 				progress := float64(time.Now().Sub(beatdetect.InterpolatedBeatTime).Nanoseconds()) / (1000000000 * 60 / beatdetect.InterpolatedBPM)
 				easedProgress := math.Sin(progress * math.Pi)
-				if config.Config.MetronomeThinLineMode {
-					if config.Config.MetronomeThinLineThicknessChangeWithVelocity {
+				if config.Config.BeatDetection.Metronome.ThinLineMode {
+					if config.Config.BeatDetection.Metronome.ThinLineThicknessChangeWithVelocity {
 						easedVelocityProgress := math.Cos(progress * math.Pi)
-						vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(easedVelocityProgress*config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+						vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2+float32(easedProgress)*float32(config.Config.Window.Width)/2-float32(easedVelocityProgress*config.Config.BeatDetection.Metronome.ThinLineThickness)/2, float32(layoutY), float32(easedVelocityProgress*config.Config.BeatDetection.Metronome.ThinLineThickness), float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
 					} else {
-						vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2+float32(easedProgress)*float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+						vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2+float32(easedProgress)*float32(config.Config.Window.Width)/2-float32(config.Config.BeatDetection.Metronome.ThinLineThickness)/2, float32(layoutY), float32(config.Config.BeatDetection.Metronome.ThinLineThickness), float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
 					}
-					vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2-float32(config.Config.MetronomeThinLineHintThickness)/2, float32(layoutY), float32(config.Config.MetronomeThinLineHintThickness), float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+					vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2-float32(config.Config.BeatDetection.Metronome.ThinLineHintThickness)/2, float32(layoutY), float32(config.Config.BeatDetection.Metronome.ThinLineHintThickness), float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
 				} else {
-					vector.DrawFilledRect(screen, float32(config.Config.WindowWidth)/2, float32(layoutY), float32(easedProgress)*float32(config.Config.WindowWidth)/2, float32(config.Config.MetronomeHeight), config.ThirdColorAdj, true)
+					vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2, float32(layoutY), float32(easedProgress)*float32(config.Config.Window.Width)/2, float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
 				}
 			}
-			layoutY += config.Config.MetronomeHeight + config.Config.MetronomePadding
+			layoutY += config.Config.BeatDetection.Metronome.Height + config.Config.BeatDetection.Metronome.Padding
 		}
-		if config.Config.ShowBPM {
+		if config.Config.BeatDetection.ShowBPM {
 			op := &text.DrawOptions{}
-			op.GeoM.Translate(float64(config.Config.WindowWidth)/2, float64(layoutY))
+			op.GeoM.Translate(float64(config.Config.Window.Width)/2, float64(layoutY))
 			op.LayoutOptions.PrimaryAlign = text.AlignCenter
-			op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
+			op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRIS.TextOpacity})
 			displayedBPM := beatdetect.InterpolatedBPM
-			if config.Config.BeatDetectHalfDisplayedBPM {
+			if config.Config.BeatDetection.HalfDisplayedBPM {
 				displayedBPM /= 2
 			}
 			text.Draw(screen, fmt.Sprintf("%0.2f BPM", displayedBPM), &text.GoTextFace{
 				Source: fonts.FontA,
-				Size:   config.Config.BPMTextSize,
+				Size:   config.Config.BeatDetection.BPMTextSize,
 			}, op)
 		}
 	}
 
 	//audio.SampleRingBuffer.Reset()
 
-	if config.Config.CopyPreviousFrame {
+	if config.Config.ImageRetention.Enable {
 		prevFrame.Clear()
 		prevFrame.DrawImage(screen, nil)
-		if config.Config.DisableTransparency {
+		if config.Config.Colors.DisableBGTransparency {
 			screen.Fill(config.BGColor)
 			screen.DrawImage(prevFrame, nil)
 		}
 	}
-	if config.Config.UseShaders {
+	if config.Config.Shaders.Enable {
 		timeUniform := float32(time.Since(startTime).Milliseconds()) / 1000
 		op := &ebiten.DrawRectShaderOptions{}
 		op.Images[2] = shaderWorkBuffer
@@ -639,45 +639,45 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			op.Uniforms = shader.Arguments
 			op.Uniforms["Time"] = timeUniform * shader.TimeScale
 			screen.Clear()
-			screen.DrawRectShader(int(config.Config.WindowWidth), int(config.Config.WindowHeight), shader.Shader, op)
+			screen.DrawRectShader(int(config.Config.Window.Width), int(config.Config.Window.Height), shader.Shader, op)
 		}
 	}
 
-	if config.Config.FPSCounter {
+	if config.Config.App.FPSCounter {
 		ebitenutil.DebugPrint(screen, fmt.Sprintf("TPS: %0.2f", ebiten.ActualTPS()))
 	}
 
-	if config.Config.ShowMPRIS {
+	if config.Config.MPRIS.Enable {
 		op := &text.DrawOptions{}
-		op.GeoM.Translate(16, 16+config.Config.MPRISTextTitleYOffset)
-		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
+		op.GeoM.Translate(16, 16+config.Config.MPRIS.TextTitleYOffset)
+		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRIS.TextOpacity})
 		text.Draw(screen, media.PlayingMediaInfo.Artist+" - "+media.PlayingMediaInfo.Title, fonts.MPRISBigTextFace, op)
 
 		op = &text.DrawOptions{}
-		op.GeoM.Translate(16, 64+config.Config.MPRISTextAlbumYOffset)
-		op.ColorScale.ScaleWithColor(color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, config.Config.MPRISTextOpacity})
+		op.GeoM.Translate(16, 64+config.Config.MPRIS.TextAlbumYOffset)
+		op.ColorScale.ScaleWithColor(color.RGBA{config.ThirdColor.R, config.ThirdColor.G, config.ThirdColor.B, config.Config.MPRIS.TextOpacity})
 
 		text.Draw(screen, media.PlayingMediaInfo.Album, fonts.MPRISSmallTextFace, op)
 
 		op = &text.DrawOptions{}
-		op.GeoM.Translate(16, 80+config.Config.MPRISTextDurationYOffset)
-		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
+		op.GeoM.Translate(16, 80+config.Config.MPRIS.TextDurationYOffset)
+		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRIS.TextOpacity})
 
 		text.Draw(screen, media.FmtDuration(media.PlayingMediaInfo.Position)+" / "+media.FmtDuration(media.PlayingMediaInfo.Duration), fonts.MPRISBigTextFace, op)
 	}
 
-	if config.FiltersApplied && config.Config.ShowFilterInfo {
+	if config.FiltersApplied && config.Config.FilterInfo.Enable {
 		op := &text.DrawOptions{}
-		loFreq := lowCutOffFrac * float64(config.Config.SampleRate)
-		hiFreq := highCutOffFrac * float64(config.Config.SampleRate)
+		loFreq := lowCutOffFrac * float64(config.Config.Audio.SampleRate)
+		hiFreq := highCutOffFrac * float64(config.Config.Audio.SampleRate)
 
 		op = &text.DrawOptions{}
-		op.GeoM.Translate(config.Config.FilterInfoTextPaddingLeft, float64(config.Config.WindowHeight)-config.Config.FilterInfoTextSize-config.Config.FilterInfoTextPaddingBottom)
-		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRISTextOpacity})
+		op.GeoM.Translate(config.Config.FilterInfo.TextPaddingLeft, float64(config.Config.Window.Height)-config.Config.FilterInfo.TextSize-config.Config.FilterInfo.TextPaddingBottom)
+		op.ColorScale.ScaleWithColor(color.RGBA{config.AccentColor.R, config.AccentColor.G, config.AccentColor.B, config.Config.MPRIS.TextOpacity})
 
 		text.Draw(screen, fmt.Sprintf("Lo: %0.2f Hz; Hi: %0.2f Hz", loFreq, hiFreq), &text.GoTextFace{
 			Source: fonts.FontA,
-			Size:   config.Config.FilterInfoTextSize,
+			Size:   config.Config.FilterInfo.TextSize,
 		}, op)
 	}
 
@@ -691,13 +691,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		// png.Encode(f, prevFrame)
 	}
 
-	readHeadPosition = (readHeadPosition + numSamples*8) % config.Config.RingBufferSize
+	readHeadPosition = (readHeadPosition + numSamples*8) % config.Config.Buffers.RingBufferSize
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	if config.Config.WindowWidth != int32(outsideWidth) || config.Config.WindowHeight != int32(outsideHeight) {
-		config.Config.WindowWidth = int32(outsideWidth)
-		config.Config.WindowHeight = int32(outsideHeight)
+	if config.Config.Window.Width != int32(outsideWidth) || config.Config.Window.Height != int32(outsideHeight) {
+		config.Config.Window.Width = int32(outsideWidth)
+		config.Config.Window.Height = int32(outsideHeight)
 		InitBuffersAtSize(outsideWidth, outsideHeight)
 		bars.Init()
 	}
@@ -706,13 +706,13 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 
 func InitBuffersAtSize(width int, height int) {
 	prevFrame = ebiten.NewImage(width, height)
-	if config.Config.UseShaders {
+	if config.Config.Shaders.Enable {
 		shaderWorkBuffer = ebiten.NewImage(width, height)
 	}
 }
 
 func Init() {
-	numSamples := config.Config.ReadBufferSize / 2
+	numSamples := config.Config.Buffers.ReadBufferSize / 2
 	FFTBuffer = make([]float64, numSamples)
 	lowCutOff := flag.Float64("lo", 0.0, "low frequency cutoff fraction (discernable details are around 0.001 increments for a 4096 buffer size and 192kHz sample rate)")
 	highCutOff := flag.Float64("hi", 1.0, "high frequency cutoff fraction (discernable details are around 0.001 increments for a 4096 buffer size and 192kHz sample rate)")
@@ -723,8 +723,8 @@ func Init() {
 
 	overrideGain := flag.Float64("gain", -1.0, "override gain multiplier")
 
-	overrideWidth := flag.Int("width", int(config.Config.WindowWidth), "override window width")
-	overrideHeight := flag.Int("height", int(config.Config.WindowHeight), "override window height")
+	overrideWidth := flag.Int("width", int(config.Config.Window.Width), "override window width")
+	overrideHeight := flag.Int("height", int(config.Config.Window.Height), "override window height")
 
 	overrideX = flag.Int("x", -1, "override starting x coordinate of the center of the window; x=0 corresponds to the center of the screen")
 	overrideY = flag.Int("y", -1, "override starting y coordinate of the center of the window; y=0 corresponds to the center of the screen")
@@ -744,25 +744,25 @@ func Init() {
 	}
 
 	complexFFTBuffer = make([]complex128, numSamples)
-	if config.Config.UseBetterPeakDetectionAlgorithm {
+	if config.Config.SingleChannelOsc.PeakDetect.UseACF {
 		complexFFTBufferFlipped = make([]complex128, numSamples)
 		align.Init()
 	}
 	XYComplexFFTBufferL = make([]complex128, numSamples)
 	XYComplexFFTBufferR = make([]complex128, numSamples)
-	config.Config.WindowWidth = int32(*overrideWidth)
-	config.Config.WindowHeight = int32(*overrideHeight)
+	config.Config.Window.Width = int32(*overrideWidth)
+	config.Config.Window.Height = int32(*overrideHeight)
 
 	if *overrideGain != -1.0 {
-		config.Config.Gain = float32(*overrideGain)
+		config.Config.Audio.Gain = float32(*overrideGain)
 	}
 
 	if *overrideMode != -1 {
-		config.Config.DefaultMode = *overrideMode
+		config.Config.App.DefaultMode = *overrideMode
 	}
 
 	if *overrideResizable {
-		config.Config.WindowResizable = !config.Config.WindowResizable
+		config.Config.Window.Resizable = !config.Config.Window.Resizable
 	}
 }
 
@@ -773,49 +773,49 @@ func main() {
 	fonts.Init()
 	icons.Init()
 	go audio.Start()
-	if config.Config.BeatDetect || *beatDetectOverride {
+	if config.Config.BeatDetection.Enable || *beatDetectOverride {
 		go beatdetect.Start()
 	}
-	if config.Config.ShowMPRIS {
+	if config.Config.MPRIS.Enable {
 		go media.Start()
 	}
-	if config.Config.UseShaders {
+	if config.Config.Shaders.Enable {
 		shaders.Init()
 	}
 	bars.Init()
 	kaiser.Init()
-	if config.Config.VUPeak {
+	if config.Config.VU.Peak.Enable {
 		vu.Init()
 	}
 	splash.Init()
 	ebiten.SetWindowIcon([]image.Image{icons.WindowIcon48, icons.WindowIcon32, icons.WindowIcon16})
-	ebiten.SetWindowSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
+	ebiten.SetWindowSize(int(config.Config.Window.Width), int(config.Config.Window.Height))
 	ebiten.SetWindowTitle("xyosc")
 	ebiten.SetWindowMousePassthrough(true)
-	if config.Config.WindowResizable {
+	if config.Config.Window.Resizable {
 		ebiten.SetWindowResizingMode(ebiten.WindowResizingModeEnabled)
 	}
-	ebiten.SetTPS(int(config.Config.TargetFPS))
+	ebiten.SetTPS(int(config.Config.App.TargetFPS))
 	ebiten.SetWindowDecorated(false)
 	screenW, screenH := ebiten.Monitor().Size()
 	if *overrideX == -1 {
-		*overrideX = screenW/2 - int(config.Config.WindowWidth)/2
+		*overrideX = screenW/2 - int(config.Config.Window.Width)/2
 	} else {
-		*overrideX = screenW/2 + *overrideX - int(config.Config.WindowWidth)/2
+		*overrideX = screenW/2 + *overrideX - int(config.Config.Window.Width)/2
 	}
 	if *overrideY == -1 {
-		*overrideY = screenH/2 - int(config.Config.WindowHeight)/2
+		*overrideY = screenH/2 - int(config.Config.Window.Height)/2
 	} else {
-		*overrideY = screenH/2 + *overrideY - int(config.Config.WindowHeight)/2
+		*overrideY = screenH/2 + *overrideY - int(config.Config.Window.Height)/2
 	}
 	ebiten.SetWindowPosition(*overrideX, *overrideY)
 	ebiten.SetVsyncEnabled(true)
-	if config.Config.BarsPeakFreqCursor {
-		barCursorImageBGRectFrame = ebiten.NewImage(int(config.Config.BarsPeakFreqCursorBGWidth), int(config.Config.BarsPeakFreqCursorTextSize+2*config.Config.BarsPeakFreqCursorBGPadding))
+	if config.Config.Bars.PeakCursor.Enable {
+		barCursorImageBGRectFrame = ebiten.NewImage(int(config.Config.Bars.PeakCursor.BGWidth), int(config.Config.Bars.PeakCursor.TextSize+2*config.Config.Bars.PeakCursor.BGPadding))
 	}
-	InitBuffersAtSize(int(config.Config.WindowWidth), int(config.Config.WindowHeight))
+	InitBuffersAtSize(int(config.Config.Window.Width), int(config.Config.Window.Height))
 	gameOptions := ebiten.RunGameOptions{SingleThread: true, ScreenTransparent: true}
-	if config.Config.DisableTransparency {
+	if config.Config.Colors.DisableBGTransparency {
 		gameOptions.ScreenTransparent = false
 	}
 

@@ -23,10 +23,10 @@ var MPRISSmallTextFace *text.MultiFace
 
 func Init() {
 	foundFont := false
-	if config.Config.UseSystemFonts {
+	if config.Config.Fonts.UseSystemFont {
 		fontMap := fontscan.NewFontMap(log.Default())
 		fontMap.UseSystemFonts("")
-		loc, found := fontMap.FindSystemFont(config.Config.SystemFont)
+		loc, found := fontMap.FindSystemFont(config.Config.Fonts.SystemFont)
 		foundFont = found
 		f, err := os.Open(loc.File)
 		FontA, err = text.NewGoTextFaceSource(f)

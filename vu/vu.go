@@ -9,6 +9,7 @@ import (
 	"github.com/ztrue/tracerr"
 
 	"xyosc/config"
+	"xyosc/interpolate"
 	"xyosc/kaiser"
 	"xyosc/utils"
 )
@@ -33,13 +34,13 @@ var LoudnessCursorPos = 0
 var startTime time.Time
 
 func Init() {
-	LoudnessPeakL = make([]float64, int(float64(config.Config.TargetFPS)*config.Config.VUPeakHistorySeconds))
-	LoudnessPeakR = make([]float64, int(float64(config.Config.TargetFPS)*config.Config.VUPeakHistorySeconds))
+	LoudnessPeakL = make([]float64, int(float64(config.Config.App.TargetFPS)*config.Config.VU.Peak.HistorySeconds))
+	LoudnessPeakR = make([]float64, int(float64(config.Config.App.TargetFPS)*config.Config.VU.Peak.HistorySeconds))
 	startTime = time.Now()
 }
 
 func CommitPeakPoint() {
-	newCursorPos := int(float64(config.Config.TargetFPS) * (float64(time.Since(startTime).Nanoseconds()) / 1e9))
+	newCursorPos := int(float64(config.Config.App.TargetFPS) * (float64(time.Since(startTime).Nanoseconds()) / 1e9))
 	newOffset := min(newCursorPos-LoudnessCursorPos, len(LoudnessPeakL))
 	LoudnessCursorPos = newCursorPos
 	for x := range int(newOffset) {
@@ -54,8 +55,8 @@ func CommitPeakPoint() {
 func CalcLoudness(inputArray *[]complex128, lowCutFrac, hiCutFrac float64) float64 { // in out units
 	vol := 0.
 	if lowCutFrac != 0 || hiCutFrac != 1.0 {
-		if config.Config.BarsUseWindow {
-			for i := uint32(0); i < config.Config.ReadBufferSize/2; i++ {
+		if config.Config.Bars.UseWindowFn {
+			for i := uint32(0); i < config.Config.Buffers.ReadBufferSize/2; i++ {
 				(*inputArray)[i] = complex(real((*inputArray)[i])*kaiser.WindowBuffer[i], 0)
 			}
 		}
@@ -79,48 +80,36 @@ func CalcLoudness(inputArray *[]complex128, lowCutFrac, hiCutFrac float64) float
 			vol = max(val, vol)
 		}
 	}
-	if config.Config.VULogScale {
-		vol = ((max(math.Log10(vol)*10, config.Config.VULogScaleMinDB)) - config.Config.VULogScaleMinDB) / (config.Config.VULogScaleMaxDB - config.Config.VULogScaleMinDB)
+	if config.Config.VU.LogScale {
+		vol = ((max(math.Log10(vol)*10, config.Config.VU.LogMinDB)) - config.Config.VU.LogMinDB) / (config.Config.VU.LogMaxDB - config.Config.VU.LogMinDB)
 	} else {
-		vol = vol / config.Config.VULinScaleMax
+		vol = vol / config.Config.VU.LinMax
 	}
 	return vol
 }
 
 func ComputeBarLayout(barIndex int, vol float64) (x float64, y float64, w float64, h float64) {
-	barsWidth := (float64(config.Config.WindowWidth)-config.Config.VUPaddingBetween)/2 - config.Config.VUPaddingEdge
+	barsWidth := (float64(config.Config.Window.Width)-config.Config.VU.PaddingBetween)/2 - config.Config.VU.PaddingEdge
 
-	if config.FiltersApplied && config.Config.ShowFilterInfo {
-		return (config.Config.VUPaddingEdge) + float64(barIndex)*(barsWidth+config.Config.VUPaddingBetween), float64(config.Config.WindowHeight) - (config.Config.VUPaddingEdge) - (config.Config.FilterInfoTextSize) - (config.Config.FilterInfoTextPaddingBottom), (barsWidth), -(float64(config.Config.WindowHeight) - 2*(config.Config.BarsPaddingEdge) - (config.Config.FilterInfoTextSize) - (config.Config.FilterInfoTextPaddingBottom)) * vol
+	if config.FiltersApplied && config.Config.FilterInfo.Enable {
+		return (config.Config.VU.PaddingEdge) + float64(barIndex)*(barsWidth+config.Config.VU.PaddingBetween), float64(config.Config.Window.Height) - (config.Config.VU.PaddingEdge) - (config.Config.FilterInfo.TextSize) - (config.Config.FilterInfo.TextPaddingBottom), (barsWidth), -(float64(config.Config.Window.Height) - 2*(config.Config.Bars.PaddingEdge) - (config.Config.FilterInfo.TextSize) - (config.Config.FilterInfo.TextPaddingBottom)) * vol
 	} else {
-		return (config.Config.VUPaddingEdge) + float64(barIndex)*(barsWidth+config.Config.VUPaddingBetween), float64(config.Config.WindowHeight) - (config.Config.VUPaddingEdge), (barsWidth), -(float64(config.Config.WindowHeight) - 2*(config.Config.VUPaddingEdge)) * vol
+		return (config.Config.VU.PaddingEdge) + float64(barIndex)*(barsWidth+config.Config.VU.PaddingBetween), float64(config.Config.Window.Height) - (config.Config.VU.PaddingEdge), (barsWidth), -(float64(config.Config.Window.Height) - 2*(config.Config.VU.PaddingEdge)) * vol
 	}
 }
 
 func Interpolate(deltaTime float64) {
-	if config.Config.VUInterpolate {
-		LoudnessLPos += (LoudnessLTarget - LoudnessLPos) * min(1.0, deltaTime*config.Config.VUInterpolateDirect)
-		LoudnessLVel += (LoudnessLTarget - LoudnessLPos) * deltaTime * config.Config.VUInterpolateAccel
-		LoudnessLVel -= LoudnessLVel * min(1.0, deltaTime*config.Config.VUInterpolateDrag)
-		LoudnessLPos += LoudnessLVel * deltaTime
-		LoudnessRPos += (LoudnessRTarget - LoudnessRPos) * min(1.0, deltaTime*config.Config.VUInterpolateDirect)
-		LoudnessRVel += (LoudnessRTarget - LoudnessRPos) * deltaTime * config.Config.VUInterpolateAccel
-		LoudnessRVel -= LoudnessRVel * min(1.0, deltaTime*config.Config.VUInterpolateDrag)
-		LoudnessRPos += LoudnessRVel * deltaTime
+	if config.Config.VU.Interpolate.Enable {
+		interpolate.Interpolate(deltaTime, LoudnessLTarget, &LoudnessLPos, &LoudnessLVel, config.Config.VU.Interpolate)
+		interpolate.Interpolate(deltaTime, LoudnessRTarget, &LoudnessRPos, &LoudnessRVel, config.Config.VU.Interpolate)
 	} else {
 		LoudnessLPos = LoudnessLTarget
 		LoudnessRPos = LoudnessRTarget
 	}
-	if config.Config.VUPeak {
-		if config.Config.VUPeakInterpolate {
-			LoudnessLPeakPos += (LoudnessLPeakTarget - LoudnessLPeakPos) * min(1.0, deltaTime*config.Config.VUInterpolateDirect)
-			LoudnessLPeakVel += (LoudnessLPeakTarget - LoudnessLPeakPos) * deltaTime * config.Config.VUInterpolateAccel
-			LoudnessLPeakVel -= LoudnessLPeakVel * min(1.0, deltaTime*config.Config.VUInterpolateDrag)
-			LoudnessLPeakPos += LoudnessLPeakVel * deltaTime
-			LoudnessRPeakPos += (LoudnessRPeakTarget - LoudnessRPeakPos) * min(1.0, deltaTime*config.Config.VUInterpolateDirect)
-			LoudnessRPeakVel += (LoudnessRPeakTarget - LoudnessRPeakPos) * deltaTime * config.Config.VUInterpolateAccel
-			LoudnessRPeakVel -= LoudnessRPeakVel * min(1.0, deltaTime*config.Config.VUInterpolateDrag)
-			LoudnessRPeakPos += LoudnessRPeakVel * deltaTime
+	if config.Config.VU.Peak.Enable {
+		if config.Config.VU.Peak.Interpolate.Enable {
+			interpolate.Interpolate(deltaTime, LoudnessLPeakTarget, &LoudnessLPeakPos, &LoudnessLPeakVel, config.Config.VU.Peak.Interpolate)
+			interpolate.Interpolate(deltaTime, LoudnessRPeakTarget, &LoudnessRPeakPos, &LoudnessRPeakVel, config.Config.VU.Peak.Interpolate)
 		} else {
 			LoudnessLPeakPos = LoudnessLPeakTarget
 			LoudnessRPeakPos = LoudnessRPeakTarget

@@ -98,367 +98,408 @@ Here is an example of how to configure `xyosc` using Nix.
 
 # Typical configuration file
 ```yaml
-usesystemfonts: true
-systemfont: "Maple Mono NF"
-fpscounter: false
-showfilterinfo: true
-filterinfotextsize: 16
-filterinfotextpaddingleft: 16
-filterinfotextpaddingbottom: 4
-showmpris: false
-mpristexttitleyoffset: 0
-mpristextalbumyoffset: -7
-mpristextdurationyoffset: 0
-mpristextopacity: 255
-targetfps: 240
-windowwidth: 1000
-windowheight: 1000
-windowresizable: false
-capturedeviceindex: 0
-capturedevicename: ""
-capturedevicesamplerate: 0
-samplerate: 192000
-audiocapturebuffersize: 512
-ringbuffersize: 2097152
-readbuffersize: 16384
-xyoscilloscopereadbuffersize: 2048
-readbufferdelay: 32
-beatdetectreadbuffersize: 2097152
-beatdetectdownsamplefactor: 4
-gain: 1
-lineopacity: 200
-linebrightness: 1
-linethicknessxy: 3
-linethicknesssinglechannel: 3
-lineinvsqrtopacitycontrol: true
-lineinvsqrtopacitycontroluselogdecrement: true
-lineinvsqrtopacitycontrollogdecrementbase: 200.0
-lineinvsqrtopacitycontrollogdecrementoffset: 0.99
-linetimedependentopacitycontrol: true
-linetimedependentopacitycontrolbase: 0.999
-lineopacitycontrolalsoappliestothickness: true
-particles: false
-particlegenperframeeveryxsamples: 4000
-particlemaxcount: 100
-particleminsize: 1.0
-particlemaxsize: 3.0
-particleacceleration: 0.2
-particledrag: 5.0
-defaultmode: 0
-scaleenable: true
-scaletextopacity: 255
-scalemainaxisenable: true
-scaleverttextenable: true
-scalehorztextenable: true
-scaleverttextsize: 10
-scalehorztextsize: 10
-scaleverttextpadding: 5
-scalehorztextpadding: 5
-scaleverttickenable: true
-scalehorztickenable: true
-scaleverttickexpandtogrid: false
-scalehorztickexpandtogrid: false
-scalemainaxisstrokethickness: 2
-scaleverttickexpandtogridthickness: 0.5
-scalehorztickexpandtogridthickness: 0.5
-scaleverttickstrokethickness: 1
-scalehorztickstrokethickness: 1
-scalevertticklength: 10
-scalehorzticklength: 10
-scalevertdiv: 20
-scalehorzdiv: 20
-scalehorzdivdynamicpos: true
-peakdetectseparator: 100
-oscilloscopestartpeakdetection: true
-usebetterpeakdetectionalgorithm: true
-betterpeakdetectionalgorithmusewindow: true
-triggerthroughoutwindow: true
-usecomplextriggeringalgorithm: true
-complextriggeringalgorithmusecorrelation: true
-frequencydetectionusemedian: true
-centerpeak: true
-quadratureoffset: true
-smoothwaveoverperiods:                            true
-smoothwaveoverperiodsinvtau:                      100
-smoothwaveoverperiodsusetimeindependentweights:   true
-smoothwaveoverperiodstimeindependentweightfactor: 0.4
-smoothwaveoverperiodsmax:                         10
-peakdetectedgeguardbuffersize: 30
-singlechannelwindow: 8192
-periodcrop: false
-periodcropcount: 2
-periodcroploopovercount: 1
-fftbufferoffset: 0
-forcecolors: true
-accentcolor: "#E7BDB9"
-firstcolor: "#E7BDB9"
-thirdcolor: "#E7BDB9"
-particlecolor: "#F9DCD9"
-bgcolor: "#2B1C1A"
-bgopacity: 200
-disabletransparency: false
-copypreviousframe: true
-copypreviousframealphadecaybase: 0.0000001
-copypreviousframealphadecayspeed: 2.0
-beatdetect: false
-beatdetectinterval: 100
-beatdetectbpmcorrectionspeed: 4
-beatdetecttimecorrectionspeed: 0.4
-beatdetectmaxbpm: 500.0
-beatdetecthalfdisplayedbpm: false
-showmetronome: true
-metronomeheight: 8
-metronomepadding: 8
-metronomethinlinemode: true
-metronomethinlinethicknesschangewithvelocity: true
-metronomethinlinethickness: 64
-metronomethinlinehintthickness: 2
-showbpm: true
-bpmtextsize: 24
-barsusewindow: true
-barspreserveparsevalenergy: true
-barspreventspectralleakageabovefreq: 170000
-barswidth: 4
-barspaddingedge: 4
-barspaddingbetween: 4
-barsautogain: true
-barsautogainspeed: 0.5
-barsautogainminvolume: 0.000000001
-barsinterpolatepos: true
-barsinterpolateaccel: 20
-barsinterpolatedrag: 2
-barsinterpolatedirect: 20
-barsshowphase: false
-barsphasecolorlmult: 0.8
-barsphasecolorcmult: 3
-barsphasecolorhmult: 1.0
-barsinterpolatephase: true
-barsinterpolatephaseaccel: 2.0
-barsinterpolatephasedrag: 0.2
-barsinterpolatephasedirect: 2.0
-barspeakfreqcursor: false
-barspeakfreqcursortextdisplaynote: true
-barspeakfreqcursortextdisplaynotereffreq: 440
-barspeakfreqcursortextsize: 24
-barspeakfreqcursortextopacity: 255
-barspeakfreqcursortextoffset: -4
-barspeakfreqcursorbgwidth: 210
-barspeakfreqcursorbgpadding: 2
-barspeakfreqcursorinterpolatepos: true
-barspeakfreqcursorinterpolatedirect: 1
-barspeakfreqcursorinterpolateaccel: 5
-barspeakfreqcursorinterpolatedrag: 20
-usekaiserinsteadofhannwindow: true
-kaiserwindowparam: 8
-vupaddingbetween: 64
-vupaddingedge: 8
-vupreserveparsevalenergy: true
-vulogscale: true
-vulogscalemaxdb: 3
-vulogscalemindb: -40
-vulinscalemax: 1.1
-vuinterpolate: true
-vuinterpolatedirect: 40
-vuinterpolateaccel: 2
-vuinterpolatedrag: 10
-vuscale: true
-vuscaletextsize: 12
-vuscaletextoffset: -2
-vuscalelogdivisions:
-- 3
-- 2
-- 1
-- 0
-- -1
-- -2
-- -3
-- -4
-- -5
-- -6
-- -8
-- -10
-- -15
-- -20
-- -30
-- -40
-vuscalelindivisions:
-- 0
-- 0.1
-- 0.2
-- 0.3
-- 0.4
-- 0.5
-- 0.6
-- 0.7
-- 0.8
-- 0.9
-- 1
-- 1.1
-vuscaledivticksouter: true
-vuscaledivticksinner: true
-vuscaledivtickthickness: 1
-vuscaledivticklength: 2
-vuscaledivtickpadding: 2
-vupeak: true
-vupeakhistoryseconds: 5
-vupeakinterpolate: true
-vupeakinterpolatedirect: 40
-vupeakinterpolateaccel: 2
-vupeakinterpolatedrag: 10
-vupeakthickness: 2
-showsplash: true
-splashstaticseconds: 1
-splashtransitionseconds: 1
-useshaders: true
-modeshaders:
-- - 2
-  - 4
-  - 5
-  - 0
-- - 3
-  - 6
-  - 0
-- - 3
-  - 6
-  - 0
-- - 3
-  - 6
-  - 0
+app:
+  targetfps: 240
+  fpscounter: false
+  defaultmode: 0
+  splash:
+    enable: true
+    staticsecs: 1
+    transsecs: 1
+window:
+  width: 1000
+  height: 1000
+  resizable: false
+fonts:
+  usesystemfont: true
+  systemfont: Maple Mono NF
+audio:
+  capturedevicematchindex: 0
+  capturedevicematchname: ""
+  capturedevicematchsamplerate: 0
+  samplerate: 192000
+  gain: 1
+buffers:
+  audiocapturebuffersize: 512
+  ringbuffersize: 2097152
+  readbuffersize: 16384
+  readbufferdelay: 32
+  xyoscilloscopereadbuffersize: 2048
+  beatdetectreadbuffersize: 2097152
+windowfn:
+  usekaiserinsteadofhann: true
+  kaiserparam: 8
+line:
+  opacity: 200
+  brightness: 1
+  thicknessxy: 3
+  thicknesssinglechannel: 3
+  invsqrtopacitycontrol:
+    enable: true
+    uselogdecrement: true
+    logbase: 200
+    logoffset: 0.99
+  timedependentopacitycontrol:
+    enable: true
+    base: 0.999
+  opacityalsoaffectsthickness: true
+colors:
+  useconfigcolorsinsteadofpywal: true
+  palette:
+    accent: '#E7BDB9'
+    first: '#E7BDB9'
+    third: '#E7BDB9'
+    particle: '#F9DCD9'
+    bg: '#2B1C1A'
+  bgopacity: 200
+  disablebgtransparency: false
+imageretention:
+  enable: true
+  alphadecaybase: 1e-07
+  alphadecayspeed: 2
+singlechannelosc:
+  displaybuffersize: 8192
+  periodcrop:
+    enable: true
+    displaycount: 2
+    loopovercount: 1
+  aligntolastpossiblepeak: false
+  triggerthroughoutwindow: false
+  peakdetect:
+    enable: true
+    peakdetectseparator: 100
+    useacf: true
+    acfusewindowfn: true
+    usemedian: true
+    triggerthroughoutwindow: true
+    usecomplextrigger: true
+    aligntolastpossiblepeak: true
+    complextriggerusecorrelationtosinewave: true
+    fftbufferoffset: 0
+    edgeguardbuffersize: 30
+    quadratureoffsetpeak: true
+    centerpeak: true
+  smoothwave:
+    enable: true
+    invtau: 100
+    timeindependent: true
+    timeindependentfactor: 0.4
+    maxperiods: 10
+scale:
+  enable: true
+  mainaxisenable: true
+  textopacity: 255
+  mainaxisthickness: 2
+  horz:
+    textenable: true
+    textsize: 10
+    textpadding: 5
+    tickenable: true
+    ticktogrid: false
+    gridthickness: 0.5
+    tickthickness: 1
+    ticklength: 10
+    divs: 20
+  vert:
+    textenable: true
+    textsize: 10
+    textpadding: 5
+    tickenable: true
+    ticktogrid: false
+    gridthickness: 0.5
+    tickthickness: 1
+    ticklength: 10
+    divs: 20
+  horzdivdynamicpos: true
+particles:
+  enable: false
+  geneveryxsamples: 4000
+  maxcount: 100
+  minsize: 1
+  maxsize: 3
+  acceleration: 0.2
+  drag: 5
+bars:
+  usewindowfn: true
+  preserveparsevalenergy: true
+  preventleakageabovefreq: 170000
+  width: 4
+  paddingedge: 4
+  paddingbetween: 4
+  autogain:
+    enable: true
+    speed: 0.5
+    minvolume: 1e-09
+  interpolate:
+    enable: true
+    accel: 20
+    drag: 2
+    direct: 20
+  peakcursor:
+    enable: false
+    shownote: true
+    refnotefreq: 440
+    textsize: 24
+    textopacity: 255
+    textoffset: -4
+    bgwidth: 210
+    bgpadding: 2
+    interpolatepos:
+      enable: true
+      accel: 5
+      drag: 20
+      direct: 1
+  phasecolors:
+    enable: false
+    lmult: 0.8
+    cmult: 3
+    hmult: 1
+    interpolate:
+      enable: true
+      accel: 2
+      drag: 0.2
+      direct: 2
+vu:
+  paddingbetween: 64
+  paddingedge: 8
+  preserveparsevalenergy: true
+  logscale: true
+  logmaxdb: 3
+  logmindb: -40
+  linmax: 1.1
+  interpolate:
+    enable: true
+    accel: 2
+    drag: 10
+    direct: 40
+  scale:
+    enable: true
+    textsize: 12
+    textoffset: -2
+    logdivisions:
+    - 3
+    - 2
+    - 1
+    - 0
+    - -1
+    - -2
+    - -3
+    - -4
+    - -5
+    - -6
+    - -8
+    - -10
+    - -15
+    - -20
+    - -30
+    - -40
+    lindivisions:
+    - 0
+    - 0.1
+    - 0.2
+    - 0.3
+    - 0.4
+    - 0.5
+    - 0.6
+    - 0.7
+    - 0.8
+    - 0.9
+    - 1
+    - 1.1
+    ticksouter: true
+    ticksinner: true
+    tickthickness: 1
+    ticklength: 2
+    tickpadding: 2
+  peak:
+    enable: true
+    historyseconds: 5
+    interpolate:
+      enable: true
+      accel: 2
+      drag: 10
+      direct: 40
+    thickness: 2
+beatdetection:
+  enable: true
+  showbpm: true
+  bpmtextsize: 24
+  intervalms: 100
+  downsamplefactor: 4
+  bpmcorrectionspeed: 4
+  timecorrectionspeed: 0.4
+  maxbpm: 500
+  halfdisplayedbpm: false
+  metronome:
+    enable: true
+    height: 8
+    padding: 8
+    thinlinemode: true
+    thinlinethicknesschangewithvelocity: true
+    thinlinethickness: 64
+    thinlinehintthickness: 2
+filterinfo:
+  enable: true
+  textsize: 16
+  textpaddingleft: 16
+  textpaddingbottom: 4
 shaders:
-- - name: glow
-    arguments:
-      Strength: 0.05
-    timescale: 0
-  - name: chromaticabberation
-    arguments:
-      Strength: 0.001
-    timescale: 0
-- - name: glow
-    arguments:
-      Strength: 0.05
-    timescale: 0
-  - name: gammacorrectionalphafriendly
-    arguments:
-      MidPoint: 0.1
-      Strength: 2.
-    timescale: 0
-  - name: gammacorrectionalphafriendly
-    arguments:
-      MidPoint: 0.45
-      Strength: 8.
-    timescale: 0
-  - name: chromaticabberation
-    arguments:
-      Strength: 0.001
-    timescale: 0
-- - name: glow
-    arguments:
-      Strength: 0.1
-    timescale: 0
-  - name: gammacorrection
-    arguments:
-      MidPoint: 0.1
-      Strength: 2.
-    timescale: 0
-  - name: gammacorrection
-    arguments:
-      MidPoint: 0.45
-      Strength: 10.
-    timescale: 0
-  - name: chromaticabberation
-    arguments:
-      Strength: 0.001
-    timescale: 0
-- - name: glow
-    arguments:
-      Strength: 0.04
-    timescale: 0
-  - name: gammacorrection
-    arguments:
-      MidPoint: 0.1
-      Strength: 4.
-    timescale: 0
-  - name: gammacorrection
-    arguments:
-      MidPoint: 0.45
-      Strength: 8.
-    timescale: 0
-  - name: chromaticabberation
-    arguments:
-      Strength: 0.001
-    timescale: 0
-- - name: crtcurve
-    arguments:
-      Strength: 0.5
-    timescale: 0
-  - name: glow
-    arguments:
-      Strength: 0.1
-    timescale: 0
-  - name: gammacorrection
-    arguments:
-      MidPoint: 0.1
-      Strength: 2.
-    timescale: 0
-  - name: gammacorrection
-    arguments:
-      MidPoint: 0.45
-      Strength: 10.
-    timescale: 0
-  - name: chromaticabberation
-    arguments:
-      Strength: 0.001
-    timescale: 0
-- - name: crt
-    arguments: {}
-    timescale: 0
-  - name: glow
-    arguments:
-      Strength: 0.05
-    timescale: 0
-  - name: gammacorrection
-    arguments:
-      MidPoint: 0.1
-      Strength: 4.
-    timescale: 0
-  - name: gammacorrection
-    arguments:
-      MidPoint: 0.45
-      Strength: 8.
-    timescale: 0
-  - name: chromaticabberation
-    arguments:
-      Strength: 0.001
-    timescale: 0
-- - name: crtcurve
-    arguments:
-      Strength: 0.5
-    timescale: 0
-  - name: glow
-    arguments:
-      Strength: 0.04
-    timescale: 0
-  - name: gammacorrection
-    arguments:
-      MidPoint: 0.1
-      Strength: 4.
-    timescale: 0
-  - name: gammacorrection
-    arguments:
-      MidPoint: 0.45
-      Strength: 8.
-    timescale: 0
-  - name: chromaticabberation
-    arguments:
-      Strength: 0.001
-    timescale: 0
-customshadercode:
-  noise: "//go:build ignore\n\n//kage:unit pixels\n\npackage main\n\nvar Strength
-      float\nvar Time float\nvar Scale float\n\nfunc Fragment(dstPos vec4, srcPos vec2,
-      color vec4) vec4 {\n\t\t\tvar clr vec4\n\t\t\tclr = imageSrc2At(srcPos)\n\t\t\tamount
+  enable: true
+  modepresetslist:
+  - - 2
+    - 4
+    - 5
+    - 0
+  - - 3
+    - 6
+    - 0
+  - - 3
+    - 6
+    - 0
+  - - 3
+    - 6
+    - 0
+  presets:
+  - - name: glow
+      arguments:
+        Strength: 0.05
+      timescale: 0
+    - name: chromaticabberation
+      arguments:
+        Strength: 0.001
+      timescale: 0
+  - - name: glow
+      arguments:
+        Strength: 0.05
+      timescale: 0
+    - name: gammacorrectionalphafriendly
+      arguments:
+        MidPoint: 0.1
+        Strength: 2
+      timescale: 0
+    - name: gammacorrectionalphafriendly
+      arguments:
+        MidPoint: 0.45
+        Strength: 8
+      timescale: 0
+    - name: chromaticabberation
+      arguments:
+        Strength: 0.001
+      timescale: 0
+  - - name: glow
+      arguments:
+        Strength: 0.1
+      timescale: 0
+    - name: gammacorrection
+      arguments:
+        MidPoint: 0.1
+        Strength: 2
+      timescale: 0
+    - name: gammacorrection
+      arguments:
+        MidPoint: 0.45
+        Strength: 10
+      timescale: 0
+    - name: chromaticabberation
+      arguments:
+        Strength: 0.001
+      timescale: 0
+  - - name: glow
+      arguments:
+        Strength: 0.04
+      timescale: 0
+    - name: gammacorrection
+      arguments:
+        MidPoint: 0.1
+        Strength: 4
+      timescale: 0
+    - name: gammacorrection
+      arguments:
+        MidPoint: 0.45
+        Strength: 8
+      timescale: 0
+    - name: chromaticabberation
+      arguments:
+        Strength: 0.001
+      timescale: 0
+  - - name: crtcurve
+      arguments:
+        Strength: 0.5
+      timescale: 0
+    - name: glow
+      arguments:
+        Strength: 0.1
+      timescale: 0
+    - name: gammacorrection
+      arguments:
+        MidPoint: 0.1
+        Strength: 2
+      timescale: 0
+    - name: gammacorrection
+      arguments:
+        MidPoint: 0.45
+        Strength: 10
+      timescale: 0
+    - name: chromaticabberation
+      arguments:
+        Strength: 0.001
+      timescale: 0
+  - - name: crt
+      arguments: {}
+      timescale: 0
+    - name: glow
+      arguments:
+        Strength: 0.05
+      timescale: 0
+    - name: gammacorrection
+      arguments:
+        MidPoint: 0.1
+        Strength: 4
+      timescale: 0
+    - name: gammacorrection
+      arguments:
+        MidPoint: 0.45
+        Strength: 8
+      timescale: 0
+    - name: chromaticabberation
+      arguments:
+        Strength: 0.001
+      timescale: 0
+  - - name: crtcurve
+      arguments:
+        Strength: 0.5
+      timescale: 0
+    - name: glow
+      arguments:
+        Strength: 0.04
+      timescale: 0
+    - name: gammacorrection
+      arguments:
+        MidPoint: 0.1
+        Strength: 4
+      timescale: 0
+    - name: gammacorrection
+      arguments:
+        MidPoint: 0.45
+        Strength: 8
+      timescale: 0
+    - name: chromaticabberation
+      arguments:
+        Strength: 0.001
+      timescale: 0
+  customshadercode:
+    noise: "//go:build ignore\n\n//kage:unit pixels\n\npackage main\n\nvar Strength
+      float\nvar Time float\nvar Scale float\n\nfunc Fragment(dstPos vec4, srcPos
+      vec2, color vec4) vec4 {\n\t\t\tvar clr vec4\n\t\t\tclr = imageSrc2At(srcPos)\n\t\t\tamount
       := abs(cos(sin(srcPos.x*Scale+Time+cos(srcPos.y*Scale+Time)*Scale)*Scale+sin(srcPos.x*Scale+Time)*Scale))
       * Strength\n\t\t\tclr.r += amount\n\t\t\tclr.g += amount\n\t\t\tclr.b += amount\n\t\t\tclr.a
-      += amount\n\t\t\treturn clr\n}\n"
+      += amount\n\t\t\treturn clr\n}\n\t\t\t"
+mpris:
+  enable: false
+  texttitleyoffset: 0
+  textalbumyoffset: -7
+  textdurationyoffset: 0
+  textopacity: 255
 ```
 
 # Example aliases for running the setup seen in the screenshots

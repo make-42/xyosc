@@ -19,22 +19,22 @@ var inputBufferCopied []complex128
 var sineWaveBuffer []complex128
 
 func Init() {
-	realBuffer = make([]float64, config.Config.ReadBufferSize/2)
-	realBufferUnchanged = make([]float64, config.Config.ReadBufferSize/2)
-	if config.Config.ComplexTriggeringAlgorithmUseCorrelation {
-		inputBufferCopied = make([]complex128, config.Config.ReadBufferSize/2)
-		sineWaveBuffer = make([]complex128, config.Config.ReadBufferSize/2)
+	realBuffer = make([]float64, config.Config.Buffers.ReadBufferSize/2)
+	realBufferUnchanged = make([]float64, config.Config.Buffers.ReadBufferSize/2)
+	if config.Config.SingleChannelOsc.PeakDetect.ComplexTriggerUseCorrelationToSineWave {
+		inputBufferCopied = make([]complex128, config.Config.Buffers.ReadBufferSize/2)
+		sineWaveBuffer = make([]complex128, config.Config.Buffers.ReadBufferSize/2)
 	}
 }
 
 func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (uint32, []int, uint32) {
-	numSamples := config.Config.ReadBufferSize / 2
+	numSamples := config.Config.Buffers.ReadBufferSize / 2
 	for i := uint32(0); i < numSamples; i++ {
-		realBufferUnchanged[(i+config.Config.FFTBufferOffset)%numSamples] = real((*inputArray)[i])
-		if config.Config.ComplexTriggeringAlgorithmUseCorrelation {
-			inputBufferCopied[(i+config.Config.FFTBufferOffset)%numSamples] = complex(real((*inputArray)[i])*kaiser.WindowBuffer[i], 0)
+		realBufferUnchanged[(i+config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples] = real((*inputArray)[i])
+		if config.Config.SingleChannelOsc.PeakDetect.ComplexTriggerUseCorrelationToSineWave {
+			inputBufferCopied[(i+config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples] = complex(real((*inputArray)[i])*kaiser.WindowBuffer[i], 0)
 		}
-		if config.Config.BetterPeakDetectionAlgorithmUseWindow {
+		if config.Config.SingleChannelOsc.PeakDetect.ACFUseWindowFn {
 			(*inputArray)[i] = complex(real((*inputArray)[i])*kaiser.WindowBuffer[i], 0)
 		}
 	}
@@ -42,12 +42,12 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 	utils.CheckError(tracerr.Wrap(err))
 
 	for i := uint32(0); i < numSamples; i++ {
-		realBuffer[(i+config.Config.FFTBufferOffset)%numSamples] = real((*inputArray)[i])
+		realBuffer[(i+config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples] = real((*inputArray)[i])
 	}
-	indicesACFPeaks := peaks.Get(realBuffer, config.Config.PeakDetectSeparator)
+	indicesACFPeaks := peaks.Get(realBuffer, config.Config.SingleChannelOsc.PeakDetect.PeakDetectSeparator)
 	sort.Ints(indicesACFPeaks)
 	avgPeriod := 0.
-	if config.Config.FrequencyDetectionUseMedian {
+	if config.Config.SingleChannelOsc.PeakDetect.UseMedian {
 		periods := []int{}
 		for i := range len(indicesACFPeaks) - 1 {
 			periods = append(periods, indicesACFPeaks[i+1]-indicesACFPeaks[i])
@@ -75,8 +75,8 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 	if avgPeriod == 0 || len(indicesACFPeaks) <= 1 {
 		return 0, []int{}, 0
 	}
-	if config.Config.UseComplexTriggeringAlgorithm {
-		if config.Config.ComplexTriggeringAlgorithmUseCorrelation {
+	if config.Config.SingleChannelOsc.PeakDetect.UseComplexTrigger {
+		if config.Config.SingleChannelOsc.PeakDetect.ComplexTriggerUseCorrelationToSineWave {
 			for i := uint32(0); i < numSamples && i < uint32(avgPeriod); i++ {
 				sineWaveBuffer[numSamples-i-1] = complex(math.Sin(float64(i)*2*math.Pi/float64(avgPeriod)), 0)
 			}
@@ -93,7 +93,7 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 			offset -= uint32(avgPeriod / 4)
 		} else {
 			minVal := 0.
-			for i := uint32(0); i < numSamples && (config.Config.TriggerThroughoutWindow || (i < uint32(avgPeriod))); i++ {
+			for i := uint32(0); i < numSamples && (config.Config.SingleChannelOsc.PeakDetect.TriggerThroughoutWindow || (i < uint32(avgPeriod))); i++ {
 				n := 0
 				sum := 0.
 				for j := uint32(0); i+uint32((float64(j)+0.75)*avgPeriod) < numSamples; j++ {
@@ -116,7 +116,7 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 		}
 	} else {
 		minVal := 0.
-		for i := uint32(0); i < numSamples && (config.Config.TriggerThroughoutWindow || (i < uint32(avgPeriod))); i++ {
+		for i := uint32(0); i < numSamples && (config.Config.SingleChannelOsc.PeakDetect.TriggerThroughoutWindow || (i < uint32(avgPeriod))); i++ {
 			n := 0
 			sum := 0.
 			for j := uint32(0); i+uint32(float64(j)*avgPeriod) < numSamples; j++ {
@@ -134,34 +134,34 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 			}
 		}
 	}
-	if config.Config.QuadratureOffset {
+	if config.Config.SingleChannelOsc.PeakDetect.QuadratureOffsetPeak {
 		offset += uint32(0.25 * avgPeriod)
 	}
 
-	if config.Config.AlignToLastPossiblePeak {
-		if config.Config.PeriodCrop {
+	if config.Config.SingleChannelOsc.PeakDetect.AlignToLastPossiblePeak {
+		if config.Config.SingleChannelOsc.PeriodCrop.Enable {
 			div := 1.
-			if config.Config.CenterPeak {
+			if config.Config.SingleChannelOsc.PeakDetect.CenterPeak {
 				div = 2.
 			}
 			addValue := 0.
-			for offset+uint32(addValue+avgPeriod*float64(1+config.Config.PeriodCropCount)/div) < numSamples {
+			for offset+uint32(addValue+avgPeriod*float64(1+config.Config.SingleChannelOsc.PeriodCrop.DisplayCount)/div) < numSamples {
 				addValue += avgPeriod
 			}
-			for offset+uint32(addValue+avgPeriod*float64(1+config.Config.PeriodCropCount)/div) >= numSamples {
+			for offset+uint32(addValue+avgPeriod*float64(1+config.Config.SingleChannelOsc.PeriodCrop.DisplayCount)/div) >= numSamples {
 				addValue -= avgPeriod
 			}
 			offset += uint32(addValue)
 		} else {
 			addValue := 0.
 			div := 1.
-			if config.Config.CenterPeak {
+			if config.Config.SingleChannelOsc.PeakDetect.CenterPeak {
 				div = 2.
 			}
-			for offset+uint32(addValue+float64(config.Config.SingleChannelWindow)/2./div) < numSamples {
+			for offset+uint32(addValue+float64(config.Config.SingleChannelOsc.DisplayBufferSize)/2./div) < numSamples {
 				addValue += avgPeriod
 			}
-			for offset+uint32(addValue+float64(config.Config.SingleChannelWindow)/2./div) >= numSamples {
+			for offset+uint32(addValue+float64(config.Config.SingleChannelOsc.DisplayBufferSize)/2./div) >= numSamples {
 				addValue -= avgPeriod
 			}
 			offset += uint32(addValue)

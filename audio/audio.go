@@ -20,7 +20,7 @@ var WriteHeadPosition uint32
 const format = malgo.FormatF32
 
 func Init() {
-	SampleRingBufferUnsafe = make([]float32, int(config.Config.RingBufferSize))
+	SampleRingBufferUnsafe = make([]float32, int(config.Config.Buffers.RingBufferSize))
 	SampleSizeInBytes = uint32(malgo.SampleSizeInBytes(format))
 	WriteHeadPosition = 0
 }
@@ -52,7 +52,7 @@ func Start() {
 		}
 		fmt.Printf("    %d: %v, %s, [%s], formats: %+v\n",
 			i, info.ID, info.Name(), e, full.Formats)
-		if info.Name() == config.Config.CaptureDeviceName && config.Config.CaptureDeviceName != "" && (config.Config.CaptureDeviceSampleRate == 0 || config.Config.CaptureDeviceSampleRate == int(full.Formats[0].SampleRate)) {
+		if info.Name() == config.Config.Audio.CaptureDeviceMatchName && config.Config.Audio.CaptureDeviceMatchName != "" && (config.Config.Audio.CaptureDeviceMatchSampleRate == 0 || config.Config.Audio.CaptureDeviceMatchSampleRate == int(full.Formats[0].SampleRate)) {
 			overrideCaptureDeviceIndex = i
 		}
 	}
@@ -63,12 +63,12 @@ func Start() {
 	if overrideCaptureDeviceIndex != -1 {
 		deviceConfig.Capture.DeviceID = infos[overrideCaptureDeviceIndex].ID.Pointer()
 	} else {
-		deviceConfig.Capture.DeviceID = infos[config.Config.CaptureDeviceIndex].ID.Pointer()
+		deviceConfig.Capture.DeviceID = infos[config.Config.Audio.CaptureDeviceMatchIndex].ID.Pointer()
 	}
 	deviceConfig.PerformanceProfile = malgo.LowLatency
-	deviceConfig.SampleRate = config.Config.SampleRate
+	deviceConfig.SampleRate = config.Config.Audio.SampleRate
 	deviceConfig.Alsa.NoMMap = 1
-	deviceConfig.PeriodSizeInFrames = config.Config.AudioCaptureBufferSize
+	deviceConfig.PeriodSizeInFrames = config.Config.Buffers.AudioCaptureBufferSize
 
 	onRecvFrames := func(pSample2, pSample []byte, framecount uint32) {
 		buf := bytes.NewReader(pSample)
@@ -83,7 +83,7 @@ func Start() {
 			SampleRingBufferUnsafe[int(WriteHeadPosition)+i*2+1] = AY
 			i++
 		}
-		WriteHeadPosition = (WriteHeadPosition + uint32(len(pSample))/4) % config.Config.RingBufferSize
+		WriteHeadPosition = (WriteHeadPosition + uint32(len(pSample))/4) % config.Config.Buffers.RingBufferSize
 	}
 	captureCallbacks := malgo.DeviceCallbacks{
 		Data: onRecvFrames,

@@ -50,12 +50,12 @@ var PresetLastShaderRenderListGenerated = -1
 var SelectedPreset = [4]int{0, 0, 0, 0}
 
 func GenShaderRenderList() {
-	if config.Config.DefaultMode != ModeLastShaderRenderListGenerated || SelectedPreset[config.Config.DefaultMode] != PresetLastShaderRenderListGenerated {
-		ModeLastShaderRenderListGenerated = config.Config.DefaultMode
-		PresetLastShaderRenderListGenerated = SelectedPreset[config.Config.DefaultMode]
+	if config.Config.App.DefaultMode != ModeLastShaderRenderListGenerated || SelectedPreset[config.Config.App.DefaultMode] != PresetLastShaderRenderListGenerated {
+		ModeLastShaderRenderListGenerated = config.Config.App.DefaultMode
+		PresetLastShaderRenderListGenerated = SelectedPreset[config.Config.App.DefaultMode]
 		ShaderRenderList = []ShaderRenderStep{}
-		SelectedPreset[config.Config.DefaultMode] = SelectedPreset[config.Config.DefaultMode] % len(config.Config.ModeShaders[config.Config.DefaultMode])
-		for _, shader := range config.Config.Shaders[config.Config.ModeShaders[config.Config.DefaultMode][SelectedPreset[config.Config.DefaultMode]]] {
+		SelectedPreset[config.Config.App.DefaultMode] = SelectedPreset[config.Config.App.DefaultMode] % len(config.Config.Shaders.ModePresetsList[config.Config.App.DefaultMode])
+		for _, shader := range config.Config.Shaders.Presets[config.Config.Shaders.ModePresetsList[config.Config.App.DefaultMode][SelectedPreset[config.Config.App.DefaultMode]]] {
 			ShaderRenderList = append(ShaderRenderList, ShaderRenderStep{
 				Shader:    Shaders[shader.Name],
 				Arguments: shader.Arguments,
@@ -87,7 +87,7 @@ func Init() {
 	utils.CheckError(tracerr.Wrap(err))
 
 	// Custom shaders
-	for shaderName, shaderCode := range config.Config.CustomShaderCode {
+	for shaderName, shaderCode := range config.Config.Shaders.CustomShaderCode {
 		Shaders["custom/"+shaderName], err = ebiten.NewShader([]byte(shaderCode))
 		if err != nil {
 			log.Println("Couldn't compile", shaderName, "shader.")

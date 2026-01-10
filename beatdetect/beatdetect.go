@@ -5,11 +5,12 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/goccmack/godsp/peaks"
+
 	"xyosc/audio"
 	"xyosc/config"
 	"xyosc/filter"
-
-	"github.com/goccmack/godsp/peaks"
 )
 
 var InterpolatedBPM float64 = 0.0
@@ -25,37 +26,37 @@ var readHeadPosition uint32
 var isSafeToInterpolateBPMAndTiming sync.Mutex
 
 func Start() {
-	numSamples = config.Config.BeatDetectReadBufferSize / 2
-	numSampleDownsampled = numSamples / config.Config.BeatDetectDownSampleFactor
+	numSamples = config.Config.Buffers.BeatDetectReadBufferSize / 2
+	numSampleDownsampled = numSamples / config.Config.BeatDetection.DownSampleFactor
 	BeatDetectSampleBufferDownsampled = make([]float64, numSampleDownsampled)
 	BeatDetectSampleBufferDownsampledComplex = make([]complex128, numSampleDownsampled)
 	for {
 		DetectBeat()
-		time.Sleep(time.Millisecond * time.Duration(config.Config.BeatDetectInterval))
+		time.Sleep(time.Millisecond * time.Duration(config.Config.BeatDetection.IntervalMS))
 	}
 }
 
 func InterpolateBeatTime(deltaTime float64) {
 	if isSafeToInterpolateBPMAndTiming.TryLock() {
 		defer isSafeToInterpolateBPMAndTiming.Unlock()
-		InterpolatedBPM = max(0, (InterpolatedBPM*(1-config.Config.BeatDetectBPMCorrectionSpeed*deltaTime) + CurrentBPM*(config.Config.BeatDetectBPMCorrectionSpeed*deltaTime)))
-		InterpolatedBeatTime = InterpolatedBeatTime.Add(time.Duration(float64(CurrentBeatTime.Sub(InterpolatedBeatTime).Nanoseconds()) * (config.Config.BeatDetectTimeCorrectionSpeed * deltaTime)))
+		InterpolatedBPM = max(0, (InterpolatedBPM*(1-config.Config.BeatDetection.BPMCorrectionSpeed*deltaTime) + CurrentBPM*(config.Config.BeatDetection.BPMCorrectionSpeed*deltaTime)))
+		InterpolatedBeatTime = InterpolatedBeatTime.Add(time.Duration(float64(CurrentBeatTime.Sub(InterpolatedBeatTime).Nanoseconds()) * (config.Config.BeatDetection.TimeCorrectionSpeed * deltaTime)))
 	}
 }
 
 func DetectBeat() {
-	posStartRead := (config.Config.RingBufferSize + audio.WriteHeadPosition - numSamples*2) % config.Config.RingBufferSize
+	posStartRead := (config.Config.Buffers.RingBufferSize + audio.WriteHeadPosition - numSamples*2) % config.Config.Buffers.RingBufferSize
 	timeAtDump := time.Now()
 	for i := uint32(0); i < numSampleDownsampled; i++ {
 		BeatDetectSampleBufferDownsampledComplex[i] = 0
-		for j := uint32(0); j < config.Config.BeatDetectDownSampleFactor; j++ {
-			sampleToAvg := float64((audio.SampleRingBufferUnsafe[(posStartRead+(i*config.Config.BeatDetectDownSampleFactor+j)*2)%config.Config.RingBufferSize]) + (audio.SampleRingBufferUnsafe[(posStartRead+(i*config.Config.BeatDetectDownSampleFactor+j)*2+1)%config.Config.RingBufferSize]))
+		for j := uint32(0); j < config.Config.BeatDetection.DownSampleFactor; j++ {
+			sampleToAvg := float64((audio.SampleRingBufferUnsafe[(posStartRead+(i*config.Config.BeatDetection.DownSampleFactor+j)*2)%config.Config.Buffers.RingBufferSize]) + (audio.SampleRingBufferUnsafe[(posStartRead+(i*config.Config.BeatDetection.DownSampleFactor+j)*2+1)%config.Config.Buffers.RingBufferSize]))
 			BeatDetectSampleBufferDownsampledComplex[i] += complex(sampleToAvg*sampleToAvg, 0)
 		}
 	}
 	domains := [][2]float64{
-		{40 / (float64(config.Config.SampleRate) / float64(config.Config.BeatDetectDownSampleFactor)), 250 / (float64(config.Config.SampleRate) / float64(config.Config.BeatDetectDownSampleFactor))},
-		{1000 / (float64(config.Config.SampleRate) / float64(config.Config.BeatDetectDownSampleFactor)), 40000 / (float64(config.Config.SampleRate) / float64(config.Config.BeatDetectDownSampleFactor))},
+		{40 / (float64(config.Config.Audio.SampleRate) / float64(config.Config.BeatDetection.DownSampleFactor)), 250 / (float64(config.Config.Audio.SampleRate) / float64(config.Config.BeatDetection.DownSampleFactor))},
+		{1000 / (float64(config.Config.Audio.SampleRate) / float64(config.Config.BeatDetection.DownSampleFactor)), 40000 / (float64(config.Config.Audio.SampleRate) / float64(config.Config.BeatDetection.DownSampleFactor))},
 	}
 
 	filter.FilterBufferInPlaceDomains(&BeatDetectSampleBufferDownsampledComplex, domains)
@@ -63,7 +64,7 @@ func DetectBeat() {
 	for i := uint32(0); i < numSampleDownsampled; i++ {
 		BeatDetectSampleBufferDownsampled[i] = real(BeatDetectSampleBufferDownsampledComplex[i])
 	}
-	indices := peaks.Get(BeatDetectSampleBufferDownsampled, int(float64(config.Config.SampleRate)/float64(config.Config.BeatDetectDownSampleFactor)*60.0/config.Config.BeatDetectMaxBPM))
+	indices := peaks.Get(BeatDetectSampleBufferDownsampled, int(float64(config.Config.Audio.SampleRate)/float64(config.Config.BeatDetection.DownSampleFactor)*60.0/config.Config.BeatDetection.MaxBPM))
 	sort.Ints(indices)
 	indices = indices[1:]
 
@@ -71,10 +72,10 @@ func DetectBeat() {
 	if ok {
 		isSafeToInterpolateBPMAndTiming.Lock()
 		defer isSafeToInterpolateBPMAndTiming.Unlock()
-		CurrentBPM = 60.0 * float64(config.Config.SampleRate) / float64(config.Config.BeatDetectDownSampleFactor) / avg
-		CurrentBeatTime = timeAtDump.Add(time.Duration(int64(avgOffset) * 1000000000 / int64(config.Config.SampleRate) * int64(config.Config.BeatDetectDownSampleFactor)))
+		CurrentBPM = 60.0 * float64(config.Config.Audio.SampleRate) / float64(config.Config.BeatDetection.DownSampleFactor) / avg
+		CurrentBeatTime = timeAtDump.Add(time.Duration(int64(avgOffset) * 1000000000 / int64(config.Config.Audio.SampleRate) * int64(config.Config.BeatDetection.DownSampleFactor)))
 		MultFactor := 2.0
-		if config.Config.BeatDetectHalfDisplayedBPM {
+		if config.Config.BeatDetection.HalfDisplayedBPM {
 			MultFactor = 4
 		}
 		if InterpolatedBPM != .0 {

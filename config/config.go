@@ -22,565 +22,763 @@ const (
 	VUMode
 )
 
+type SplashConfig struct {
+	Enable     bool
+	StaticSecs float64
+	TransSecs  float64
+}
+
+type AppConfig struct {
+	TargetFPS   int32
+	FPSCounter  bool
+	DefaultMode int // 0 = XY, 1 = SingleChannel, 2 = Bars
+	Splash      SplashConfig
+}
+
+type WindowConfig struct {
+	Width     int32
+	Height    int32
+	Resizable bool
+}
+
+type FontConfig struct {
+	UseSystemFont bool
+	SystemFont    string
+}
+
+type AudioDeviceConfig struct {
+	CaptureDeviceMatchIndex      int
+	CaptureDeviceMatchName       string
+	CaptureDeviceMatchSampleRate int
+	SampleRate                   uint32
+	Gain                         float32
+}
+
+type AudioBuffersConfig struct {
+	AudioCaptureBufferSize       uint32
+	RingBufferSize               uint32
+	ReadBufferSize               uint32
+	ReadBufferDelay              uint32
+	XYOscilloscopeReadBufferSize uint32
+	BeatDetectReadBufferSize     uint32
+}
+
+type SmoothWaveConfig struct {
+	Enable                bool
+	InvTau                float64
+	TimeIndependent       bool
+	TimeIndependentFactor float64
+	MaxPeriods            uint32
+}
+
+type PeriodCropConfig struct {
+	Enable        bool
+	DisplayCount  int
+	LoopOverCount uint32
+}
+
+type SingleChannelOscilloscopeConfig struct {
+	DisplayBufferSize       uint32
+	PeriodCrop              PeriodCropConfig
+	AlignToLastPossiblePeak bool
+	TriggerThroughoutWindow bool
+	PeakDetect              PeakDetectionConfig
+	SmoothWave              SmoothWaveConfig
+}
+
+type PeakDetectionConfig struct {
+	Enable                                 bool
+	PeakDetectSeparator                    int
+	UseACF                                 bool // ACF
+	ACFUseWindowFn                         bool
+	UseMedian                              bool
+	TriggerThroughoutWindow                bool
+	UseComplexTrigger                      bool
+	AlignToLastPossiblePeak                bool
+	ComplexTriggerUseCorrelationToSineWave bool
+	FFTBufferOffset                        uint32
+	EdgeGuardBufferSize                    uint32
+	QuadratureOffsetPeak                   bool
+	CenterPeak                             bool
+}
+
+type InvSqrtOpacityControlConfig struct {
+	Enable          bool
+	UseLogDecrement bool
+	LogBase         float64
+	LogOffset       float64
+}
+
+type TimeDependentOpacityControlConfig struct {
+	Enable bool
+	Base   float64
+}
+
+type LineConfig struct {
+	Opacity                     uint8
+	Brightness                  float64
+	ThicknessXY                 float32
+	ThicknessSingleChannel      float32
+	InvSqrtOpacityControl       InvSqrtOpacityControlConfig
+	TimeDependentOpacityControl TimeDependentOpacityControlConfig
+	OpacityAlsoAffectsThickness bool
+}
+
+type ParticleConfig struct {
+	Enable           bool
+	GenEveryXSamples int
+	MaxCount         int
+	MinSize          float32
+	MaxSize          float32
+	Acceleration     float32
+	Drag             float32
+}
+
+type AxisConfig struct {
+	TextEnable    bool
+	TextSize      float64
+	TextPadding   float64
+	TickEnable    bool
+	TickToGrid    bool
+	GridThickness float32
+	TickThickness float32
+	TickLength    float32
+	Divs          int
+}
+
+type ScaleConfig struct {
+	Enable         bool
+	MainAxisEnable bool
+	TextOpacity    uint8
+
+	MainAxisThickness float32
+
+	Horz AxisConfig
+	Vert AxisConfig
+
+	HorzDivDynamicPos bool
+}
+
+type PaletteConfig struct {
+	Accent   string
+	First    string
+	Third    string
+	Particle string
+	BG       string
+}
+
+type ColorConfig struct {
+	UseConfigColorsInsteadOfPywal bool
+	Palette                       PaletteConfig
+	BGOpacity                     uint8
+	DisableBGTransparency         bool
+}
+
+type ImageRetentionConfig struct {
+	Enable          bool
+	AlphaDecayBase  float64
+	AlphaDecaySpeed float64
+}
+
+type MetronomeConfig struct {
+	Enable                              bool
+	Height                              float64
+	Padding                             float64
+	ThinLineMode                        bool
+	ThinLineThicknessChangeWithVelocity bool
+	ThinLineThickness                   float64
+	ThinLineHintThickness               float64
+}
+
+type BeatDetectConfig struct {
+	Enable              bool
+	ShowBPM             bool
+	BPMTextSize         float64
+	IntervalMS          int64
+	DownSampleFactor    uint32
+	BPMCorrectionSpeed  float64
+	TimeCorrectionSpeed float64
+	MaxBPM              float64
+	HalfDisplayedBPM    bool
+	Metronome           MetronomeConfig
+}
+
+type InterpolationConfig struct {
+	Enable bool
+	Accel  float64
+	Drag   float64
+	Direct float64
+}
+
+type AutoGainConfig struct {
+	Enable    bool
+	Speed     float64
+	MinVolume float64
+}
+
+type PhaseColorsConfig struct {
+	Enable      bool
+	LMult       float64
+	CMult       float64
+	HMult       float64
+	Interpolate InterpolationConfig
+}
+
+type BarsConfig struct {
+	UseWindowFn             bool
+	PreserveParsevalEnergy  bool
+	PreventLeakageAboveFreq float64
+	Width                   float64
+	PaddingEdge             float64
+	PaddingBetween          float64
+
+	AutoGain    AutoGainConfig
+	Interpolate InterpolationConfig
+
+	PeakCursor  PeakCursorConfig
+	PhaseColors PhaseColorsConfig
+}
+
+type PeakCursorConfig struct {
+	Enable      bool
+	ShowNote    bool
+	RefNoteFreq float64
+	TextSize    float64
+	TextOpacity uint8
+	TextOffset  float64
+	BGWidth     float64
+	BGPadding   float64
+
+	InterpolatePos InterpolationConfig
+}
+
+type WindowFunctionConfig struct {
+	UseKaiserInsteadOfHann bool
+	KaiserParam            float64
+}
+
+type VUScaleConfig struct {
+	Enable        bool
+	TextSize      float64
+	TextOffset    float64
+	LogDivisions  []float64
+	LinDivisions  []float64
+	TicksOuter    bool
+	TicksInner    bool
+	TickThickness float32
+	TickLength    float64
+	TickPadding   float64
+}
+
+type VUPeakConfig struct {
+	Enable         bool
+	HistorySeconds float64
+	Interpolate    InterpolationConfig
+	Thickness      float32
+}
+
+type VUConfig struct {
+	PaddingBetween         float64
+	PaddingEdge            float64
+	PreserveParsevalEnergy bool
+
+	LogScale bool
+	LogMaxDB float64
+	LogMinDB float64
+	LinMax   float64
+
+	Interpolate InterpolationConfig
+
+	Scale VUScaleConfig
+
+	Peak VUPeakConfig
+}
+
+type FilterInfoConfig struct {
+	Enable            bool
+	TextSize          float64
+	TextPaddingLeft   float64
+	TextPaddingBottom float64
+}
+
+type ShaderConfig struct {
+	Enable           bool
+	ModePresetsList  [][]int
+	Presets          [][]Shader
+	CustomShaderCode map[string]string
+}
+
+type MPRISConfig struct {
+	Enable              bool
+	TextTitleYOffset    float64
+	TextAlbumYOffset    float64
+	TextDurationYOffset float64
+	TextOpacity         uint8
+}
+
 type ConfigS struct {
-	UseSystemFonts                                   bool
-	SystemFont                                       string
-	FPSCounter                                       bool
-	ShowFilterInfo                                   bool
-	FilterInfoTextSize                               float64
-	FilterInfoTextPaddingLeft                        float64
-	FilterInfoTextPaddingBottom                      float64
-	ShowMPRIS                                        bool
-	MPRISTextOpacity                                 uint8
-	MPRISTextTitleYOffset                            float64
-	MPRISTextAlbumYOffset                            float64
-	MPRISTextDurationYOffset                         float64
-	TargetFPS                                        int32
-	WindowWidth                                      int32
-	WindowHeight                                     int32
-	WindowResizable                                  bool
-	CaptureDeviceIndex                               int
-	CaptureDeviceName                                string
-	CaptureDeviceSampleRate                          int
-	SampleRate                                       uint32
-	AudioCaptureBufferSize                           uint32
-	RingBufferSize                                   uint32
-	ReadBufferSize                                   uint32
-	ReadBufferDelay                                  uint32
-	XYOscilloscopeReadBufferSize                     uint32
-	BeatDetectReadBufferSize                         uint32
-	BeatDetectDownSampleFactor                       uint32
-	Gain                                             float32
-	LineOpacity                                      uint8
-	LineBrightness                                   float64
-	LineThicknessXY                                  float32
-	LineThicknessSingleChannel                       float32
-	LineInvSqrtOpacityControl                        bool
-	LineInvSqrtOpacityControlUseLogDecrement         bool
-	LineInvSqrtOpacityControlLogDecrementBase        float64
-	LineInvSqrtOpacityControlLogDecrementOffset      float64
-	LineTimeDependentOpacityControl                  bool
-	LineTimeDependentOpacityControlBase              float64
-	LineOpacityControlAlsoAppliesToThickness         bool
-	Particles                                        bool
-	ParticleGenPerFrameEveryXSamples                 int
-	ParticleMaxCount                                 int
-	ParticleMinSize                                  float32
-	ParticleMaxSize                                  float32
-	ParticleAcceleration                             float32
-	ParticleDrag                                     float32
-	DefaultMode                                      int // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
-	ScaleEnable                                      bool
-	ScaleVertTextEnable                              bool
-	ScaleHorzTextEnable                              bool
-	ScaleMainAxisEnable                              bool
-	ScaleVertTextSize                                float64
-	ScaleHorzTextSize                                float64
-	ScaleVertTextPadding                             float64
-	ScaleHorzTextPadding                             float64
-	ScaleTextOpacity                                 uint8
-	ScaleMainAxisStrokeThickness                     float32
-	ScaleVertTickEnable                              bool
-	ScaleHorzTickEnable                              bool
-	ScaleVertTickExpandToGrid                        bool
-	ScaleHorzTickExpandToGrid                        bool
-	ScaleVertTickExpandToGridThickness               float32
-	ScaleHorzTickExpandToGridThickness               float32
-	ScaleVertTickStrokeThickness                     float32
-	ScaleHorzTickStrokeThickness                     float32
-	ScaleVertDiv                                     int
-	ScaleHorzDiv                                     int
-	ScaleHorzDivDynamicPos                           bool
-	ScaleVertTickLength                              float32
-	ScaleHorzTickLength                              float32
-	PeakDetectSeparator                              int
-	OscilloscopeStartPeakDetection                   bool
-	UseBetterPeakDetectionAlgorithm                  bool // ACF
-	BetterPeakDetectionAlgorithmUseWindow            bool
-	FrequencyDetectionUseMedian                      bool
-	TriggerThroughoutWindow                          bool
-	UseComplexTriggeringAlgorithm                    bool
-	ComplexTriggeringAlgorithmUseCorrelation         bool
-	CenterPeak                                       bool
-	AlignToLastPossiblePeak                          bool
-	QuadratureOffset                                 bool
-	SmoothWaveOverPeriods                            bool
-	SmoothWaveOverPeriodsInvTau                      float64 //s^-1
-	SmoothWaveOverPeriodsUseTimeIndependentWeights   bool
-	SmoothWaveOverPeriodsTimeIndependentWeightFactor float64
-	SmoothWaveOverPeriodsMax                         uint32
-	PeakDetectEdgeGuardBufferSize                    uint32
-	SingleChannelWindow                              uint32
-	PeriodCrop                                       bool
-	PeriodCropCount                                  int
-	PeriodCropLoopOverCount                          uint32
-	FFTBufferOffset                                  uint32 // Set it to 0 if AlignToLastPossiblePeak enabled
-	ForceColors                                      bool
-	AccentColor                                      string
-	FirstColor                                       string
-	ThirdColor                                       string
-	ParticleColor                                    string
-	BGColor                                          string
-	BGOpacity                                        uint8
-	DisableTransparency                              bool
-	CopyPreviousFrame                                bool
-	CopyPreviousFrameAlphaDecayBase                  float64
-	CopyPreviousFrameAlphaDecaySpeed                 float64
-	BeatDetect                                       bool
-	BeatDetectInterval                               int64 //ms
-	BeatDetectBPMCorrectionSpeed                     float64
-	BeatDetectTimeCorrectionSpeed                    float64
-	BeatDetectMaxBPM                                 float64
-	BeatDetectHalfDisplayedBPM                       bool
-	ShowMetronome                                    bool
-	MetronomeHeight                                  float64
-	MetronomePadding                                 float64
-	MetronomeThinLineMode                            bool
-	MetronomeThinLineThicknessChangeWithVelocity     bool
-	MetronomeThinLineThickness                       float64
-	MetronomeThinLineHintThickness                   float64
-	ShowBPM                                          bool
-	BPMTextSize                                      float64
-	BarsUseWindow                                    bool
-	BarsPreserveParsevalEnergy                       bool
-	BarsPreventSpectralLeakageAboveFreq              float64
-	BarsWidth                                        float64
-	BarsPaddingEdge                                  float64
-	BarsPaddingBetween                               float64
-	BarsAutoGain                                     bool
-	BarsAutoGainSpeed                                float64
-	BarsAutoGainMinVolume                            float64
-	BarsInterpolatePos                               bool
-	BarsInterpolateAccel                             float64
-	BarsInterpolateDrag                              float64
-	BarsInterpolateDirect                            float64
-	BarsShowPhase                                    bool
-	BarsPhaseColorLMult                              float64
-	BarsPhaseColorCMult                              float64
-	BarsPhaseColorHMult                              float64
-	BarsInterpolatePhase                             bool
-	BarsInterpolatePhaseAccel                        float64
-	BarsInterpolatePhaseDrag                         float64
-	BarsInterpolatePhaseDirect                       float64
-	BarsPeakFreqCursor                               bool
-	BarsPeakFreqCursorTextDisplayNote                bool
-	BarsPeakFreqCursorTextDisplayNoteRefFreq         float64
-	BarsPeakFreqCursorTextSize                       float64
-	BarsPeakFreqCursorTextOpacity                    uint8
-	BarsPeakFreqCursorTextOffset                     float64
-	BarsPeakFreqCursorBGWidth                        float64
-	BarsPeakFreqCursorBGPadding                      float64
-	BarsPeakFreqCursorInterpolatePos                 bool
-	BarsPeakFreqCursorInterpolateDirect              float64
-	BarsPeakFreqCursorInterpolateAccel               float64
-	BarsPeakFreqCursorInterpolateDrag                float64
-	BarsPeakFreqCursorInterpolateVal                 bool
-	BarsPeakFreqCursorInterpolateValDirect           float64
-	BarsPeakFreqCursorInterpolateValAccel            float64
-	BarsPeakFreqCursorInterpolateValDrag             float64
-	UseKaiserInsteadOfHannWindow                     bool
-	KaiserWindowParam                                float64
-	VUPaddingBetween                                 float64
-	VUPaddingEdge                                    float64
-	VUPreserveParsevalEnergy                         bool
-	VULogScale                                       bool
-	VULogScaleMaxDB                                  float64
-	VULogScaleMinDB                                  float64
-	VULinScaleMax                                    float64
-	VUInterpolate                                    bool
-	VUInterpolateDirect                              float64
-	VUInterpolateAccel                               float64
-	VUInterpolateDrag                                float64
-	VUScale                                          bool
-	VUScaleTextSize                                  float64
-	VUScaleTextOffset                                float64
-	VUScaleLogDivisions                              []float64
-	VUScaleLinDivisions                              []float64
-	VUScaleDivTicksOuter                             bool
-	VUScaleDivTicksInner                             bool
-	VUScaleDivTickThickness                          float32
-	VUScaleDivTickLength                             float64
-	VUScaleDivTickPadding                            float64
-	VUPeak                                           bool
-	VUPeakHistorySeconds                             float64
-	VUPeakInterpolate                                bool
-	VUPeakInterpolateDirect                          float64
-	VUPeakInterpolateAccel                           float64
-	VUPeakInterpolateDrag                            float64
-	VUPeakThickness                                  float32
-	ShowSplash                                       bool
-	SplashStaticSeconds                              float64
-	SplashTransitionSeconds                          float64
-	UseShaders                                       bool
-	ModeShaders                                      [][]int
-	Shaders                                          [][]Shader
-	CustomShaderCode                                 map[string]string
+	App            AppConfig
+	Window         WindowConfig
+	Fonts          FontConfig
+	Audio          AudioDeviceConfig
+	Buffers        AudioBuffersConfig
+	WindowFn       WindowFunctionConfig
+	Line           LineConfig
+	Colors         ColorConfig
+	ImageRetention ImageRetentionConfig
+
+	SingleChannelOsc SingleChannelOscilloscopeConfig
+	Scale            ScaleConfig
+	Particles        ParticleConfig
+	Bars             BarsConfig
+	VU               VUConfig
+
+	BeatDetection BeatDetectConfig
+
+	FilterInfo FilterInfoConfig
+
+	Shaders ShaderConfig
+	MPRIS   MPRISConfig
 }
 
 var DefaultConfig = ConfigS{
-	UseSystemFonts:                           true,
-	SystemFont:                               "Maple Mono NF",
-	FPSCounter:                               false,
-	ShowFilterInfo:                           true,
-	FilterInfoTextSize:                       16,
-	FilterInfoTextPaddingLeft:                16,
-	FilterInfoTextPaddingBottom:              4,
-	ShowMPRIS:                                false,
-	MPRISTextTitleYOffset:                    0,
-	MPRISTextAlbumYOffset:                    -7,
-	MPRISTextDurationYOffset:                 0,
-	MPRISTextOpacity:                         255,
-	TargetFPS:                                240,
-	WindowWidth:                              1000,
-	WindowHeight:                             1000,
-	WindowResizable:                          false,
-	CaptureDeviceIndex:                       0,
-	CaptureDeviceName:                        "",
-	CaptureDeviceSampleRate:                  0, // In case there are multiple outputs with different sample rates and you want to pick a specific one, else leave equal to 0
-	SampleRate:                               192000,
-	AudioCaptureBufferSize:                   512, // Affects latency
-	RingBufferSize:                           2097152,
-	ReadBufferSize:                           16384,
-	XYOscilloscopeReadBufferSize:             2048,
-	ReadBufferDelay:                          32,
-	BeatDetectReadBufferSize:                 2097152,
-	BeatDetectDownSampleFactor:               4,
-	Gain:                                     1,
-	LineOpacity:                              200,
-	LineBrightness:                           1,
-	LineThicknessXY:                          3,
-	LineThicknessSingleChannel:               3,
-	LineInvSqrtOpacityControl:                true,
-	LineInvSqrtOpacityControlUseLogDecrement: true,
-	LineInvSqrtOpacityControlLogDecrementBase:        200.0,
-	LineInvSqrtOpacityControlLogDecrementOffset:      0.99,
-	LineTimeDependentOpacityControl:                  true,
-	LineTimeDependentOpacityControlBase:              0.999,
-	LineOpacityControlAlsoAppliesToThickness:         true,
-	Particles:                                        false,
-	ParticleGenPerFrameEveryXSamples:                 4000,
-	ParticleMaxCount:                                 100,
-	ParticleMinSize:                                  1.0,
-	ParticleMaxSize:                                  3.0,
-	ParticleAcceleration:                             0.2,
-	ParticleDrag:                                     5.0,
-	DefaultMode:                                      XYMode, // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars
-	ScaleEnable:                                      true,
-	ScaleTextOpacity:                                 255,
-	ScaleMainAxisEnable:                              true,
-	ScaleVertTextEnable:                              true,
-	ScaleHorzTextEnable:                              true,
-	ScaleVertTextSize:                                10,
-	ScaleHorzTextSize:                                10,
-	ScaleVertTextPadding:                             5,
-	ScaleHorzTextPadding:                             5,
-	ScaleVertTickEnable:                              true,
-	ScaleHorzTickEnable:                              true,
-	ScaleVertTickExpandToGrid:                        false,
-	ScaleHorzTickExpandToGrid:                        false,
-	ScaleMainAxisStrokeThickness:                     2,
-	ScaleVertTickExpandToGridThickness:               0.5,
-	ScaleHorzTickExpandToGridThickness:               0.5,
-	ScaleVertTickStrokeThickness:                     1,
-	ScaleHorzTickStrokeThickness:                     1,
-	ScaleVertTickLength:                              10,
-	ScaleHorzTickLength:                              10,
-	ScaleVertDiv:                                     20,
-	ScaleHorzDiv:                                     20,
-	ScaleHorzDivDynamicPos:                           true,
-	PeakDetectSeparator:                              100,
-	OscilloscopeStartPeakDetection:                   true,
-	UseBetterPeakDetectionAlgorithm:                  true,
-	BetterPeakDetectionAlgorithmUseWindow:            true,
-	FrequencyDetectionUseMedian:                      true,
-	TriggerThroughoutWindow:                          true,
-	UseComplexTriggeringAlgorithm:                    true,
-	ComplexTriggeringAlgorithmUseCorrelation:         true,
-	CenterPeak:                                       true,
-	AlignToLastPossiblePeak:                          true,
-	QuadratureOffset:                                 true,
-	SmoothWaveOverPeriods:                            true,
-	SmoothWaveOverPeriodsInvTau:                      100, //s^-1
-	SmoothWaveOverPeriodsUseTimeIndependentWeights:   true,
-	SmoothWaveOverPeriodsTimeIndependentWeightFactor: 0.4,
-	SmoothWaveOverPeriodsMax:                         10,
-	PeakDetectEdgeGuardBufferSize:                    30,
-	SingleChannelWindow:                              8192,
-	PeriodCrop:                                       false,
-	PeriodCropCount:                                  2,
-	PeriodCropLoopOverCount:                          1,
-	FFTBufferOffset:                                  0, // For peak detection
-	ForceColors:                                      true,
-	AccentColor:                                      "#E7BDB9",
-	FirstColor:                                       "#E7BDB9",
-	ThirdColor:                                       "#E7BDB9",
-	ParticleColor:                                    "#F9DCD9",
-	BGColor:                                          "#2B1C1A",
-	BGOpacity:                                        200,
-	DisableTransparency:                              false,
-	CopyPreviousFrame:                                true,
-	CopyPreviousFrameAlphaDecayBase:                  0.0000001,
-	CopyPreviousFrameAlphaDecaySpeed:                 2.0,
-	BeatDetect:                                       false,
-	BeatDetectInterval:                               100, // ms
-	BeatDetectBPMCorrectionSpeed:                     4,
-	BeatDetectTimeCorrectionSpeed:                    0.4,
-	BeatDetectMaxBPM:                                 500.0,
-	BeatDetectHalfDisplayedBPM:                       false,
-	ShowMetronome:                                    true,
-	MetronomeHeight:                                  8,
-	MetronomePadding:                                 8,
-	MetronomeThinLineMode:                            true,
-	MetronomeThinLineThicknessChangeWithVelocity:     true,
-	MetronomeThinLineThickness:                       64,
-	MetronomeThinLineHintThickness:                   2,
-	ShowBPM:                                          true,
-	BPMTextSize:                                      24,
-	BarsUseWindow:                                    true,
-	BarsPreserveParsevalEnergy:                       true,
-	BarsPreventSpectralLeakageAboveFreq:              170000, //Hz
-	BarsWidth:                                        4,
-	BarsPaddingEdge:                                  4,
-	BarsPaddingBetween:                               4,
-	BarsAutoGain:                                     true,
-	BarsAutoGainSpeed:                                0.5,
-	BarsAutoGainMinVolume:                            0.000000001,
-	BarsInterpolatePos:                               true,
-	BarsInterpolateAccel:                             20.,
-	BarsInterpolateDrag:                              2.,
-	BarsInterpolateDirect:                            20.,
-	BarsShowPhase:                                    false,
-	BarsPhaseColorLMult:                              0.8,
-	BarsPhaseColorCMult:                              3,
-	BarsPhaseColorHMult:                              1.0,
-	BarsInterpolatePhase:                             true,
-	BarsInterpolatePhaseAccel:                        2.,
-	BarsInterpolatePhaseDrag:                         .2,
-	BarsInterpolatePhaseDirect:                       2.,
-	BarsPeakFreqCursor:                               false,
-	BarsPeakFreqCursorTextDisplayNote:                true,
-	BarsPeakFreqCursorTextDisplayNoteRefFreq:         440.,
-	BarsPeakFreqCursorTextSize:                       24,
-	BarsPeakFreqCursorTextOpacity:                    255,
-	BarsPeakFreqCursorTextOffset:                     -4,
-	BarsPeakFreqCursorBGWidth:                        210,
-	BarsPeakFreqCursorBGPadding:                      2,
-	BarsPeakFreqCursorInterpolatePos:                 true,
-	BarsPeakFreqCursorInterpolateDirect:              1,
-	BarsPeakFreqCursorInterpolateAccel:               5,
-	BarsPeakFreqCursorInterpolateDrag:                20,
-	UseKaiserInsteadOfHannWindow:                     true,
-	KaiserWindowParam:                                8.,
-	VUPaddingBetween:                                 64,
-	VUPaddingEdge:                                    8,
-	VUPreserveParsevalEnergy:                         true,
-	VULogScale:                                       true,
-	VULogScaleMaxDB:                                  3,
-	VULogScaleMinDB:                                  -40,
-	VULinScaleMax:                                    1.1,
-	VUScale:                                          true,
-	VUScaleTextSize:                                  12,
-	VUScaleTextOffset:                                -2,
-	VUScaleLogDivisions:                              []float64{3., 2.0, 1.0, 0, -1, -2, -3, -4, -5, -6, -8, -10., -15, -20, -30, -40},
-	VUScaleLinDivisions:                              []float64{0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1},
-	VUScaleDivTicksOuter:                             true,
-	VUScaleDivTicksInner:                             true,
-	VUScaleDivTickThickness:                          1,
-	VUScaleDivTickLength:                             2,
-	VUScaleDivTickPadding:                            2,
-	VUInterpolate:                                    true,
-	VUInterpolateDirect:                              40,
-	VUInterpolateAccel:                               2,
-	VUInterpolateDrag:                                10,
-	VUPeak:                                           true,
-	VUPeakHistorySeconds:                             5.,
-	VUPeakInterpolate:                                true,
-	VUPeakInterpolateDirect:                          40,
-	VUPeakInterpolateAccel:                           2,
-	VUPeakInterpolateDrag:                            10,
-	VUPeakThickness:                                  2,
-	ShowSplash:                                       true,
-	SplashStaticSeconds:                              1,
-	SplashTransitionSeconds:                          1,
-	UseShaders:                                       true,
-	ModeShaders: [][]int{
-		{2, 4, 5, 0}, {3, 6, 0}, {3, 6, 0}, {3, 6, 0},
+	App: AppConfig{
+		TargetFPS:   240,
+		FPSCounter:  false,
+		DefaultMode: XYMode, // 0 = XY-Oscilloscope, 1 = SingleChannel-Oscilloscope, 2 = Bars 3 = VU
+		Splash: SplashConfig{
+			Enable:     true,
+			StaticSecs: 1,
+			TransSecs:  1,
+		},
 	},
-	Shaders: [][]Shader{
-		{
-			{
-				Name: "glow",
-				Arguments: map[string]any{
-					"Strength": 0.05,
-				},
-			}, {
-				Name: "chromaticabberation",
-				Arguments: map[string]any{
-					"Strength": 0.001,
-				},
+	Window: WindowConfig{
+		Width:     1000,
+		Height:    1000,
+		Resizable: false,
+	},
+	Fonts: FontConfig{
+		UseSystemFont: true,
+		SystemFont:    "Maple Mono NF",
+	},
+	Audio: AudioDeviceConfig{
+		CaptureDeviceMatchIndex:      0,
+		CaptureDeviceMatchName:       "",
+		CaptureDeviceMatchSampleRate: 0,
+		SampleRate:                   192000,
+		Gain:                         1.0,
+	},
+	Buffers: AudioBuffersConfig{
+		AudioCaptureBufferSize:       512, // Affects latency
+		RingBufferSize:               2097152,
+		ReadBufferSize:               16384,
+		ReadBufferDelay:              32,
+		XYOscilloscopeReadBufferSize: 2048,
+		BeatDetectReadBufferSize:     2097152,
+	},
+	WindowFn: WindowFunctionConfig{
+		UseKaiserInsteadOfHann: true,
+		KaiserParam:            8.,
+	},
+	Line: LineConfig{
+		Opacity:                200,
+		Brightness:             1,
+		ThicknessXY:            3,
+		ThicknessSingleChannel: 3,
+		InvSqrtOpacityControl: InvSqrtOpacityControlConfig{
+			Enable:          true,
+			UseLogDecrement: true,
+			LogBase:         200.0,
+			LogOffset:       0.99,
+		},
+		TimeDependentOpacityControl: TimeDependentOpacityControlConfig{
+			Enable: true,
+			Base:   0.999,
+		},
+		OpacityAlsoAffectsThickness: true,
+	},
+	Colors: ColorConfig{
+		UseConfigColorsInsteadOfPywal: true,
+		Palette: PaletteConfig{
+			Accent:   "#E7BDB9",
+			First:    "#E7BDB9",
+			Third:    "#E7BDB9",
+			Particle: "#F9DCD9",
+			BG:       "#2B1C1A",
+		},
+		BGOpacity:             200,
+		DisableBGTransparency: false,
+	},
+	ImageRetention: ImageRetentionConfig{
+		Enable:          true,
+		AlphaDecayBase:  0.0000001, // these two options are redundent at infinite FPS (but they should yield different results at low FPS)
+		AlphaDecaySpeed: 2.0,
+	},
+	SingleChannelOsc: SingleChannelOscilloscopeConfig{
+		DisplayBufferSize: 8192,
+		PeriodCrop: PeriodCropConfig{
+			Enable:        true,
+			DisplayCount:  2,
+			LoopOverCount: 1,
+		},
+		PeakDetect: PeakDetectionConfig{
+			Enable:                                 true,
+			PeakDetectSeparator:                    100,
+			UseACF:                                 true, // ACF
+			ACFUseWindowFn:                         true,
+			UseMedian:                              true,
+			TriggerThroughoutWindow:                true,
+			UseComplexTrigger:                      true,
+			AlignToLastPossiblePeak:                true,
+			ComplexTriggerUseCorrelationToSineWave: true,
+			FFTBufferOffset:                        0,
+			EdgeGuardBufferSize:                    30,
+			QuadratureOffsetPeak:                   true,
+			CenterPeak:                             true},
+		SmoothWave: SmoothWaveConfig{
+			Enable:                true,
+			InvTau:                100, //s^-1
+			TimeIndependent:       true,
+			TimeIndependentFactor: 0.4,
+			MaxPeriods:            10,
+		},
+	},
+	Scale: ScaleConfig{
+		Enable:         true,
+		MainAxisEnable: true,
+		TextOpacity:    255,
+
+		MainAxisThickness: 2,
+
+		Horz: AxisConfig{
+			TextEnable:    true,
+			TextSize:      10.,
+			TextPadding:   5.,
+			TickEnable:    true,
+			TickToGrid:    false,
+			GridThickness: 0.5,
+			TickThickness: 1.0,
+			Divs:          20,
+			TickLength:    10,
+		},
+		Vert: AxisConfig{
+			TextEnable:    true,
+			TextSize:      10.,
+			TextPadding:   5.,
+			TickEnable:    true,
+			TickToGrid:    false,
+			GridThickness: 0.5,
+			TickThickness: 1.0,
+			TickLength:    10,
+			Divs:          20,
+		},
+		HorzDivDynamicPos: true,
+	},
+	Particles: ParticleConfig{
+		Enable:           false,
+		GenEveryXSamples: 4000,
+		MaxCount:         100,
+		MinSize:          1.0,
+		MaxSize:          3.0,
+		Acceleration:     0.2,
+		Drag:             5.0,
+	},
+	Bars: BarsConfig{
+		UseWindowFn:             true,
+		PreserveParsevalEnergy:  true,
+		PreventLeakageAboveFreq: 170000, //Hz
+		Width:                   4,
+		PaddingEdge:             4,
+		PaddingBetween:          4,
+
+		AutoGain: AutoGainConfig{
+			Enable:    true,
+			Speed:     0.5,
+			MinVolume: 0.000000001,
+		},
+		Interpolate: InterpolationConfig{
+			Enable: true,
+			Accel:  20.,
+			Drag:   2.,
+			Direct: 20.,
+		},
+		PeakCursor: PeakCursorConfig{
+			Enable:      false,
+			ShowNote:    true,
+			RefNoteFreq: 440.,
+			TextSize:    24,
+			TextOpacity: 255,
+			TextOffset:  -4,
+			BGWidth:     210,
+			BGPadding:   2,
+			InterpolatePos: InterpolationConfig{
+				Enable: true,
+				Direct: 1,
+				Accel:  5,
+				Drag:   20,
 			},
-		}, {
-			{
-				Name: "glow",
-				Arguments: map[string]any{
-					"Strength": 0.05,
-				},
-			}, {
-				Name: "gammacorrectionalphafriendly",
-				Arguments: map[string]any{
-					"Strength": 2.,
-					"MidPoint": 0.1,
-				},
-			}, {
-				Name: "gammacorrectionalphafriendly",
-				Arguments: map[string]any{
-					"Strength": 8.,
-					"MidPoint": 0.45,
-				},
-			}, {
-				Name: "chromaticabberation",
-				Arguments: map[string]any{
-					"Strength": 0.001,
-				},
-			},
-		}, {
-			{
-				Name: "glow",
-				Arguments: map[string]any{
-					"Strength": 0.10,
-				},
-			}, {
-				Name: "gammacorrection",
-				Arguments: map[string]any{
-					"Strength": 2.,
-					"MidPoint": 0.1,
-				},
-			}, {
-				Name: "gammacorrection",
-				Arguments: map[string]any{
-					"Strength": 10.,
-					"MidPoint": 0.45,
-				},
-			}, {
-				Name: "chromaticabberation",
-				Arguments: map[string]any{
-					"Strength": 0.001,
-				},
-			},
-		}, {
-			{
-				Name: "glow",
-				Arguments: map[string]any{
-					"Strength": 0.04,
-				},
-			}, {
-				Name: "gammacorrection",
-				Arguments: map[string]any{
-					"Strength": 4.,
-					"MidPoint": 0.1,
-				},
-			}, {
-				Name: "gammacorrection",
-				Arguments: map[string]any{
-					"Strength": 8.,
-					"MidPoint": 0.45,
-				},
-			}, {
-				Name: "chromaticabberation",
-				Arguments: map[string]any{
-					"Strength": 0.001,
-				},
-			},
-		}, {
-			{
-				Name: "crtcurve",
-				Arguments: map[string]any{
-					"Strength": 0.5,
-				},
-			},
-			{
-				Name: "glow",
-				Arguments: map[string]any{
-					"Strength": 0.10,
-				},
-			}, {
-				Name: "gammacorrection",
-				Arguments: map[string]any{
-					"Strength": 2.,
-					"MidPoint": 0.1,
-				},
-			}, {
-				Name: "gammacorrection",
-				Arguments: map[string]any{
-					"Strength": 10.,
-					"MidPoint": 0.45,
-				},
-			}, {
-				Name: "chromaticabberation",
-				Arguments: map[string]any{
-					"Strength": 0.001,
-				},
-			},
-		}, {
-			{
-				Name:      "crt",
-				Arguments: map[string]any{},
-			}, {
-				Name: "glow",
-				Arguments: map[string]any{
-					"Strength": 0.05,
-				},
-			}, {
-				Name: "gammacorrection",
-				Arguments: map[string]any{
-					"Strength": 4.,
-					"MidPoint": 0.1,
-				},
-			}, {
-				Name: "gammacorrection",
-				Arguments: map[string]any{
-					"Strength": 8.,
-					"MidPoint": 0.45,
-				},
-			}, {
-				Name: "chromaticabberation",
-				Arguments: map[string]any{
-					"Strength": 0.001,
-				},
-			},
-		}, {
-			{
-				Name: "crtcurve",
-				Arguments: map[string]any{
-					"Strength": 0.5,
-				},
-			}, {
-				Name: "glow",
-				Arguments: map[string]any{
-					"Strength": 0.04,
-				},
-			}, {
-				Name: "gammacorrection",
-				Arguments: map[string]any{
-					"Strength": 4.,
-					"MidPoint": 0.1,
-				},
-			}, {
-				Name: "gammacorrection",
-				Arguments: map[string]any{
-					"Strength": 8.,
-					"MidPoint": 0.45,
-				},
-			}, {
-				Name: "chromaticabberation",
-				Arguments: map[string]any{
-					"Strength": 0.001,
-				},
+		},
+		PhaseColors: PhaseColorsConfig{
+			Enable: false,
+			LMult:  0.8,
+			CMult:  3.0,
+			HMult:  1.0,
+			Interpolate: InterpolationConfig{
+				Enable: true,
+				Accel:  2.,
+				Drag:   .2,
+				Direct: 2.,
 			},
 		},
 	},
-	CustomShaderCode: map[string]string{
-		"noise": `//go:build ignore
+	VU: VUConfig{
+		PaddingBetween:         64,
+		PaddingEdge:            8,
+		PreserveParsevalEnergy: true,
+
+		LogScale: true,
+		LogMaxDB: 3,
+		LogMinDB: -40,
+		LinMax:   1.1,
+
+		Interpolate: InterpolationConfig{
+			Enable: true,
+			Accel:  2,
+			Drag:   10,
+			Direct: 40,
+		},
+
+		Scale: VUScaleConfig{
+			Enable:        true,
+			TextSize:      12,
+			TextOffset:    -2,
+			LogDivisions:  []float64{3., 2.0, 1.0, 0, -1, -2, -3, -4, -5, -6, -8, -10., -15, -20, -30, -40},
+			LinDivisions:  []float64{0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1},
+			TicksOuter:    true,
+			TicksInner:    true,
+			TickThickness: 1,
+			TickLength:    2,
+			TickPadding:   2,
+		},
+
+		Peak: VUPeakConfig{
+			Enable:         true,
+			HistorySeconds: 5.,
+			Interpolate: InterpolationConfig{
+				Enable: true,
+				Direct: 40,
+				Accel:  2,
+				Drag:   10,
+			},
+			Thickness: 2,
+		},
+	},
+	BeatDetection: BeatDetectConfig{
+		Enable:              true,
+		ShowBPM:             true,
+		BPMTextSize:         24,
+		IntervalMS:          100,
+		DownSampleFactor:    4,
+		BPMCorrectionSpeed:  4,
+		TimeCorrectionSpeed: 0.4,
+		MaxBPM:              500.0,
+		HalfDisplayedBPM:    false,
+		Metronome: MetronomeConfig{
+			Enable:                              true,
+			Height:                              8,
+			Padding:                             8,
+			ThinLineMode:                        true,
+			ThinLineThicknessChangeWithVelocity: true,
+			ThinLineThickness:                   64,
+			ThinLineHintThickness:               2,
+		},
+	},
+	FilterInfo: FilterInfoConfig{
+		Enable:            true,
+		TextSize:          16,
+		TextPaddingLeft:   16,
+		TextPaddingBottom: 4,
+	},
+	Shaders: ShaderConfig{
+		Enable: true,
+		ModePresetsList: [][]int{
+			{2, 4, 5, 0}, {3, 6, 0}, {3, 6, 0}, {3, 6, 0},
+		},
+		Presets: [][]Shader{
+			{
+				{
+					Name: "glow",
+					Arguments: map[string]any{
+						"Strength": 0.05,
+					},
+				}, {
+					Name: "chromaticabberation",
+					Arguments: map[string]any{
+						"Strength": 0.001,
+					},
+				},
+			}, {
+				{
+					Name: "glow",
+					Arguments: map[string]any{
+						"Strength": 0.05,
+					},
+				}, {
+					Name: "gammacorrectionalphafriendly",
+					Arguments: map[string]any{
+						"Strength": 2.,
+						"MidPoint": 0.1,
+					},
+				}, {
+					Name: "gammacorrectionalphafriendly",
+					Arguments: map[string]any{
+						"Strength": 8.,
+						"MidPoint": 0.45,
+					},
+				}, {
+					Name: "chromaticabberation",
+					Arguments: map[string]any{
+						"Strength": 0.001,
+					},
+				},
+			}, {
+				{
+					Name: "glow",
+					Arguments: map[string]any{
+						"Strength": 0.10,
+					},
+				}, {
+					Name: "gammacorrection",
+					Arguments: map[string]any{
+						"Strength": 2.,
+						"MidPoint": 0.1,
+					},
+				}, {
+					Name: "gammacorrection",
+					Arguments: map[string]any{
+						"Strength": 10.,
+						"MidPoint": 0.45,
+					},
+				}, {
+					Name: "chromaticabberation",
+					Arguments: map[string]any{
+						"Strength": 0.001,
+					},
+				},
+			}, {
+				{
+					Name: "glow",
+					Arguments: map[string]any{
+						"Strength": 0.04,
+					},
+				}, {
+					Name: "gammacorrection",
+					Arguments: map[string]any{
+						"Strength": 4.,
+						"MidPoint": 0.1,
+					},
+				}, {
+					Name: "gammacorrection",
+					Arguments: map[string]any{
+						"Strength": 8.,
+						"MidPoint": 0.45,
+					},
+				}, {
+					Name: "chromaticabberation",
+					Arguments: map[string]any{
+						"Strength": 0.001,
+					},
+				},
+			}, {
+				{
+					Name: "crtcurve",
+					Arguments: map[string]any{
+						"Strength": 0.5,
+					},
+				},
+				{
+					Name: "glow",
+					Arguments: map[string]any{
+						"Strength": 0.10,
+					},
+				}, {
+					Name: "gammacorrection",
+					Arguments: map[string]any{
+						"Strength": 2.,
+						"MidPoint": 0.1,
+					},
+				}, {
+					Name: "gammacorrection",
+					Arguments: map[string]any{
+						"Strength": 10.,
+						"MidPoint": 0.45,
+					},
+				}, {
+					Name: "chromaticabberation",
+					Arguments: map[string]any{
+						"Strength": 0.001,
+					},
+				},
+			}, {
+				{
+					Name:      "crt",
+					Arguments: map[string]any{},
+				}, {
+					Name: "glow",
+					Arguments: map[string]any{
+						"Strength": 0.05,
+					},
+				}, {
+					Name: "gammacorrection",
+					Arguments: map[string]any{
+						"Strength": 4.,
+						"MidPoint": 0.1,
+					},
+				}, {
+					Name: "gammacorrection",
+					Arguments: map[string]any{
+						"Strength": 8.,
+						"MidPoint": 0.45,
+					},
+				}, {
+					Name: "chromaticabberation",
+					Arguments: map[string]any{
+						"Strength": 0.001,
+					},
+				},
+			}, {
+				{
+					Name: "crtcurve",
+					Arguments: map[string]any{
+						"Strength": 0.5,
+					},
+				}, {
+					Name: "glow",
+					Arguments: map[string]any{
+						"Strength": 0.04,
+					},
+				}, {
+					Name: "gammacorrection",
+					Arguments: map[string]any{
+						"Strength": 4.,
+						"MidPoint": 0.1,
+					},
+				}, {
+					Name: "gammacorrection",
+					Arguments: map[string]any{
+						"Strength": 8.,
+						"MidPoint": 0.45,
+					},
+				}, {
+					Name: "chromaticabberation",
+					Arguments: map[string]any{
+						"Strength": 0.001,
+					},
+				},
+			},
+		},
+		CustomShaderCode: map[string]string{
+			"noise": `//go:build ignore
 
 //kage:unit pixels
 
@@ -600,7 +798,15 @@ func Fragment(dstPos vec4, srcPos vec2, color vec4) vec4 {
 			clr.a += amount
 			return clr
 }
-`,
+			`,
+		},
+	},
+	MPRIS: MPRISConfig{
+		Enable:              false,
+		TextTitleYOffset:    0,
+		TextAlbumYOffset:    -7,
+		TextDurationYOffset: 0,
+		TextOpacity:         255,
 	},
 }
 
@@ -687,28 +893,28 @@ func Init() {
 
 func updatePywalColors() {
 	/* This is not synced to pywal */
-	BGColorParsed, err := ParseHexColor(Config.BGColor)
+	BGColorParsed, err := ParseHexColor(Config.Colors.Palette.BG)
 	utils.CheckError(tracerr.Wrap(err))
-	BGColor = color.RGBA{BGColorParsed.R, BGColorParsed.G, BGColorParsed.B, Config.BGOpacity}
+	BGColor = color.RGBA{BGColorParsed.R, BGColorParsed.G, BGColorParsed.B, Config.Colors.BGOpacity}
 	/* end */
 
 	walPath := configdir.LocalCache("wal")
 	walFile := filepath.Join(walPath, "colors")
-	if _, err := os.Stat(walFile); os.IsNotExist(err) || Config.ForceColors {
-		AccentColorParsed, err := ParseHexColor(Config.AccentColor)
+	if _, err := os.Stat(walFile); os.IsNotExist(err) || Config.Colors.UseConfigColorsInsteadOfPywal {
+		AccentColorParsed, err := ParseHexColor(Config.Colors.Palette.Accent)
 		utils.CheckError(tracerr.Wrap(err))
-		FirstColorParsed, err := ParseHexColor(Config.FirstColor)
+		FirstColorParsed, err := ParseHexColor(Config.Colors.Palette.First)
 		utils.CheckError(tracerr.Wrap(err))
-		ThirdColorParsed, err := ParseHexColor(Config.ThirdColor)
+		ThirdColorParsed, err := ParseHexColor(Config.Colors.Palette.Third)
 		utils.CheckError(tracerr.Wrap(err))
-		ParticleColorParsed, err := ParseHexColor(Config.ParticleColor)
+		ParticleColorParsed, err := ParseHexColor(Config.Colors.Palette.Particle)
 		utils.CheckError(tracerr.Wrap(err))
 
-		AccentColor = color.RGBA{AccentColorParsed.R, AccentColorParsed.G, AccentColorParsed.B, Config.LineOpacity}
-		FirstColor = color.RGBA{FirstColorParsed.R, FirstColorParsed.G, FirstColorParsed.B, Config.LineOpacity}
-		ThirdColor = color.RGBA{ThirdColorParsed.R, ThirdColorParsed.G, ThirdColorParsed.B, Config.LineOpacity}
-		ParticleColor = color.RGBA{ParticleColorParsed.R, ParticleColorParsed.G, ParticleColorParsed.B, Config.LineOpacity}
-		ThirdColorAdj = color.RGBA{uint8(float64(ThirdColorParsed.R) * Config.LineBrightness), uint8(float64(ThirdColorParsed.G) * Config.LineBrightness), uint8(float64(ThirdColorParsed.B) * Config.LineBrightness), Config.LineOpacity}
+		AccentColor = color.RGBA{AccentColorParsed.R, AccentColorParsed.G, AccentColorParsed.B, Config.Line.Opacity}
+		FirstColor = color.RGBA{FirstColorParsed.R, FirstColorParsed.G, FirstColorParsed.B, Config.Line.Opacity}
+		ThirdColor = color.RGBA{ThirdColorParsed.R, ThirdColorParsed.G, ThirdColorParsed.B, Config.Line.Opacity}
+		ParticleColor = color.RGBA{ParticleColorParsed.R, ParticleColorParsed.G, ParticleColorParsed.B, Config.Line.Opacity}
+		ThirdColorAdj = color.RGBA{uint8(float64(ThirdColorParsed.R) * Config.Line.Brightness), uint8(float64(ThirdColorParsed.G) * Config.Line.Brightness), uint8(float64(ThirdColorParsed.B) * Config.Line.Brightness), Config.Line.Opacity}
 	} else {
 		fh, err := os.Open(walFile)
 		utils.CheckError(tracerr.Wrap(err))
@@ -720,19 +926,19 @@ func updatePywalColors() {
 			if line == 0 {
 				rgbaColor, err = ParseHexColor(scanner.Text())
 				utils.CheckError(tracerr.Wrap(err))
-				FirstColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
+				FirstColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.Line.Opacity}
 			}
 			if line == 1 {
 				rgbaColor, err = ParseHexColor(scanner.Text())
 				utils.CheckError(tracerr.Wrap(err))
-				AccentColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
+				AccentColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.Line.Opacity}
 			}
 			if line == 2 {
 				rgbaColor, err = ParseHexColor(scanner.Text())
 				utils.CheckError(tracerr.Wrap(err))
-				ThirdColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
-				ThirdColorAdj = color.RGBA{uint8(float64(rgbaColor.R) * Config.LineBrightness), uint8(float64(rgbaColor.G) * Config.LineBrightness), uint8(float64(rgbaColor.B) * Config.LineBrightness), Config.LineOpacity}
-				ParticleColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.LineOpacity}
+				ThirdColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.Line.Opacity}
+				ThirdColorAdj = color.RGBA{uint8(float64(rgbaColor.R) * Config.Line.Brightness), uint8(float64(rgbaColor.G) * Config.Line.Brightness), uint8(float64(rgbaColor.B) * Config.Line.Brightness), Config.Line.Opacity}
+				ParticleColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.Line.Opacity}
 				break
 			}
 			line++
