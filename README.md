@@ -183,6 +183,11 @@ singlechannelosc:
     timeindependent: true
     timeindependentfactor: 0.4
     maxperiods: 10
+  slew:
+    enable: true
+    accel: 100
+    drag: 20
+    direct: 20
 scale:
   enable: false
   mainaxisenable: true

@@ -82,6 +82,7 @@ type SingleChannelOscilloscopeConfig struct {
 	PeriodCrop        PeriodCropConfig
 	PeakDetect        PeakDetectionConfig
 	SmoothWave        SmoothWaveConfig
+	Slew              InterpolationConfig
 }
 
 type PeakDetectionConfig struct {
@@ -439,6 +440,12 @@ var DefaultConfig = ConfigS{
 			TimeIndependent:       true,
 			TimeIndependentFactor: 0.4,
 			MaxPeriods:            10,
+		},
+		Slew: InterpolationConfig{
+			Enable: true,
+			Accel:  100,
+			Drag:   20,
+			Direct: 20, // 1,10,20 gives really smooth results (100,20,20 sounds like a good compromise)
 		},
 	},
 	Scale: ScaleConfig{
