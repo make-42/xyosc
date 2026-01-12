@@ -440,6 +440,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					}
 				}
 				if config.Config.SingleChannelOsc.Slew.Enable {
+					if i == 0 {
+						interpolate.Interpolate(deltaTime, float64(fAX), &slew.InterpolationPosBuffer[i], &slew.InterpolationVelBuffer[i], config.Config.SingleChannelOsc.Slew)
+					}
 					interpolate.Interpolate(deltaTime, float64(fBX), &slew.InterpolationPosBuffer[i+1], &slew.InterpolationVelBuffer[i+1], config.Config.SingleChannelOsc.Slew)
 				}
 				if (i+1+offset-config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples != 0 {
@@ -447,10 +450,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 						vector.StrokeLine(screen, float32(config.Config.Window.Width)*float32(i)/float32((config.Config.SingleChannelOsc.DisplayBufferSize/2)), float32(config.Config.Window.Height/2)-float32(slew.InterpolationPosBuffer[i]), float32(config.Config.Window.Width)*float32(i+1)/float32(config.Config.SingleChannelOsc.DisplayBufferSize/2), float32(config.Config.Window.Height/2)-float32(slew.InterpolationPosBuffer[i+1]), config.Config.Line.ThicknessSingleChannel, config.ThirdColorAdj, true)
 					} else {
 						vector.StrokeLine(screen, float32(config.Config.Window.Width)*float32(i)/float32((config.Config.SingleChannelOsc.DisplayBufferSize/2)), float32(config.Config.Window.Height/2)-fAX, float32(config.Config.Window.Width)*float32(i+1)/float32(config.Config.SingleChannelOsc.DisplayBufferSize/2), float32(config.Config.Window.Height/2)-fBX, config.Config.Line.ThicknessSingleChannel, config.ThirdColorAdj, true)
-					}
-				} else {
-					if config.Config.SingleChannelOsc.Slew.Enable {
-						interpolate.Interpolate(deltaTime, float64(fAX), &slew.InterpolationPosBuffer[0], &slew.InterpolationVelBuffer[0], config.Config.SingleChannelOsc.Slew)
 					}
 				}
 			}
