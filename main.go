@@ -599,21 +599,34 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		if config.Config.BeatDetection.Metronome.Enable {
 			if beatdetect.InterpolatedBPM != 0 {
 				progress := float64(time.Now().Sub(beatdetect.InterpolatedBeatTime).Nanoseconds()) / (1000000000 * 60 / beatdetect.InterpolatedBPM)
-				easedProgress := math.Sin(progress * math.Pi)
-				if config.Config.BeatDetection.Metronome.ThinLineMode {
-					if config.Config.BeatDetection.Metronome.ThinLineThicknessChangeWithVelocity {
-						easedVelocityProgress := math.Cos(progress * math.Pi)
-						vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2+float32(easedProgress)*float32(config.Config.Window.Width)/2-float32(easedVelocityProgress*config.Config.BeatDetection.Metronome.ThinLineThickness)/2, float32(layoutY), float32(easedVelocityProgress*config.Config.BeatDetection.Metronome.ThinLineThickness), float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
-					} else {
-						vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2+float32(easedProgress)*float32(config.Config.Window.Width)/2-float32(config.Config.BeatDetection.Metronome.ThinLineThickness)/2, float32(layoutY), float32(config.Config.BeatDetection.Metronome.ThinLineThickness), float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
-					}
-					vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2-float32(config.Config.BeatDetection.Metronome.ThinLineHintThickness)/2, float32(layoutY), float32(config.Config.BeatDetection.Metronome.ThinLineHintThickness), float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
+
+				if config.Config.BeatDetection.Metronome.EdgeMode {
+					easedProgress := 1 + math.Cos(progress*2*math.Pi)
+					vector.DrawFilledRect(screen, 0, 0, float32(easedProgress*config.Config.BeatDetection.Metronome.EdgeThickness), float32(config.Config.Window.Height), config.ThirdColorAdj, true)
+					vector.DrawFilledRect(screen, 0, 0, float32(config.Config.Window.Width), float32(easedProgress*config.Config.BeatDetection.Metronome.EdgeThickness), config.ThirdColorAdj, true)
+					vector.DrawFilledRect(screen, float32(config.Config.Window.Width), 0, -float32(easedProgress*config.Config.BeatDetection.Metronome.EdgeThickness), float32(config.Config.Window.Height), config.ThirdColorAdj, true)
+					vector.DrawFilledRect(screen, 0, float32(config.Config.Window.Height), float32(config.Config.Window.Width), -float32(easedProgress*config.Config.BeatDetection.Metronome.EdgeThickness), config.ThirdColorAdj, true)
+
 				} else {
-					vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2, float32(layoutY), float32(easedProgress)*float32(config.Config.Window.Width)/2, float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
+					easedProgress := math.Sin(progress * math.Pi)
+					if config.Config.BeatDetection.Metronome.ThinLineMode {
+						if config.Config.BeatDetection.Metronome.ThinLineThicknessChangeWithVelocity {
+							easedVelocityProgress := math.Cos(progress * math.Pi)
+							vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2+float32(easedProgress)*float32(config.Config.Window.Width)/2-float32(easedVelocityProgress*config.Config.BeatDetection.Metronome.ThinLineThickness)/2, float32(layoutY), float32(easedVelocityProgress*config.Config.BeatDetection.Metronome.ThinLineThickness), float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
+						} else {
+							vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2+float32(easedProgress)*float32(config.Config.Window.Width)/2-float32(config.Config.BeatDetection.Metronome.ThinLineThickness)/2, float32(layoutY), float32(config.Config.BeatDetection.Metronome.ThinLineThickness), float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
+						}
+						vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2-float32(config.Config.BeatDetection.Metronome.ThinLineHintThickness)/2, float32(layoutY), float32(config.Config.BeatDetection.Metronome.ThinLineHintThickness), float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
+					} else {
+						vector.DrawFilledRect(screen, float32(config.Config.Window.Width)/2, float32(layoutY), float32(easedProgress)*float32(config.Config.Window.Width)/2, float32(config.Config.BeatDetection.Metronome.Height), config.ThirdColorAdj, true)
+					}
 				}
 			}
-			layoutY += config.Config.BeatDetection.Metronome.Height + config.Config.BeatDetection.Metronome.Padding
+			if !config.Config.BeatDetection.Metronome.EdgeMode {
+				layoutY += config.Config.BeatDetection.Metronome.Height + config.Config.BeatDetection.Metronome.Padding
+			}
 		}
+
 		if config.Config.BeatDetection.ShowBPM {
 			op := &text.DrawOptions{}
 			op.GeoM.Translate(float64(config.Config.Window.Width)/2, float64(layoutY))

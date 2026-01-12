@@ -183,6 +183,8 @@ type MetronomeConfig struct {
 	Enable                              bool
 	Height                              float64
 	Padding                             float64
+	EdgeMode                            bool
+	EdgeThickness                       float64
 	ThinLineMode                        bool
 	ThinLineThicknessChangeWithVelocity bool
 	ThinLineThickness                   float64
@@ -592,6 +594,8 @@ var DefaultConfig = ConfigS{
 			Enable:                              true,
 			Height:                              8,
 			Padding:                             8,
+			EdgeMode:                            false,
+			EdgeThickness:                       0.5,
 			ThinLineMode:                        true,
 			ThinLineThicknessChangeWithVelocity: true,
 			ThinLineThickness:                   64,

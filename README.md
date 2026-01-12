@@ -337,6 +337,8 @@ beatdetection:
     enable: true
     height: 8
     padding: 8
+    edgemode: false
+		edgethickness: 0.5
     thinlinemode: true
     thinlinethicknesschangewithvelocity: true
     thinlinethickness: 64
