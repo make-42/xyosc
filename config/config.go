@@ -103,6 +103,8 @@ type PeakDetectionConfig struct {
 
 type InvSqrtOpacityControlConfig struct {
 	Enable          bool
+	LinSens         float64
+	LinCutoffFrac   float64
 	UseLogDecrement bool
 	LogBase         float64
 	LogOffset       float64
@@ -388,6 +390,8 @@ var DefaultConfig = ConfigS{
 		ThicknessSingleChannel: 3,
 		InvSqrtOpacityControl: InvSqrtOpacityControlConfig{
 			Enable:          true,
+			LinSens:         2,
+			LinCutoffFrac:   0.02,
 			UseLogDecrement: true,
 			LogBase:         200.0,
 			LogOffset:       0.99,

@@ -136,6 +136,8 @@ line:
   thicknesssinglechannel: 3
   invsqrtopacitycontrol:
     enable: true
+    linsens: 2
+		lincutofffrac: 0.02
     uselogdecrement: true
     logbase: 10
     logoffset: 1

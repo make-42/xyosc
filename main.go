@@ -214,7 +214,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				if config.Config.Line.InvSqrtOpacityControl.Enable || config.Config.Line.TimeDependentOpacityControl.Enable {
 					mult := 1.0
 					if config.Config.Line.InvSqrtOpacityControl.Enable {
-						invStrength := min(float64(fastsqrt.FastInvSqrt32((fBX-fAX)*(fBX-fAX)+(fBY-fBY)*(fBY-fBY))), 1.0)
+						invStrength := min(config.Config.Line.InvSqrtOpacityControl.LinSens*max(float64(fastsqrt.FastInvSqrt32((fBX-fAX)*(fBX-fAX)+(fBY-fBY)*(fBY-fBY))), config.Config.Line.InvSqrtOpacityControl.LinCutoffFrac)-config.Config.Line.InvSqrtOpacityControl.LinCutoffFrac, 1)
 						if config.Config.Line.InvSqrtOpacityControl.UseLogDecrement {
 							mult *= config.Config.Line.InvSqrtOpacityControl.LogOffset + math.Log(invStrength)/math.Log(config.Config.Line.InvSqrtOpacityControl.LogBase)
 						} else {
