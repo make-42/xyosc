@@ -78,11 +78,12 @@ type PeriodCropConfig struct {
 }
 
 type SingleChannelOscilloscopeConfig struct {
-	DisplayBufferSize uint32
-	PeriodCrop        PeriodCropConfig
-	PeakDetect        PeakDetectionConfig
-	SmoothWave        SmoothWaveConfig
-	Slew              InterpolationConfig
+	DisplayBufferSize         uint32
+	IfFilteringShowUnfiltered bool
+	PeriodCrop                PeriodCropConfig
+	PeakDetect                PeakDetectionConfig
+	SmoothWave                SmoothWaveConfig
+	Slew                      InterpolationConfig
 }
 
 type PeakDetectionConfig struct {
@@ -420,7 +421,8 @@ var DefaultConfig = ConfigS{
 		AlphaDecaySpeed: 2.0,
 	},
 	SingleChannelOsc: SingleChannelOscilloscopeConfig{
-		DisplayBufferSize: 8192,
+		DisplayBufferSize:         8192,
+		IfFilteringShowUnfiltered: true,
 		PeriodCrop: PeriodCropConfig{
 			Enable:        false,
 			DisplayCount:  2,
@@ -439,7 +441,8 @@ var DefaultConfig = ConfigS{
 			FFTBufferOffset:                        0,
 			EdgeGuardBufferSize:                    30,
 			QuadratureOffsetPeak:                   true,
-			CenterPeak:                             true},
+			CenterPeak:                             true,
+		},
 		SmoothWave: SmoothWaveConfig{
 			Enable:                true,
 			InvTau:                100, //s^-1

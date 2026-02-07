@@ -161,6 +161,7 @@ imageretention:
   alphadecayspeed: 10.0
 singlechannelosc:
   displaybuffersize: 8192
+  iffilteringshowunfiltered: true
   periodcrop:
     enable: false
     displaycount: 2

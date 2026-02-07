@@ -63,6 +63,7 @@ var firstFrame = true
 var FFTBuffer []float64
 var complexFFTBuffer []complex128
 var complexFFTBufferFlipped []complex128
+var FFTBufferClean []float64
 var lowCutOffFrac = 0.0
 var highCutOffFrac = 1.0
 var useRightChannel *bool
@@ -291,6 +292,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 		}
 		if config.FiltersApplied {
+			if config.Config.SingleChannelOsc.IfFilteringShowUnfiltered {
+				copy(FFTBufferClean, FFTBuffer)
+			}
 			filter.FilterBufferInPlace(&complexFFTBuffer, lowCutOffFrac, highCutOffFrac)
 			for i := uint32(0); i < numSamples; i++ {
 				FFTBuffer[(i+config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples] = real(complexFFTBuffer[i])
@@ -377,14 +381,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 			}
 		}
+		dispBuffer := &FFTBuffer
+		if config.FiltersApplied && config.Config.SingleChannelOsc.IfFilteringShowUnfiltered {
+			dispBuffer = &FFTBufferClean
+		}
 		if config.Config.SingleChannelOsc.PeriodCrop.Enable && len(indices) > 1 {
 			if config.Config.SingleChannelOsc.PeakDetect.CenterPeak {
 				offset -= samplesPerCrop / 2
 			}
 			its := min(numSamples, samplesPerCrop*config.Config.SingleChannelOsc.PeriodCrop.LoopOverCount) - 1
 			for i := uint32(0); i < its; i++ {
-				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
-				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+				fAX := float32((*dispBuffer)[(i+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+				fBX := float32((*dispBuffer)[(i+1+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
 				if config.Config.SingleChannelOsc.SmoothWave.Enable {
 					smoothPeriods := min((numSamples/its)-1, config.Config.SingleChannelOsc.SmoothWave.MaxPeriods)
 					if smoothPeriods > 0 {
@@ -397,8 +405,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 						rescale := float32(1.)
 						for k := range smoothPeriods {
 							fact := float32(math.Pow(q, float64(k+1)))
-							fAX += fact * float32(FFTBuffer[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
-							fBX += fact * float32(FFTBuffer[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+							fAX += fact * float32((*dispBuffer)[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+							fBX += fact * float32((*dispBuffer)[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
 							rescale += fact
 						}
 						fAX /= rescale
@@ -414,8 +422,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				offset -= config.Config.SingleChannelOsc.DisplayBufferSize / 4
 			}
 			for i := uint32(0); i < config.Config.SingleChannelOsc.DisplayBufferSize/2-1; i++ {
-				fAX := float32(FFTBuffer[(i+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
-				fBX := float32(FFTBuffer[(i+1+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+				fAX := float32((*dispBuffer)[(i+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+				fBX := float32((*dispBuffer)[(i+1+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
 				if config.Config.SingleChannelOsc.PeakDetect.Enable || *peakDetectOverride {
 					its := samplesPerPeriod
 					if config.Config.SingleChannelOsc.SmoothWave.Enable {
@@ -430,8 +438,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 							rescale := float32(1.)
 							for k := range smoothPeriods {
 								fact := float32(math.Pow(q, float64(k+1)))
-								fAX += fact * float32(FFTBuffer[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
-								fBX += fact * float32(FFTBuffer[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+								fAX += fact * float32((*dispBuffer)[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+								fBX += fact * float32((*dispBuffer)[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
 								rescale += fact
 							}
 							fAX /= rescale
@@ -769,6 +777,9 @@ func Init() {
 	}
 
 	complexFFTBuffer = make([]complex128, numSamples)
+	if config.Config.SingleChannelOsc.IfFilteringShowUnfiltered && config.FiltersApplied {
+		FFTBufferClean = make([]float64, numSamples)
+	}
 	if config.Config.SingleChannelOsc.PeakDetect.UseACF {
 		complexFFTBufferFlipped = make([]complex128, numSamples)
 		align.Init()
