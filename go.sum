@@ -60,6 +60,10 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/silbinarywolf/preferdiscretegpu v1.0.0 h1:tuvXLRCnoFMFyk74/8PFvO0B5rjDmXm0JgNTaOYAHT0=
 github.com/silbinarywolf/preferdiscretegpu v1.0.0/go.mod h1:h3s2GkfAP2sWqoS7v/PxAlFOQ1azMRsZxUJNw47QhLc=
+github.com/soypat/colorspace v0.0.0-20250918190843-3de7f4ffb708 h1:LBwUvzQqIPqxtRQOC8qWFHsG1RidbhoWnHAo9LJjZAI=
+github.com/soypat/colorspace v0.0.0-20250918190843-3de7f4ffb708/go.mod h1:MBF5oOf+MVV5XyPef/tdqNFzbJVw665nNhna14dJdaw=
+github.com/soypat/geometry v0.0.0-20250718121518-cc41fcad0ec7 h1:+fKPpSStUmn9WAtq4LDzj3QsbWzdxeUi6EH4rShvH7E=
+github.com/soypat/geometry v0.0.0-20250718121518-cc41fcad0ec7/go.mod h1:ks6uGIIvsbkaGB7RBLG8pc2yHYBIxZ1FSRSNPtXPAwY=
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/youpy/go-riff v0.0.0-20131220112943-557d78c11efb/go.mod h1:83nxdDV4Z9RzrTut9losK7ve4hUnxUR8ASSz4BsKXwQ=

@@ -17,6 +17,7 @@ require (
 	github.com/leberKleber/go-mpris v1.1.0
 	github.com/mjibson/go-dsp v0.0.0-20180508042940-11479a337f12
 	github.com/silbinarywolf/preferdiscretegpu v1.0.0
+	github.com/soypat/colorspace v0.0.0-20250918190843-3de7f4ffb708
 	github.com/ztrue/tracerr v0.4.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -28,6 +29,7 @@ require (
 	github.com/goccmack/goutil v0.4.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
+	github.com/soypat/geometry v0.0.0-20250718121518-cc41fcad0ec7 // indirect
 	golang.org/x/image v0.32.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect

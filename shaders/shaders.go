@@ -47,7 +47,7 @@ type ShaderRenderStep struct {
 var ShaderRenderList = []ShaderRenderStep{}
 var ModeLastShaderRenderListGenerated = -1
 var PresetLastShaderRenderListGenerated = -1
-var SelectedPreset = [4]int{0, 0, 0, 0}
+var SelectedPreset = [6]int{0, 0, 0, 0, 0, 0}
 
 func GenShaderRenderList() {
 	if config.Config.App.DefaultMode != ModeLastShaderRenderListGenerated || SelectedPreset[config.Config.App.DefaultMode] != PresetLastShaderRenderListGenerated {

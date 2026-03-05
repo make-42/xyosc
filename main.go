@@ -39,6 +39,7 @@ import (
 	"xyosc/splash"
 	"xyosc/utils"
 	"xyosc/vu"
+	"xyosc/waterfall"
 
 	_ "github.com/silbinarywolf/preferdiscretegpu"
 )
@@ -114,7 +115,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if slices.Contains(pressedKeys, ebiten.KeyF) {
 		if !StillSamePressFromModeToggleKey {
 			StillSamePressFromModeToggleKey = true
-			config.Config.App.DefaultMode = (config.Config.App.DefaultMode + 1) % 4
+			config.Config.App.DefaultMode = (config.Config.App.DefaultMode + 1) % 6
 		}
 	} else {
 		StillSamePressFromModeToggleKey = false
@@ -179,6 +180,27 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					}, op)
 				}
 			}
+		}
+	}
+
+	if config.Config.App.DefaultMode == config.BarsAndWaterfallMode || config.Config.App.DefaultMode == config.WaterfallMode {
+		for i := uint32(0); i < numSamples; i++ {
+			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.Buffers.RingBufferSize]
+			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.Buffers.RingBufferSize]
+			if *mixChannels {
+				complexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
+			} else {
+				if *useRightChannel {
+					complexFFTBuffer[i] = complex(float64(AY), 0.0)
+				} else {
+					complexFFTBuffer[i] = complex(float64(AX), 0.0)
+				}
+			}
+		}
+		if config.FiltersApplied {
+			waterfall.CalcWaterfallAndDraw(screen, &complexFFTBuffer, lowCutOffFrac, highCutOffFrac, deltaTime)
+		} else {
+			waterfall.CalcWaterfallAndDraw(screen, &complexFFTBuffer, 0.0, 1.0, deltaTime)
 		}
 	}
 
@@ -462,17 +484,19 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}
 			}
 		}
-	} else if config.Config.App.DefaultMode == config.BarsMode {
-		for i := uint32(0); i < numSamples; i++ {
-			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.Buffers.RingBufferSize]
-			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.Buffers.RingBufferSize]
-			if *mixChannels {
-				complexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
-			} else {
-				if *useRightChannel {
-					complexFFTBuffer[i] = complex(float64(AY), 0.0)
+	} else if config.Config.App.DefaultMode == config.BarsMode || config.Config.App.DefaultMode == config.BarsAndWaterfallMode {
+		if config.Config.App.DefaultMode != config.BarsAndWaterfallMode { // Only recompute if not already computed by the waterfall mode
+			for i := uint32(0); i < numSamples; i++ {
+				AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.Buffers.RingBufferSize]
+				AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.Buffers.RingBufferSize]
+				if *mixChannels {
+					complexFFTBuffer[i] = complex((float64(AY)+float64(AX))/2, 0.0)
 				} else {
-					complexFFTBuffer[i] = complex(float64(AX), 0.0)
+					if *useRightChannel {
+						complexFFTBuffer[i] = complex(float64(AY), 0.0)
+					} else {
+						complexFFTBuffer[i] = complex(float64(AX), 0.0)
+					}
 				}
 			}
 		}
@@ -520,7 +544,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				}, op)
 			}
 		}
-	} else {
+	} else if config.Config.App.DefaultMode == config.VUMode {
 		for i := uint32(0); i < numSamples; i++ {
 			AX = audio.SampleRingBufferUnsafe[(posStartRead+i*2)%config.Config.Buffers.RingBufferSize]
 			AY = audio.SampleRingBufferUnsafe[(posStartRead+i*2+1)%config.Config.Buffers.RingBufferSize]
@@ -742,6 +766,7 @@ func InitBuffersAtSize(width int, height int) {
 	if config.Config.Shaders.Enable {
 		shaderWorkBuffer = ebiten.NewImage(width, height)
 	}
+	waterfall.Init(width, height)
 }
 
 func Init() {

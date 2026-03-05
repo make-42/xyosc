@@ -20,6 +20,8 @@ const (
 	SingleChannelMode
 	BarsMode
 	VUMode
+	BarsAndWaterfallMode
+	WaterfallMode
 )
 
 type SplashConfig struct {
@@ -320,6 +322,12 @@ type MPRISConfig struct {
 	TextOpacity         uint8
 }
 
+type WaterfallConfig struct {
+	Speed              float64 // px per second
+	TargetPeakValDecay float64
+	InterpolatePeakVal InterpolationConfig
+}
+
 type ConfigS struct {
 	App            AppConfig
 	Window         WindowConfig
@@ -336,6 +344,7 @@ type ConfigS struct {
 	Particles        ParticleConfig
 	Bars             BarsConfig
 	VU               VUConfig
+	Waterfall        WaterfallConfig
 
 	BeatDetection BeatDetectConfig
 
@@ -587,6 +596,16 @@ var DefaultConfig = ConfigS{
 			Thickness: 2,
 		},
 	},
+	Waterfall: WaterfallConfig{
+		Speed:              165.,
+		TargetPeakValDecay: 0.4,
+		InterpolatePeakVal: InterpolationConfig{
+			Enable: true,
+			Direct: 1,
+			Accel:  2,
+			Drag:   10,
+		},
+	},
 	BeatDetection: BeatDetectConfig{
 		Enable:              true,
 		ShowBPM:             true,
@@ -618,7 +637,7 @@ var DefaultConfig = ConfigS{
 	Shaders: ShaderConfig{
 		Enable: true,
 		ModePresetsList: [][]int{
-			{2, 4, 5, 0}, {3, 6, 0}, {3, 6, 0}, {3, 6, 0},
+			{2, 4, 5, 0}, {3, 6, 0}, {3, 6, 0}, {3, 6, 0}, {3, 6, 0}, {3, 6, 0},
 		},
 		Presets: [][]Shader{
 			{

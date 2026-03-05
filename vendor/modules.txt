@@ -128,6 +128,16 @@ github.com/mjibson/go-dsp/window
 # github.com/silbinarywolf/preferdiscretegpu v1.0.0
 ## explicit; go 1.12
 github.com/silbinarywolf/preferdiscretegpu
+# github.com/soypat/colorspace v0.0.0-20250918190843-3de7f4ffb708
+## explicit; go 1.20
+github.com/soypat/colorspace
+# github.com/soypat/geometry v0.0.0-20250718121518-cc41fcad0ec7
+## explicit; go 1.18
+github.com/soypat/geometry/i3
+github.com/soypat/geometry/internal
+github.com/soypat/geometry/ms1
+github.com/soypat/geometry/ms2
+github.com/soypat/geometry/ms3
 # github.com/ztrue/tracerr v0.4.0
 ## explicit
 github.com/ztrue/tracerr

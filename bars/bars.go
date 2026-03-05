@@ -45,13 +45,15 @@ func Init() {
 }
 
 func CalcBars(inputArray *[]complex128, lowCutOffFrac float64, highCutOffFrac float64) {
-	if config.Config.Bars.UseWindowFn {
-		for i := uint32(0); i < config.Config.Buffers.ReadBufferSize/2; i++ {
-			(*inputArray)[i] = complex(real((*inputArray)[i])*kaiser.WindowBuffer[i], 0)
+	if config.Config.App.DefaultMode != config.BarsAndWaterfallMode { // Only recompute if not already computed by the waterfall mode
+		if config.Config.Bars.UseWindowFn {
+			for i := uint32(0); i < config.Config.Buffers.ReadBufferSize/2; i++ {
+				(*inputArray)[i] = complex(real((*inputArray)[i])*kaiser.WindowBuffer[i], 0)
+			}
 		}
+		err := gofft.FFT(*inputArray)
+		utils.CheckError(tracerr.Wrap(err))
 	}
-	err := gofft.FFT(*inputArray)
-	utils.CheckError(tracerr.Wrap(err))
 	numBars := float64(len(TargetBarsPos))
 	complexTot := complex128(0.0)
 	complexSum := complex128(0.0)
