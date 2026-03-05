@@ -326,6 +326,14 @@ vu:
       drag: 10
       direct: 40
     thickness: 2
+waterfall:
+  speed:              165.
+  targetpeakvaldecay: 0.4
+  interpolatepeakval:
+    enable: true
+    direct: 1
+    accel: 2
+    drag: 10
 beatdetection:
   enable: true
   showbpm: true
@@ -357,6 +365,12 @@ shaders:
   - - 2
     - 4
     - 5
+    - 0
+  - - 3
+    - 6
+    - 0
+  - - 3
+    - 6
     - 0
   - - 3
     - 6
