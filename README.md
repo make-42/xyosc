@@ -327,7 +327,7 @@ vu:
       direct: 40
     thickness: 2
 waterfall:
-  speed:              165.
+  speed: 165.
   targetpeakvaldecay: 0.4
   interpolatepeakval:
     enable: true
