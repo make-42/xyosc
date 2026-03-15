@@ -1,0 +1,329 @@
+.TH XYOSC 1 "2026" "0.0.2" "User Commands"
+.SH NAME
+xyosc \- a simple XY-oscilloscope written in Go
+.SH SYNOPSIS
+.B xyosc
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+.B xyosc
+is a real-time audio visualizer with multiple display modes. It captures audio
+from a system device and renders it in an OpenGL window. The window is
+undecorated and screen-transparent by default, making it suitable for use as
+an overlay.
+.SH OPTIONS
+.TP
+.B \-beatdetect
+Enable beat detection, overriding the value set in the configuration file.
+.TP
+.BI \-gain " float"
+Override the gain multiplier. The value defined in the configuration file is
+used by default. (default: \-1, meaning "use config")
+.TP
+.BI \-height " int"
+Override the window height in pixels. (default: 1000)
+.TP
+.BI \-hi " float"
+High frequency cutoff as a fraction of the sample rate. Activates the
+frequency filter. Discernible details are around 0.001 increments for a 4096
+buffer at 192\~kHz. (default: 1.0)
+.TP
+.BI \-lo " float"
+Low frequency cutoff as a fraction of the sample rate. Activates the
+frequency filter. Discernible details are around 0.001 increments for a 4096
+buffer at 192\~kHz. (default: 0.0)
+.TP
+.B \-mix
+Mix the left and right audio channels together, instead of using a single
+channel for the single-axis oscilloscope mode.
+.TP
+.BI \-mode " int"
+Override the default display mode on startup. See
+.B MODES
+below.
+.TP
+.B \-peakdetect
+Enable peak detection, overriding the value set in the configuration file.
+.TP
+.B \-resizable
+Toggle whether the window is resizable, inverting the value defined in the
+configuration file.
+.TP
+.B \-right
+Use the right audio channel instead of the left in single-axis oscilloscope
+mode.
+.TP
+.BI \-width " int"
+Override the window width in pixels. (default: 1000)
+.TP
+.BI \-x " int"
+Override the starting X coordinate of the center of the window. A value of 0
+corresponds to the center of the screen. (default: \-1, meaning centered)
+.TP
+.BI \-y " int"
+Override the starting Y coordinate of the center of the window. A value of 0
+corresponds to the center of the screen. (default: \-1, meaning centered)
+.SH MODES
+The display mode can be set at launch with
+.B \-mode
+or cycled at runtime with
+.BR F .
+The following integer values are accepted:
+.TP
+.B 0
+XY oscilloscope (Lissajous). Left channel on the X axis, right on the Y axis.
+.TP
+.B 1
+Single-channel oscilloscope. Displays a time-domain waveform for one channel.
+.TP
+.B 2
+Frequency bars (FFT spectrum).
+.TP
+.B 3
+VU meter. Displays per-channel loudness on a logarithmic or linear scale.
+.TP
+.B 4
+Frequency bars with waterfall.
+.TP
+.B 5
+Waterfall only.
+.SH KEYBOARD SHORTCUTS
+.TP
+.B F
+Cycle to the next display mode.
+.TP
+.B P
+Cycle to the next shader preset for the current mode.
+.SH CONFIGURATION
+The configuration file is a YAML file created automatically on first launch at:
+.PP
+.RS
+.I $XDG_CONFIG_HOME/ontake/xyosc/config.yml
+.RE
+.PP
+On most systems this resolves to
+.IR ~/.config/ontake/xyosc/config.yml .
+If the file does not exist it is written with the compiled-in defaults.
+Changes to the file are
+.I not
+hot-reloaded; restart xyosc to apply them.
+.PP
+The file is structured as a YAML document. The top-level keys and their
+notable sub-keys are described below. Default values are shown in parentheses.
+.SS App
+.TP
+.B App.TargetFPS
+Target ticks per second. (240)
+.TP
+.B App.FPSCounter
+Show a TPS counter in the corner. (false)
+.TP
+.B App.DefaultMode
+Mode to start in. See
+.B MODES
+above. (0)
+.TP
+.B App.Splash.Enable
+Show a splash screen on startup. (true)
+.TP
+.B App.Splash.StaticSecs
+Seconds the splash is held fully visible. (1.0)
+.TP
+.B App.Splash.TransSecs
+Seconds of fade transition. (1.0)
+.SS Window
+.TP
+.B Window.Width / Window.Height
+Initial window dimensions in pixels. (1000 × 1000)
+.TP
+.B Window.Resizable
+Allow the window to be resized by the user. (false)
+.SS Fonts
+.TP
+.B Fonts.UseSystemFont
+Use a system-installed font instead of the built-in one. (true)
+.TP
+.B Fonts.SystemFont
+Font family name to look up. ("Maple Mono NF")
+.SS Audio
+.TP
+.B Audio.CaptureDeviceMatchIndex
+Index of the capture device to prefer. (0)
+.TP
+.B Audio.CaptureDeviceMatchName
+Substring to match against device names. ("" = any)
+.TP
+.B Audio.CaptureDeviceMatchSampleRate
+Preferred sample rate for device selection. (0 = any)
+.TP
+.B Audio.SampleRate
+Sample rate used for capture and all frequency calculations, in Hz. (192000)
+.TP
+.B Audio.Gain
+Amplitude multiplier applied to all modes. (1.0)
+.SS Buffers
+Controls internal ring buffer and read buffer sizes. Increasing
+.B Buffers.AudioCaptureBufferSize
+reduces latency at the cost of CPU.
+.SS Colors
+.TP
+.B Colors.UseConfigColorsInsteadOfPywal
+When true, use the hex colors defined in
+.B Colors.Palette
+instead of reading from pywal's cache. (true)
+.TP
+.B Colors.Palette.Accent / .First / .Third / .Particle / .BG
+Hex color strings used for the line, particle, and background colors.
+.TP
+.B Colors.BGOpacity
+Background opacity, 0–255. (200)
+.TP
+.B Colors.DisableBGTransparency
+Fill the background with a solid color instead of rendering transparent. (false)
+.SS Line
+Controls the rendered trace appearance.
+.TP
+.B Line.Opacity
+Base opacity of the drawn line, 0–255. (200)
+.TP
+.B Line.Brightness
+Multiplier applied to the line color. (1.0)
+.TP
+.B Line.ThicknessXY / .ThicknessSingleChannel
+Stroke width in pixels for each mode. (3)
+.TP
+.B Line.OpacityAlsoAffectsThickness
+Scale stroke width proportionally with computed opacity. (true)
+.TP
+.B Line.InvSqrtOpacityControl.Enable
+Reduce opacity of fast-moving segments (dense regions appear dimmer). (true)
+.TP
+.B Line.TimeDependentOpacityControl.Enable
+Fade older samples toward transparency. (true)
+.SS ImageRetention
+.TP
+.B ImageRetention.Enable
+Retain the previous frame with alpha decay (persistence / phosphor effect). (true)
+.TP
+.B ImageRetention.AlphaDecayBase / .AlphaDecaySpeed
+Control the decay rate. Lower base = faster fade. (0.0000001, 2.0)
+.SS Scale
+Controls axis lines, tick marks, and labels shown in XY and single-channel modes.
+.TP
+.B Scale.Enable
+Show the scale overlay. (true)
+.TP
+.B Scale.MainAxisEnable
+Draw the central X and Y axis lines. (true)
+.TP
+.B Scale.Horz.Divs / Scale.Vert.Divs
+Number of scale divisions on each axis. (20)
+.TP
+.B Scale.HorzDivDynamicPos
+Rescale horizontal tick positions dynamically based on visible time span. (true)
+.SS BeatDetection
+.TP
+.B BeatDetection.Enable
+Run beat detection in a background thread. (true)
+.TP
+.B BeatDetection.ShowBPM
+Render the detected BPM as text. (true)
+.TP
+.B BeatDetection.MaxBPM
+Upper BPM limit used when searching for beat peaks. (500.0)
+.TP
+.B BeatDetection.HalfDisplayedBPM
+Display half the detected BPM value (useful for half-time feels). (false)
+.TP
+.B BeatDetection.Metronome.Enable
+Show a visual metronome indicator. (true)
+.TP
+.B BeatDetection.Metronome.ThinLineMode
+Use a thin sweeping line instead of a filled bar. (true)
+.TP
+.B BeatDetection.Metronome.EdgeMode
+Pulse the screen edges instead of drawing a bar. (false)
+.SS Bars
+Controls the FFT spectrum bar display (mode 2 and 4).
+.TP
+.B Bars.AutoGain.Enable
+Automatically normalize bar heights to the loudest bin. (true)
+.TP
+.B Bars.PhaseColors.Enable
+Color bars according to their FFT phase. (false)
+.TP
+.B Bars.PeakCursor.Enable
+Show a floating cursor at the loudest frequency bin. (false)
+.TP
+.B Bars.PeakCursor.ShowNote
+Display the musical note name next to the frequency. (true)
+.TP
+.B Bars.PeakCursor.RefNoteFreq
+Reference frequency for A4 used in note calculation, in Hz. (440.0)
+.SS VU
+Controls the VU meter display (mode 3).
+.TP
+.B VU.LogScale
+Use a dB (logarithmic) scale. (true)
+.TP
+.B VU.LogMaxDB / .LogMinDB
+Top and bottom of the dB scale. (3, \-40)
+.TP
+.B VU.Peak.Enable
+Show a peak-hold line. (true)
+.TP
+.B VU.Peak.HistorySeconds
+How long the peak is held before decaying, in seconds. (5.0)
+.SS Waterfall
+Controls the waterfall display (modes 4 and 5).
+.TP
+.B Waterfall.Speed
+Scroll speed in pixels per second. (165.0)
+.SS Shaders
+.TP
+.B Shaders.Enable
+Apply post-processing shader effects. (true)
+.TP
+.B Shaders.ModePresetsList
+A list of shader preset index lists, one entry per mode, selecting which
+presets from
+.B Shaders.Presets
+are active per mode.
+.TP
+.B Shaders.CustomShaderCode
+A map of named Kage shader programs that can be referenced in presets.
+.SS MPRIS
+.TP
+.B MPRIS.Enable
+Show currently playing media information sourced from MPRIS. (false)
+.SS FilterInfo
+.TP
+.B FilterInfo.Enable
+Display active low/high cutoff frequencies in the corner when a filter is
+applied. (true)
+.SH COLORS AND THEMING
+By default xyosc uses the hex color palette defined in the configuration file.
+If
+.B Colors.UseConfigColorsInsteadOfPywal
+is set to false, xyosc reads colors from pywal's cache file at
+.I $XDG_CACHE_HOME/wal/colors
+and watches it for changes, updating the palette live whenever pywal rewrites
+the file.
+.SH FILES
+.TP
+.I ~/.config/ontake/xyosc/config.yml
+Main configuration file (XDG_CONFIG_HOME).
+.TP
+.I ~/.cache/wal/colors
+pywal color cache read when
+.B Colors.UseConfigColorsInsteadOfPywal
+is false.
+.SH SEE ALSO
+.BR pw\-record (1),
+.BR pacat (1),
+.BR wal (1)
+.SH AUTHORS
+Written by the xyosc contributors.
+.UR https://github.com/make\-42/xyosc
+.UE
+.SH LICENSE
+GNU General Public License v3.0 or later.

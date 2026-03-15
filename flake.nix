@@ -26,7 +26,7 @@
 
       xyosc = pkgs.buildGoModule rec {
         pname = "xyosc";
-        version = "0.0.1";
+        version = "0.0.2";
 
         src = ./.; # Use local source
 
@@ -80,6 +80,7 @@
           ]}
           install -Dm644 $src/icons/assets/icon.svg $out/share/icons/hicolor/scalable/apps/xyosc.svg
           install -Dm644 $src/xyosc.desktop $out/share/applications/xyosc.desktop
+          install -Dm644 $src/xyosc.1 $out/share/man/man1/xyosc.1
         '';
       };
     in {
