@@ -412,9 +412,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				offset -= samplesPerCrop / 2
 			}
 			its := min(numSamples, samplesPerCrop*config.Config.SingleChannelOsc.PeriodCrop.LoopOverCount) - 1
-			for i := uint32(0); i < its; i++ {
-				fAX := float32((*dispBuffer)[(i+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
-				fBX := float32((*dispBuffer)[(i+1+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+			itsC := its / config.Config.SingleChannelOsc.DisplayDownsample
+			for i := uint32(0); i < itsC; i++ {
+				fAX := float32((*dispBuffer)[(i*config.Config.SingleChannelOsc.DisplayDownsample+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+				fBX := float32((*dispBuffer)[((i+1)*config.Config.SingleChannelOsc.DisplayDownsample+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
 				if config.Config.SingleChannelOsc.SmoothWave.Enable {
 					smoothPeriods := min((numSamples/its)-1, config.Config.SingleChannelOsc.SmoothWave.MaxPeriods)
 					if smoothPeriods > 0 {
@@ -427,8 +428,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 						rescale := float32(1.)
 						for k := range smoothPeriods {
 							fact := float32(math.Pow(q, float64(k+1)))
-							fAX += fact * float32((*dispBuffer)[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
-							fBX += fact * float32((*dispBuffer)[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+							fAX += fact * float32((*dispBuffer)[utils.Moduint32((i*config.Config.SingleChannelOsc.DisplayDownsample+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+							fBX += fact * float32((*dispBuffer)[utils.Moduint32(((i+1)*config.Config.SingleChannelOsc.DisplayDownsample+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
 							rescale += fact
 						}
 						fAX /= rescale
@@ -436,50 +437,53 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					}
 				}
 				if (i+1+offset-config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples != 0 {
-					vector.StrokeLine(screen, float32(config.Config.Window.Width)*float32(i%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.Window.Height/2)-fAX, float32(config.Config.Window.Width)*float32(i%samplesPerCrop+1)/float32(samplesPerCrop), float32(config.Config.Window.Height/2)-fBX, config.Config.Line.ThicknessSingleChannel, config.ThirdColorAdj, true)
+					vector.StrokeLine(screen, float32(config.Config.Window.Width)*float32((i*config.Config.SingleChannelOsc.DisplayDownsample)%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.Window.Height/2)-fAX, float32(config.Config.Window.Width)*float32(((i+1)*config.Config.SingleChannelOsc.DisplayDownsample)%samplesPerCrop)/float32(samplesPerCrop), float32(config.Config.Window.Height/2)-fBX, config.Config.Line.ThicknessSingleChannel, config.ThirdColorAdj, true)
 				}
 			}
 		} else {
 			if config.Config.SingleChannelOsc.PeakDetect.CenterPeak {
 				offset -= config.Config.SingleChannelOsc.DisplayBufferSize / 4
 			}
-			for i := uint32(0); i < config.Config.SingleChannelOsc.DisplayBufferSize/2-1; i++ {
-				fAX := float32((*dispBuffer)[(i+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
-				fBX := float32((*dispBuffer)[(i+1+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
-				if config.Config.SingleChannelOsc.PeakDetect.Enable || *peakDetectOverride {
-					its := samplesPerPeriod
-					if config.Config.SingleChannelOsc.SmoothWave.Enable {
-						smoothPeriods := min((numSamples/its)-1, config.Config.SingleChannelOsc.SmoothWave.MaxPeriods)
-						if smoothPeriods > 0 {
-							var q float64
-							if config.Config.SingleChannelOsc.SmoothWave.TimeIndependent {
-								q = config.Config.SingleChannelOsc.SmoothWave.TimeIndependentFactor
-							} else {
-								q = math.Exp(-float64(its) / float64(config.Config.Audio.SampleRate) * config.Config.SingleChannelOsc.SmoothWave.InvTau)
+			for traceIdx, _ := range config.Config.SingleChannelOsc.Traces {
+				for i := uint32(0); i < config.Config.SingleChannelOsc.DisplayBufferSize/2/(config.Config.SingleChannelOsc.DisplayDownsample)-1; i++ {
+					fAX := float32((*dispBuffer)[((i*config.Config.SingleChannelOsc.DisplayDownsample)+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+					fBX := float32((*dispBuffer)[(((i+1)*config.Config.SingleChannelOsc.DisplayDownsample)+offset)%numSamples]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+					if config.Config.SingleChannelOsc.PeakDetect.Enable || *peakDetectOverride {
+						its := samplesPerPeriod
+						if config.Config.SingleChannelOsc.SmoothWave.Enable {
+							smoothPeriods := min((numSamples/its)-1, config.Config.SingleChannelOsc.SmoothWave.MaxPeriods)
+							if smoothPeriods > 0 {
+								var q float64
+								if config.Config.SingleChannelOsc.SmoothWave.TimeIndependent {
+									q = config.Config.SingleChannelOsc.SmoothWave.TimeIndependentFactor
+								} else {
+									q = math.Exp(-float64(its) / float64(config.Config.Audio.SampleRate) * config.Config.SingleChannelOsc.SmoothWave.InvTau)
+								}
+								rescale := float32(1.)
+								for k := range smoothPeriods {
+									fact := float32(math.Pow(q, float64(k+1)))
+									fAX += fact * float32((*dispBuffer)[utils.Moduint32(((i*config.Config.SingleChannelOsc.DisplayDownsample)+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+									fBX += fact * float32((*dispBuffer)[utils.Moduint32((((i+1)*config.Config.SingleChannelOsc.DisplayDownsample)+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
+									rescale += fact
+								}
+								fAX /= rescale
+								fBX /= rescale
 							}
-							rescale := float32(1.)
-							for k := range smoothPeriods {
-								fact := float32(math.Pow(q, float64(k+1)))
-								fAX += fact * float32((*dispBuffer)[utils.Moduint32((i+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
-								fBX += fact * float32((*dispBuffer)[utils.Moduint32((i+1+offset-its*(k+1)), numSamples)]) * config.Config.Audio.Gain * float32(config.Config.Window.Height) / 2
-								rescale += fact
-							}
-							fAX /= rescale
-							fBX /= rescale
 						}
 					}
-				}
-				if config.Config.SingleChannelOsc.Slew.Enable {
-					if i == 0 {
-						interpolate.Interpolate(deltaTime, float64(fAX), &slew.InterpolationPosBuffer[i], &slew.InterpolationVelBuffer[i], config.Config.SingleChannelOsc.Slew)
+
+					if config.Config.SingleChannelOsc.Traces[traceIdx].Slew.Enable {
+						if i == 0 {
+							interpolate.Interpolate(deltaTime, float64(fAX), &slew.InterpolationPosBuffer[i+slew.BufferSize*uint32(traceIdx)], &slew.InterpolationVelBuffer[i+slew.BufferSize*uint32(traceIdx)], config.Config.SingleChannelOsc.Traces[traceIdx].Slew)
+						}
+						interpolate.Interpolate(deltaTime, float64(fBX), &slew.InterpolationPosBuffer[i+slew.BufferSize*uint32(traceIdx)+1], &slew.InterpolationVelBuffer[i+slew.BufferSize*uint32(traceIdx)+1], config.Config.SingleChannelOsc.Traces[traceIdx].Slew)
 					}
-					interpolate.Interpolate(deltaTime, float64(fBX), &slew.InterpolationPosBuffer[i+1], &slew.InterpolationVelBuffer[i+1], config.Config.SingleChannelOsc.Slew)
-				}
-				if (i+1+offset-config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples != 0 {
-					if config.Config.SingleChannelOsc.Slew.Enable {
-						vector.StrokeLine(screen, float32(config.Config.Window.Width)*float32(i)/float32((config.Config.SingleChannelOsc.DisplayBufferSize/2)), float32(config.Config.Window.Height/2)-float32(slew.InterpolationPosBuffer[i]), float32(config.Config.Window.Width)*float32(i+1)/float32(config.Config.SingleChannelOsc.DisplayBufferSize/2), float32(config.Config.Window.Height/2)-float32(slew.InterpolationPosBuffer[i+1]), config.Config.Line.ThicknessSingleChannel, config.ThirdColorAdj, true)
-					} else {
-						vector.StrokeLine(screen, float32(config.Config.Window.Width)*float32(i)/float32((config.Config.SingleChannelOsc.DisplayBufferSize/2)), float32(config.Config.Window.Height/2)-fAX, float32(config.Config.Window.Width)*float32(i+1)/float32(config.Config.SingleChannelOsc.DisplayBufferSize/2), float32(config.Config.Window.Height/2)-fBX, config.Config.Line.ThicknessSingleChannel, config.ThirdColorAdj, true)
+					if (i+1+offset-config.Config.SingleChannelOsc.PeakDetect.FFTBufferOffset)%numSamples != 0 {
+						if config.Config.SingleChannelOsc.Traces[traceIdx].Slew.Enable {
+							vector.StrokeLine(screen, float32(config.Config.Window.Width)*float32((i*config.Config.SingleChannelOsc.DisplayDownsample))/float32((config.Config.SingleChannelOsc.DisplayBufferSize/2)), float32(config.Config.Window.Height/2)-float32(slew.InterpolationPosBuffer[i+slew.BufferSize*uint32(traceIdx)]), float32(config.Config.Window.Width)*float32(((i+1)*config.Config.SingleChannelOsc.DisplayDownsample))/float32(config.Config.SingleChannelOsc.DisplayBufferSize/2), float32(config.Config.Window.Height/2)-float32(slew.InterpolationPosBuffer[i+slew.BufferSize*uint32(traceIdx)+1]), config.Config.Line.ThicknessSingleChannel*config.Config.SingleChannelOsc.Traces[traceIdx].Thickness, slew.TraceColors[traceIdx], true)
+						} else {
+							vector.StrokeLine(screen, float32(config.Config.Window.Width)*float32((i*config.Config.SingleChannelOsc.DisplayDownsample))/float32((config.Config.SingleChannelOsc.DisplayBufferSize/2)), float32(config.Config.Window.Height/2)-fAX, float32(config.Config.Window.Width)*float32(((i+1)*config.Config.SingleChannelOsc.DisplayDownsample))/float32(config.Config.SingleChannelOsc.DisplayBufferSize/2), float32(config.Config.Window.Height/2)-fBX, config.Config.Line.ThicknessSingleChannel, slew.TraceColors[traceIdx], true)
+						}
 					}
 				}
 			}
@@ -848,9 +852,17 @@ func main() {
 	if config.Config.VU.Peak.Enable {
 		vu.Init()
 	}
-	if config.Config.SingleChannelOsc.Slew.Enable {
+
+	slewUsed := false
+	for traceIdx, _ := range config.Config.SingleChannelOsc.Traces {
+		if config.Config.SingleChannelOsc.Traces[traceIdx].Slew.Enable {
+			slewUsed = true
+		}
+	}
+	if slewUsed {
 		slew.Init()
 	}
+	slew.InitTraceColors()
 	splash.Init()
 	ebiten.SetWindowIcon([]image.Image{icons.WindowIcon48, icons.WindowIcon32, icons.WindowIcon16})
 	ebiten.SetWindowSize(int(config.Config.Window.Width), int(config.Config.Window.Height))

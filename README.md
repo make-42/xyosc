@@ -161,6 +161,7 @@ imageretention:
   alphadecayspeed: 10.0
 singlechannelosc:
   displaybuffersize: 8192
+  displaydownsample: 8
   iffilteringshowunfiltered: true
   periodcrop:
     enable: false
@@ -186,11 +187,35 @@ singlechannelosc:
     timeindependent: true
     timeindependentfactor: 0.4
     maxperiods: 10
-  slew:
-    enable: true
-    accel: 100
-    drag: 20
-    direct: 20
+  traces:
+  - thickness: 1
+    opacity: 1
+    slew:
+      enable: true
+      accel: 20
+      drag: 10
+      direct: 20
+  - thickness: 0.5
+    opacity: 0.5
+    slew:
+      enable: true
+      accel: 15
+      drag: 7
+      direct: 15
+  - thickness: 0.25
+    opacity: 0.25
+    slew:
+      enable: true
+      accel: 10
+      drag: 5
+      direct: 10
+  - thickness: 0.125
+    opacity: 0.125
+    slew:
+      enable: true
+      accel: 7
+      drag: 5
+      direct: 7
 scale:
   enable: false
   mainaxisenable: true

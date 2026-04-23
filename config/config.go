@@ -81,11 +81,12 @@ type PeriodCropConfig struct {
 
 type SingleChannelOscilloscopeConfig struct {
 	DisplayBufferSize         uint32
+	DisplayDownsample         uint32
 	IfFilteringShowUnfiltered bool
 	PeriodCrop                PeriodCropConfig
 	PeakDetect                PeakDetectionConfig
 	SmoothWave                SmoothWaveConfig
-	Slew                      InterpolationConfig
+	Traces                    []TraceConfig
 }
 
 type PeakDetectionConfig struct {
@@ -354,6 +355,12 @@ type ConfigS struct {
 	MPRIS   MPRISConfig
 }
 
+type TraceConfig struct {
+	Thickness float32
+	Opacity   float64
+	Slew      InterpolationConfig
+}
+
 var DefaultConfig = ConfigS{
 	App: AppConfig{
 		TargetFPS:   240,
@@ -431,6 +438,7 @@ var DefaultConfig = ConfigS{
 	},
 	SingleChannelOsc: SingleChannelOscilloscopeConfig{
 		DisplayBufferSize:         8192,
+		DisplayDownsample:         8,
 		IfFilteringShowUnfiltered: true,
 		PeriodCrop: PeriodCropConfig{
 			Enable:        false,
@@ -459,11 +467,47 @@ var DefaultConfig = ConfigS{
 			TimeIndependentFactor: 0.4,
 			MaxPeriods:            10,
 		},
-		Slew: InterpolationConfig{
-			Enable: true,
-			Accel:  100,
-			Drag:   20,
-			Direct: 20, // 1,10,20 gives really smooth results (100,20,20 sounds like a good compromise)
+		Traces: []TraceConfig{
+			{
+				Thickness: 1.0, // fraction of max
+				Opacity:   1.0, // fraction of max
+				Slew: InterpolationConfig{
+					Enable: true,
+					Accel:  20,
+					Drag:   10,
+					Direct: 20, // 1,10,20 gives really smooth results (100,20,20 sounds like a good compromise)
+				},
+			},
+			{
+				Thickness: 0.5, // fraction of max
+				Opacity:   0.5, // fraction of max
+				Slew: InterpolationConfig{
+					Enable: true,
+					Accel:  15,
+					Drag:   7,
+					Direct: 15, // 1,10,20 gives really smooth results (100,20,20 sounds like a good compromise)
+				},
+			},
+			{
+				Thickness: 0.25, // fraction of max
+				Opacity:   0.25, // fraction of max
+				Slew: InterpolationConfig{
+					Enable: true,
+					Accel:  10,
+					Drag:   5,
+					Direct: 10, // 1,10,20 gives really smooth results (100,20,20 sounds like a good compromise)
+				},
+			},
+			{
+				Thickness: 0.125, // fraction of max
+				Opacity:   0.125, // fraction of max
+				Slew: InterpolationConfig{
+					Enable: true,
+					Accel:  7,
+					Drag:   5,
+					Direct: 7, // 1,10,20 gives really smooth results (100,20,20 sounds like a good compromise)
+				},
+			},
 		},
 	},
 	Scale: ScaleConfig{
@@ -930,7 +974,7 @@ func updatePywalColors() {
 	/* This is not synced to pywal */
 	BGColorParsed, err := ParseHexColor(Config.Colors.Palette.BG)
 	utils.CheckError(tracerr.Wrap(err))
-	BGColor = color.RGBA{BGColorParsed.R, BGColorParsed.G, BGColorParsed.B, Config.Colors.BGOpacity}
+	BGColor = color.RGBA{uint8(float64(BGColorParsed.R) * float64(Config.Colors.BGOpacity) / 255), uint8(float64(BGColorParsed.G) * float64(Config.Colors.BGOpacity) / 255), uint8(float64(BGColorParsed.B) * float64(Config.Colors.BGOpacity) / 255), Config.Colors.BGOpacity}
 	/* end */
 
 	walPath := configdir.LocalCache("wal")
@@ -945,11 +989,11 @@ func updatePywalColors() {
 		ParticleColorParsed, err := ParseHexColor(Config.Colors.Palette.Particle)
 		utils.CheckError(tracerr.Wrap(err))
 
-		AccentColor = color.RGBA{AccentColorParsed.R, AccentColorParsed.G, AccentColorParsed.B, Config.Line.Opacity}
-		FirstColor = color.RGBA{FirstColorParsed.R, FirstColorParsed.G, FirstColorParsed.B, Config.Line.Opacity}
-		ThirdColor = color.RGBA{ThirdColorParsed.R, ThirdColorParsed.G, ThirdColorParsed.B, Config.Line.Opacity}
-		ParticleColor = color.RGBA{ParticleColorParsed.R, ParticleColorParsed.G, ParticleColorParsed.B, Config.Line.Opacity}
-		ThirdColorAdj = color.RGBA{uint8(float64(ThirdColorParsed.R) * Config.Line.Brightness), uint8(float64(ThirdColorParsed.G) * Config.Line.Brightness), uint8(float64(ThirdColorParsed.B) * Config.Line.Brightness), Config.Line.Opacity}
+		AccentColor = color.RGBA{uint8(float64(AccentColorParsed.R) * float64(Config.Line.Opacity) / 255), uint8(float64(AccentColorParsed.G) * float64(Config.Line.Opacity) / 255), uint8(float64(AccentColorParsed.B) * float64(Config.Line.Opacity) / 255), Config.Line.Opacity}
+		FirstColor = color.RGBA{uint8(float64(FirstColorParsed.R) * float64(Config.Line.Opacity) / 255), uint8(float64(FirstColorParsed.G) * float64(Config.Line.Opacity) / 255), uint8(float64(FirstColorParsed.B) * float64(Config.Line.Opacity) / 255), Config.Line.Opacity}
+		ThirdColor = color.RGBA{uint8(float64(ThirdColorParsed.R) * float64(Config.Line.Opacity) / 255), uint8(float64(ThirdColorParsed.G) * float64(Config.Line.Opacity) / 255), uint8(float64(ThirdColorParsed.B) * float64(Config.Line.Opacity) / 255), Config.Line.Opacity}
+		ParticleColor = color.RGBA{uint8(float64(ParticleColorParsed.R) * float64(Config.Line.Opacity) / 255), uint8(float64(ParticleColorParsed.G) * float64(Config.Line.Opacity) / 255), uint8(float64(ParticleColorParsed.B) * float64(Config.Line.Opacity) / 255), Config.Line.Opacity}
+		ThirdColorAdj = color.RGBA{uint8(float64(ThirdColorParsed.R) * float64(Config.Line.Opacity) / 255 * float64(Config.Line.Brightness)), uint8(float64(ThirdColorParsed.G) * float64(Config.Line.Opacity) / 255 * float64(Config.Line.Brightness)), uint8(float64(ThirdColorParsed.B) * float64(Config.Line.Opacity) / 255 * float64(Config.Line.Brightness)), Config.Line.Opacity}
 	} else {
 		fh, err := os.Open(walFile)
 		utils.CheckError(tracerr.Wrap(err))
@@ -958,22 +1002,24 @@ func updatePywalColors() {
 		var line int
 		var rgbaColor color.RGBA
 		for scanner.Scan() {
+			col := color.RGBA{uint8(float64(rgbaColor.R) * float64(Config.Line.Opacity) / 255), uint8(float64(rgbaColor.G) * float64(Config.Line.Opacity) / 255), uint8(float64(rgbaColor.B) * float64(Config.Line.Opacity) / 255), Config.Line.Opacity}
 			if line == 0 {
 				rgbaColor, err = ParseHexColor(scanner.Text())
 				utils.CheckError(tracerr.Wrap(err))
-				FirstColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.Line.Opacity}
+				FirstColor = col
 			}
 			if line == 1 {
 				rgbaColor, err = ParseHexColor(scanner.Text())
 				utils.CheckError(tracerr.Wrap(err))
-				AccentColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.Line.Opacity}
+				AccentColor = col
 			}
 			if line == 2 {
 				rgbaColor, err = ParseHexColor(scanner.Text())
 				utils.CheckError(tracerr.Wrap(err))
-				ThirdColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.Line.Opacity}
-				ThirdColorAdj = color.RGBA{uint8(float64(rgbaColor.R) * Config.Line.Brightness), uint8(float64(rgbaColor.G) * Config.Line.Brightness), uint8(float64(rgbaColor.B) * Config.Line.Brightness), Config.Line.Opacity}
-				ParticleColor = color.RGBA{rgbaColor.R, rgbaColor.G, rgbaColor.B, Config.Line.Opacity}
+				ThirdColor = col
+				colAdj := color.RGBA{uint8(float64(rgbaColor.R) * float64(Config.Line.Opacity) * float64(Config.Line.Brightness) / 255), uint8(float64(rgbaColor.G) * float64(Config.Line.Opacity) * float64(Config.Line.Brightness) / 255), uint8(float64(rgbaColor.B) * float64(Config.Line.Opacity) * float64(Config.Line.Brightness) / 255), Config.Line.Opacity}
+				ThirdColorAdj = colAdj
+				ParticleColor = col
 				break
 			}
 			line++
