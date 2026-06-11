@@ -39,12 +39,12 @@
           go
           glfw
           pkg-config
-          xorg.libX11.dev
-          xorg.libXrandr.dev
-          xorg.libXcursor.dev
-          xorg.libXinerama.dev
-          xorg.libXi.dev
-          xorg.libXxf86vm.dev
+          libx11
+          libxrandr
+          libxcursor
+          libxinerama
+          libxi
+          libxxf86vm
           libglvnd
           libxkbcommon
           libpulseaudio
@@ -66,12 +66,12 @@
             --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath [
             pkgs.glfw
             pkgs.pkg-config
-            pkgs.xorg.libX11.dev
-            pkgs.xorg.libXrandr.dev
-            pkgs.xorg.libXcursor.dev
-            pkgs.xorg.libXinerama.dev
-            pkgs.xorg.libXi.dev
-            pkgs.xorg.libXxf86vm.dev
+            pkgs.libx11
+            pkgs.libxrandr
+            pkgs.libxcursor
+            pkgs.libxinerama
+            pkgs.libxi
+            pkgs.libxxf86vm
             pkgs.libxkbcommon
             pkgs.libglvnd
             pkgs.libpulseaudio
@@ -102,12 +102,12 @@
           export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath [
             pkgs.glfw
             pkgs.pkg-config
-            pkgs.xorg.libX11.dev
-            pkgs.xorg.libXrandr.dev
-            pkgs.xorg.libXcursor.dev
-            pkgs.xorg.libXinerama.dev
-            pkgs.xorg.libXi.dev
-            pkgs.xorg.libXxf86vm.dev
+            pkgs.libx11
+            pkgs.libxrandr
+            pkgs.libxcursor
+            pkgs.libxinerama
+            pkgs.libxi
+            pkgs.libxxf86vm
             pkgs.libxkbcommon
             pkgs.libglvnd
             pkgs.libpulseaudio
@@ -119,12 +119,12 @@
         '';
         buildInputs = with pkgs; [
           glfw
-          xorg.libX11.dev
-          xorg.libXrandr.dev
-          xorg.libXcursor.dev
-          xorg.libXinerama.dev
-          xorg.libXi.dev
-          xorg.libXxf86vm.dev
+          libx11
+          libxrandr
+          libxcursor
+          libxinerama
+          libxi
+          libxxf86vm
           libglvnd
           libxkbcommon
           libpulseaudio
