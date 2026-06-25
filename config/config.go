@@ -394,7 +394,7 @@ var DefaultConfig = ConfigS{
 		ReadBufferSize:               16384,
 		ReadBufferDelay:              32,
 		XYOscilloscopeReadBufferSize: 2048,
-		BeatDetectReadBufferSize:     2097152,
+		BeatDetectReadBufferSize:     1048576,
 	},
 	WindowFn: WindowFunctionConfig{
 		UseKaiserInsteadOfHann: true,
