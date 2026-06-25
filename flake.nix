@@ -34,23 +34,31 @@
 
         vendorHash = null; # Replace with hash after running once (or use `nix develop` to vendor)
 
-        buildInputs = with pkgs; [
-          gcc
-          go
-          glfw
-          pkg-config
-          libx11
-          libxrandr
-          libxcursor
-          libxinerama
-          libxi
-          libxxf86vm
-          libglvnd
-          libxkbcommon
-          libpulseaudio
-          alsa-lib
-          libjack2
-        ];
+        buildInputs = with pkgs;
+          [
+            glfw
+          ]
+          ++ lib.optionals stdenv.isLinux [
+            libx11
+            libxrandr
+            libxcursor
+            libxinerama
+            libxi
+            libxxf86vm
+            libglvnd
+            libxkbcommon
+            libpulseaudio
+            alsa-lib
+            libjack2
+          ]
+          ++ lib.optionals stdenv.isDarwin [
+            pkgs.darwin.apple_sdk.frameworks.Cocoa
+            pkgs.darwin.apple_sdk.frameworks.IOKit
+            pkgs.darwin.apple_sdk.frameworks.CoreVideo
+            pkgs.darwin.apple_sdk.frameworks.OpenGL
+            pkgs.darwin.apple_sdk.frameworks.CoreAudio
+            pkgs.darwin.apple_sdk.frameworks.AudioToolbox
+          ];
 
         nativeBuildInputs = with pkgs; [pkg-config makeWrapper];
 
@@ -62,22 +70,25 @@
         };
 
         postInstall = ''
-          wrapProgram "$out/bin/xyosc" \
-            --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath [
-            pkgs.glfw
-            pkgs.pkg-config
-            pkgs.libx11
-            pkgs.libxrandr
-            pkgs.libxcursor
-            pkgs.libxinerama
-            pkgs.libxi
-            pkgs.libxxf86vm
-            pkgs.libxkbcommon
-            pkgs.libglvnd
-            pkgs.libpulseaudio
-            pkgs.alsa-lib
-            pkgs.libjack2
-          ]}
+          ${pkgs.lib.optionalString pkgs.stdenv.isLinux ''
+            wrapProgram "$out/bin/xyosc" \
+              --prefix LD_LIBRARY_PATH : ${
+              pkgs.lib.makeLibraryPath [
+                pkgs.glfw
+                pkgs.libx11
+                pkgs.libxrandr
+                pkgs.libxcursor
+                pkgs.libxinerama
+                pkgs.libxi
+                pkgs.libxxf86vm
+                pkgs.libxkbcommon
+                pkgs.libglvnd
+                pkgs.libpulseaudio
+                pkgs.alsa-lib
+                pkgs.libjack2
+              ]
+            }
+          ''}
           install -Dm644 $src/icons/assets/icon.svg $out/share/icons/hicolor/scalable/apps/xyosc.svg
           install -Dm644 $src/xyosc.desktop $out/share/applications/xyosc.desktop
           install -Dm644 $src/xyosc.1 $out/share/man/man1/xyosc.1
