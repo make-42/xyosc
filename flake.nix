@@ -50,14 +50,6 @@
             libpulseaudio
             alsa-lib
             libjack2
-          ]
-          ++ lib.optionals stdenv.isDarwin [
-            pkgs.darwin.apple_sdk.frameworks.Cocoa
-            pkgs.darwin.apple_sdk.frameworks.IOKit
-            pkgs.darwin.apple_sdk.frameworks.CoreVideo
-            pkgs.darwin.apple_sdk.frameworks.OpenGL
-            pkgs.darwin.apple_sdk.frameworks.CoreAudio
-            pkgs.darwin.apple_sdk.frameworks.AudioToolbox
           ];
 
         nativeBuildInputs = with pkgs; [pkg-config makeWrapper];
@@ -102,6 +94,7 @@
       };
 
       devShells.default = pkgs.mkShell {
+        # only works on linux
         nativeBuildInputs = with pkgs; [
           go
           pkg-config
