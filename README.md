@@ -63,6 +63,8 @@ The configuration file can be found at `~/.config/ontake/xyosc/config.yml`
 
 Note: `xyosc` might not chose the right device to get audio from by default. When you run xyosc it displays a list of capture devices with indices, change the `capturedeviceindex` option to the right index if it isn't the right one by default.
 
+You should also always set read buffers smaller than the ring buffer by a few frames' worth of samples to prevent race conditions.
+
 # Features
  - XY mode, single channel mode (L/R/Mix modes), bars - can be toggled with the `F` key
  - particles
@@ -125,7 +127,7 @@ buffers:
   readbuffersize: 16384
   readbufferdelay: 32
   xyoscilloscopereadbuffersize: 8192
-  beatdetectreadbuffersize: 2097152
+  beatdetectreadbuffersize: 1048576
 windowfn:
   usekaiserinsteadofhann: true
   kaiserparam: 8
