@@ -58,7 +58,7 @@
           description = "A simple XY-oscilloscope written in Go.";
           homepage = "https://github.com/make-42/xyosc";
           license = licenses.gpl3;
-          platforms = platforms.linux;
+          platforms = platforms.linux ++ platforms.darwin;
         };
 
         postInstall = ''
