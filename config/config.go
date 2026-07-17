@@ -95,6 +95,7 @@ type PeakDetectionConfig struct {
 	UseACF                                 bool // ACF
 	ACFUseWindowFn                         bool
 	UseMedian                              bool
+	PeriodRefinementSteps                  int
 	TriggerThroughoutWindow                bool
 	UseComplexTrigger                      bool
 	AlignToLastPossiblePeak                bool
@@ -451,6 +452,7 @@ var DefaultConfig = ConfigS{
 			UseACF:                                 true, // ACF
 			ACFUseWindowFn:                         true,
 			UseMedian:                              true,
+			PeriodRefinementSteps:                  4,
 			TriggerThroughoutWindow:                true,
 			UseComplexTrigger:                      true,
 			AlignToLastPossiblePeak:                true,

@@ -75,6 +75,54 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 	if avgPeriod == 0 || len(indicesACFPeaks) <= 1 {
 		return 0, []int{}, 0
 	}
+
+	old := avgPeriod
+	for range config.Config.SingleChannelOsc.PeakDetect.PeriodRefinementSteps {
+		//fmt.Println(indicesACFPeaks, avgPeriod)
+
+		sumPeriods := 0.0
+		n := 0
+
+		base := float64(indicesACFPeaks[0])
+
+		for cycle := 1; ; cycle++ {
+			expected := base + float64(cycle)*avgPeriod
+
+			// stop when past the available peaks
+			if expected >= float64(indicesACFPeaks[len(indicesACFPeaks)-1]) {
+				break
+			}
+
+			// Find closest peak
+			best := -1
+			bestDist := math.Inf(1)
+
+			for _, p := range indicesACFPeaks {
+				d := math.Abs(float64(p) - expected)
+				if d < bestDist {
+					bestDist = d
+					best = p
+				}
+			}
+
+			if best >= 0 {
+				// reject peaks too far from prediction
+				if bestDist < avgPeriod*0.25 {
+					measuredPeriod := (float64(best) - base) / float64(cycle)
+					sumPeriods += measuredPeriod
+					n++
+				}
+			}
+		}
+
+		if n > 0 {
+			avgPeriod = sumPeriods / float64(n)
+		}
+		if avgPeriod == old {
+			break
+		}
+	}
+
 	if config.Config.SingleChannelOsc.PeakDetect.UseComplexTrigger {
 		if config.Config.SingleChannelOsc.PeakDetect.ComplexTriggerUseCorrelationToSineWave {
 			for i := uint32(0); i < numSamples && i < uint32(avgPeriod); i++ {

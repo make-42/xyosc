@@ -175,6 +175,7 @@ singlechannelosc:
     useacf: true
     acfusewindowfn: true
     usemedian: true
+    periodrefinementsteps: 4
     triggerthroughoutwindow: true
     usecomplextrigger: true
     aligntolastpossiblepeak: true
