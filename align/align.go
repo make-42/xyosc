@@ -78,7 +78,7 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 	if config.Config.SingleChannelOsc.PeakDetect.UseComplexTrigger {
 		if config.Config.SingleChannelOsc.PeakDetect.ComplexTriggerUseCorrelationToSineWave {
 			for i := uint32(0); i < numSamples && i < uint32(avgPeriod); i++ {
-				sineWaveBuffer[numSamples-i-1] = complex(math.Sin(float64(i)*2*math.Pi/float64(avgPeriod)), 0)
+				sineWaveBuffer[numSamples-i-1] = complex(math.Sin(float64(i)*2*math.Pi/avgPeriod), 0)
 			}
 			err := gofft.FastConvolve(inputBufferCopied, sineWaveBuffer)
 			utils.CheckError(tracerr.Wrap(err))
@@ -96,11 +96,23 @@ func AutoCorrelate(inputArray *[]complex128, inputArrayFlipped *[]complex128) (u
 			for i := uint32(0); i < numSamples && (config.Config.SingleChannelOsc.PeakDetect.TriggerThroughoutWindow || (i < uint32(avgPeriod))); i++ {
 				n := 0
 				sum := 0.
-				for j := uint32(0); i+uint32((float64(j)+0.75)*avgPeriod) < numSamples; j++ {
-					sum += realBufferUnchanged[i+uint32(float64(j)*avgPeriod)]
-					sum += realBufferUnchanged[i+uint32((float64(j)+0.25)*avgPeriod)] * realBufferUnchanged[i+uint32((float64(j)+0.25)*avgPeriod)]
-					sum -= realBufferUnchanged[i+uint32((float64(j)+0.5)*avgPeriod)]
-					sum += realBufferUnchanged[i+uint32((float64(j)+0.75)*avgPeriod)] * realBufferUnchanged[i+uint32((float64(j)+0.75)*avgPeriod)]
+				for j := 0; ; j++ {
+					base := float64(i) + float64(j)*avgPeriod
+
+					if base+0.75*avgPeriod >= float64(numSamples) {
+						break
+					}
+
+					v0 := utils.SampleLinear(realBufferUnchanged, base)
+					v25 := utils.SampleLinear(realBufferUnchanged, base+0.25*avgPeriod)
+					v50 := utils.SampleLinear(realBufferUnchanged, base+0.5*avgPeriod)
+					v75 := utils.SampleLinear(realBufferUnchanged, base+0.75*avgPeriod)
+
+					sum += v0
+					sum += v25 * v25
+					sum -= v50
+					sum += v75 * v75
+
 					n++
 				}
 				avg := sum / float64(n)

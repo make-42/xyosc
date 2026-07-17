@@ -40,3 +40,14 @@ func NextPowOf2(n uint32) uint32 {
 	return k
 }
 */
+
+func SampleLinear(buf []float64, index float64) float64 {
+	if index < 0 || index >= float64(len(buf)-1) {
+		return 0
+	}
+
+	i := int(math.Floor(index))
+	frac := index - float64(i)
+
+	return buf[i]*(1-frac) + buf[i+1]*frac
+}
