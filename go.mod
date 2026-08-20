@@ -1,6 +1,6 @@
 module xyosc
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/alltom/oklab v1.0.0
@@ -26,13 +26,18 @@ require (
 	github.com/ebitengine/gomobile v0.0.0-20241016134836-cc2e38a7c0ee // indirect
 	github.com/ebitengine/hideconsole v1.0.0 // indirect
 	github.com/ebitengine/purego v0.8.2 // indirect
+	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20260802143932-8fa725040a18 // indirect
 	github.com/goccmack/goutil v0.4.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
+	github.com/hajimehoshi/ebiten v1.12.13 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
 	github.com/soypat/geometry v0.0.0-20250718121518-cc41fcad0ec7 // indirect
-	golang.org/x/image v0.32.0 // indirect
-	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/exp v0.0.0-20190731235908-ec7cb31e5a56 // indirect
+	golang.org/x/exp/shiny v0.0.0-20260813180055-c1d0aacb2297 // indirect
+	golang.org/x/image v0.45.0 // indirect
+	golang.org/x/mobile v0.0.0-20260820023541-8e8303b9da6c // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 )
